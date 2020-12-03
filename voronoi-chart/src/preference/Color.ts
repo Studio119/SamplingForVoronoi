@@ -1,8 +1,8 @@
 /*
  * @Author: Antoine YANG 
  * @Date: 2019-10-24 17:47:11 
- * @Last Modified by: Wenyari
- * @Last Modified time: 2020-11-25 22:16:47
+ * @Last Modified by: Kanata You
+ * @Last Modified time: 2020-12-02 20:27:41
  */
 
 
@@ -146,6 +146,13 @@ const toHsl: (color: string) => { code: string; h: number; s: number; l: number;
 
 const toRgb: (hsl: string) => string
     = (hsl: string) => {
+        if (hsl.startsWith("rgb")) {
+            return hsl;
+        } else if (hsl.startsWith("#")) {
+            hsl = toHsl(hsl).code;
+        } else if (!hsl.startsWith("hsl")) {
+            return "none";
+        }
         let params: Array<string> = hsl.substring(hsl.indexOf('(') + 1, hsl.indexOf(')')).split(',');
         if (params.length === 3 || params.length === 4) {
             let h: number = parseFloat(params[0]);
@@ -184,12 +191,37 @@ const toRgb: (hsl: string) => string
                         : p;
 
             if (params.length === 4) {
-                // return `rgba(${ Math.floor(r * 255) },${ Math.floor(g * 255) },${ Math.floor(b * 255) },${ params[3] })`;
                 return `rgba(${ Math.floor(r * 255) },${ Math.floor(g * 255) },${ Math.floor(b * 255) },${ params[3] })`;
             }
             return `rgb(${ Math.floor(r * 255) },${ Math.floor(g * 255) },${ Math.floor(b * 255) })`;
         }
         return 'none';
+    };
+
+
+const getRgba: (color: string) => { r: number; g: number; b: number; a: number; }
+    = (color: string) => {
+        if (!color.startsWith("rgb")) {
+            color = toRgb(color);
+        }
+        let colorSet: Array<string> = toRgb(
+            color
+        ).match(/\d+/g)!;
+        if (color.startsWith("rgba")) {
+            return {
+                r: parseInt(colorSet[0]),
+                g: parseInt(colorSet[1]),
+                b: parseInt(colorSet[2]),
+                a: parseFloat(colorSet[3])
+            };
+        } else {
+            return {
+                r: parseInt(colorSet[0]),
+                g: parseInt(colorSet[1]),
+                b: parseInt(colorSet[2]),
+                a: 1
+            };
+        }
     };
 
 
@@ -214,17 +246,31 @@ const setLightness: (color: string, degree: number) => string
  * @param {number} step a number between [0, 1]
  * @returns
  */
-const interpolate: (color1: string, color2: string, step?: number) => string
-    = (color1: string, color2: string, step: number = 0.5) => {
-        const hsl1: { code: string; h: number; s: number; l: number; a: number; } = toHsl(color1);
-        const hsl2: { code: string; h: number; s: number; l: number; a: number; } = toHsl(color2);
-        let h: number = hsl1.h * (1 - step) + hsl2.h * step;
-        let s: number = hsl1.s * (1 - step) + hsl2.s * step;
-        let l: number = hsl1.l * (1 - step) + hsl2.l * step;
-        let a: number = hsl1.a * (1 - step) + hsl2.a * step;
-        a = isNaN(a) ? 1 : a;
-        let hsl: string = a === 1 ? `hsl(${ h },${ s },${ l })` : `hsla(${ h },${ s },${ l },${ a })`;
-        return toRgb(hsl);
+const interpolate: (color1: string, color2: string, step?: number, mode?: "rgb" | "hsl") => string
+    = (color1: string, color2: string, step: number = 0.5, mode: "rgb" | "hsl" = "hsl") => {
+        if (mode === "hsl") {
+            const hsl1: { code: string; h: number; s: number; l: number; a: number; } = toHsl(color1);
+            const hsl2: { code: string; h: number; s: number; l: number; a: number; } = toHsl(color2);
+            let h: number = hsl1.h * (1 - step) + hsl2.h * step;
+            let s: number = hsl1.s * (1 - step) + hsl2.s * step;
+            let l: number = hsl1.l * (1 - step) + hsl2.l * step;
+            let a: number = hsl1.a * (1 - step) + hsl2.a * step;
+            a = isNaN(a) ? 1 : a;
+            let hsl: string = a === 1 ? `hsl(${ h },${ s },${ l })` : `hsla(${ h },${ s },${ l },${ a })`;
+            return toRgb(hsl);
+        } else {
+            const rgb1 = getRgba(color1);
+            const rgb2 = getRgba(color2);
+            return `rgba(${
+                Math.floor(rgb1.r * (1 - step) + rgb2.r * step)
+            },${
+                Math.floor(rgb1.g * (1 - step) + rgb2.g * step)
+            },${
+                Math.floor(rgb1.b * (1 - step) + rgb2.b * step)
+            },${
+                rgb1.a * (1 - step) + rgb2.a * step
+            })`;
+        }
     };
 
 
@@ -240,6 +286,9 @@ const Color = {
     
     /**Translates a hsl(a) code to rgb(a).*/
     toRgb: toRgb,
+
+    /**Get rgba values.*/
+    getRgba: getRgba,
 
     /**Sets lightness of a color.*/
     setLightness: setLightness,

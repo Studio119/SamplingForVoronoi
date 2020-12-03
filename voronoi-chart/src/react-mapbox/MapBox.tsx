@@ -1,8 +1,8 @@
 /*
  * @Author: Antoine YANG 
  * @Date: 2020-01-16 22:19:20 
- * @Last Modified by: Wenyari
- * @Last Modified time: 2020-11-18 22:51:13
+ * @Last Modified by: Kanata You
+ * @Last Modified time: 2020-12-03 13:33:35
  */
 
 import React, {Component} from 'react';
@@ -88,7 +88,7 @@ class MapBox extends Component<MapProps, {}, {}> {
         });
         this.map.on('click', (e) => {
             this.lnglat.push(e.lngLat);
-            console.log(this.lnglat)
+            // console.log(this.lnglat)
         });
     }
 
