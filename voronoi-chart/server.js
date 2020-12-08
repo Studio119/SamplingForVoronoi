@@ -2,7 +2,7 @@
  * @Author: Wenyari 
  * @Date: 2020-11-12 19:19:16 
  * @Last Modified by: Wenyari
- * @Last Modified time: 2020-12-01 17:36:39
+ * @Last Modified time: 2020-12-06 16:34:59
  */
 const express = require('express');
 const app = express();
@@ -25,6 +25,13 @@ app.get("/kmeans", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     res.json(
         JSON.parse(fs.readFileSync('./storage/Kmeans_result.json'))
+    );
+});
+
+app.get("/bns", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    res.json(
+        JSON.parse(fs.readFileSync('./storage/crimes_b2.json'))
     );
 });
 

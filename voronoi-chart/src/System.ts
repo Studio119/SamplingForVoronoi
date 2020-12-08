@@ -1,10 +1,14 @@
+import { DataItem } from "./TypeLib";
+
 export interface SystemType {
     sampled: boolean;
-    unsampled: boolean;
     voronoi: boolean;
     fill: boolean;
     border: boolean;
     merge: boolean;
+    point: boolean;
+    sample: Array<DataItem>;
+    origin: Array<DataItem>;
     params: {
         classes: number;
     };
@@ -12,12 +16,14 @@ export interface SystemType {
 
 export const System: SystemType = {
     sampled: false,
-    unsampled: true,
     voronoi: false,
     fill: true,
     border: true,
     merge: false,
+    point: true,
     params: {
         classes: 1000
-    }
+    },
+    sample: [],
+    origin: []
 }

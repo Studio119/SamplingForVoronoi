@@ -11,6 +11,7 @@ export interface ControlPanelProps {
     padding: [number, number];
     mapViewChange: () => void;
     merge: () => void;
+    ifSample: () => void;
 };
 
 export interface ControlPanelState {
@@ -46,26 +47,10 @@ export class ControlPanel extends Component<ControlPanelProps, ControlPanelState
                 }}
                 onClick={ () => {
                     System.sampled = !System.sampled;
-                    this.props.mapViewChange();
+                    this.props.ifSample();
                     this.forceUpdate();
                 } }
-                >{ "sampled" }
-                </button>
-                <button key='unsampled' style={{
-                    height: this.props.height,
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    marginLeft: 5,
-                    border: System.unsampled ? '2px solid black' : '2px solid #aaaaaa',
-                    borderRadius: System.unsampled ? 5 : 0,
-                    cursor: 'pointer',
-                    backgroundColor: System.unsampled ? '#dddddd' : '#ffffff',
-                }}
-                onClick={ () => {
-                    System.unsampled = !System.unsampled;
-                    this.props.mapViewChange();
-                    this.forceUpdate();
-                } }>{ "unsampled" }
+                >{ System.sampled === true ? "sample" : "unsample" }
                 </button>
                 <button key='voronoi' style={{
                     height: this.props.height,
@@ -160,7 +145,8 @@ export class ControlPanel extends Component<ControlPanelProps, ControlPanelState
                         paddingLeft: 20,
                         // float: "left",
                         display: "inline-flex",
-                        // paddingTop: 20
+                        // paddingTop: 20,
+                        marginLeft: "-1200px"
                     }} >
                         <ValueBar width={ 160 } height={ 20 } label="clusters"
                         min={ 100 } max={ 3000 } step={ 100 } defaultValue={ 1000 }

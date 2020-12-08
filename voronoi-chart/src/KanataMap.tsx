@@ -265,7 +265,8 @@ export class KanataMap<P = {}> extends Component<KanataMapProps & P, KanataMapSt
                     position: "relative",
                     top: -this.props.height,
                     pointerEvents: "none",
-                    border: '1px solid black'
+                    border: '1px solid black',
+                    left: -450
                     // backgroundColor: 'rgb(50,100,180)'
             }} >
                 <defs>
@@ -541,7 +542,7 @@ export class KanataMap<P = {}> extends Component<KanataMapProps & P, KanataMapSt
                     list.forEach((
                         d: [number, number, number, number]
                     ) => {
-                        if(System.unsampled)
+                        if(System.point)
                             this.addPoint(d[0], d[1], [Color.interpolate(this.colorLinear[1], this.colorLinear[0], d[3]), 'rgb(50, 50, 50)']);
                     });
                     this.makeStep();
