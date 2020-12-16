@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 19:40:41
+ * @Last Modified time: 2020-12-16 21:49:17
  */
 
 const express = require('express');
@@ -30,6 +30,30 @@ app.get("/fromfile/:path", (req, res) => {
         } else {
             res.json(JSON.parse(data));
         }
+    });
+});
+
+app.get("/fromsample/:path", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = "../storage/sampled_" + decodePath(req.params["path"]);
+    fs.readFile(path, (err, data) => {
+        if (err) {
+            res.json(err);
+        } else {
+            res.json(JSON.parse(data));
+        }
+    });
+});
+
+app.post("/snapshot", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = "../storage/snapshot_" + decodePath(req.body["path"]);
+    const data = req.body["data"];
+    fs.writeFile(path, JSON.stringify(data), () => {
+        res.json({
+            status: true,
+            message: "Snapshot storaged successfully."
+        });
     });
 });
 
@@ -62,7 +86,7 @@ const envcheck = [{
         if (error || stderr) {
             res.json({
                 status: false,
-                message: JSON.stringify(error || stderr)
+                message: JSON.stringify(stderr || error)
             });
             return;
         } else if (stdout) {
@@ -74,11 +98,16 @@ const envcheck = [{
                 return;
             } else {
                 autofix = response => {
-                    process.exec("echo Y | conda create -n vis2021 python=3.7", (err, _sout, serr) => {
+                    process.exec(
+                        "echo Y | conda create -n vis2021 python=3.7"
+                            + " numpy scipy matplotlib",
+                        (err, _sout, serr) => {
                         if (err || serr) {
                             response.json({
                                 status: false,
-                                message: JSON.stringify(err || serr)
+                                message: "Auto fixation failed. Run `conda"
+                                    + " create -n vis2021 python=3.7"
+                                    + " numpy scipy matplotlib`."
                             });
                         } else {
                             response.json({
@@ -117,14 +146,15 @@ app.get("/autofix", (_req, res) => {
 
 app.get("/sample/:path", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-    const path = "../dataset/" + decodePath(req.params["path"]);
+    const path = decodePath(req.params["path"]);
     process.exec(
-        `conda activate vis2021 && python ../back-end/sample.py ${ path }`,
+        `conda activate vis2021 && python ../back-end/sample.py ${ path } 1`,
         (error, stdout, stderr) => {
+            // console.log(stdout);
             if (error || stderr) {
                 res.json({
                     status: false,
-                    message: error || stderr
+                    message: stdout || stderr || error
                 });
             } else if (stdout === '0\r\n') {
                 res.json({

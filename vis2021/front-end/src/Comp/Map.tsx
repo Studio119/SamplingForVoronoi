@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 15:44:20
+ * @Last Modified time: 2020-12-16 18:59:33
  */
 
 import React, { Component } from "react";
@@ -178,6 +178,32 @@ export class Map extends Component<MapProps, MapState, {}> {
                 mapcl.fitBounds(map);
             }
         });
+    }
+
+    /**
+     * 数据格式: [id, screenX, screenY, value(0-1)]
+     *
+     * @static
+     * @returns {Promise<[number, number, number, number][]>}
+     * @memberof Map
+     */
+    public static async takeSnapshot(): Promise<[number, number, number, number][]> {
+        let list: [number, number, number, number][] = [];
+        const map = Map.list[0];
+        if (!map || !map.map.current) {
+            return [];
+        }
+        const max = map.props.max();
+        (await map.props.data).forEach(d => {
+            const pos = map.map.current!.project(d);
+            if (pos.x < 0 || pos.x > map.props.width || pos.y < 0 || pos.y > map.props.height) {
+                return;
+            }
+            const item: [number, number, number, number] = [d.id, pos.x, pos.y, d.value / max];
+            list.push(item);
+        });
+
+        return list;
     }
 
 };

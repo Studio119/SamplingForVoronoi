@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 12:04:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 16:46:11
+ * @Last Modified time: 2020-12-16 19:27:59
  */
 
 import { geodata } from "../types";
@@ -26,7 +26,7 @@ export interface DataReduxState {
 };
 
 export type DataActionType = (
-    "RELOAD" | "SAMPLE"
+    "RELOAD" | "SAMPLE" | "RESET"
 );
 
 export type DataActionReduxAction<AT extends DataActionType = DataActionType> = {
@@ -38,6 +38,8 @@ export type DataActionReduxAction<AT extends DataActionType = DataActionType> = 
         path: string;
     } : AT extends "SAMPLE" ? {
         index: 101;
+    } : AT extends "RESET" ? {
+        index: 102;
     } : {}
 );
 
@@ -79,7 +81,7 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
                         reject(reason);
                     });
                 });
-                
+
                 return {
                     sampled: false,
                     path: reloadAction.path,
@@ -91,7 +93,7 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
             return state;
         case "SAMPLE":
             const data = new Promise<geodata[]>((resolve, reject) => {
-                axios.get(`/fromfile/${ encodePath(state.path) }`).then(res => {
+                axios.get(`/fromsample/${ encodePath(state.path) }`).then(res => {
                     const data: geodata[] = res.data;
                     // 派发
                     resolve(data);
@@ -107,6 +109,24 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
                 colorize: state.colorize,
                 max: state.max
             };
+        case "RESET":
+            const dataHome = new Promise<geodata[]>((resolve, reject) => {
+                axios.get(`/fromfile/${ encodePath(state.path) }`).then(res => {
+                    const data: geodata[] = res.data;
+                    // 派发
+                    resolve(data);
+                }).catch(reason => {
+                    reject(reason);
+                });
+            });
+
+            return {
+                sampled: false,
+                path: state.path,
+                data: dataHome,
+                colorize: state.colorize,
+                max: state.max
+            };
         default:
             return state;
     }
@@ -116,6 +136,7 @@ export const DataCenter = {
 
     mapStateToProps: (state: { DataRedux: DataReduxState; }) => {
         return Object.assign({}, {
+            sampled: state.DataRedux.sampled,
             path: state.DataRedux.path,
             data: state.DataRedux.data,
             colorize: state.DataRedux.colorize,
@@ -136,6 +157,12 @@ export const DataCenter = {
                 return dispatch({
                     type: "SAMPLE",
                     index: 101
+                });
+            },
+            reset: () => {
+                return dispatch({
+                    type: "RESET",
+                    index: 102
                 });
             }
         };
