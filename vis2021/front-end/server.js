@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-16 21:49:17
+ * @Last Modified time: 2020-12-19 02:36:16
  */
 
 const express = require('express');
@@ -47,14 +47,31 @@ app.get("/fromsample/:path", (req, res) => {
 
 app.post("/snapshot", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-    const path = "../storage/snapshot_" + decodePath(req.body["path"]);
+    const path = decodePath(req.body["path"]);
+    const alpha = req.body["alpha"];
     const data = req.body["data"];
-    fs.writeFile(path, JSON.stringify(data), () => {
-        res.json({
-            status: true,
-            message: "Snapshot storaged successfully."
-        });
-    });
+    fs.writeFileSync("../storage/snapshot_" + path, JSON.stringify(data));
+    process.exec(
+        `conda activate vis2021 && python ../back-end/kde.py ${ path } ${ alpha }`,
+        (error, stdout, stderr) => {
+            if (error || stderr) {
+                res.json({
+                    status: false,
+                    message: stdout || stderr || error
+                });
+            } else if (stdout.endsWith('0\r\n')) {
+                res.json({
+                    status: true,
+                    message: "Snapshot storaged successfully."
+                });
+            } else {
+                res.json({
+                    status: false,
+                    message: stdout
+                });
+            }
+        }
+    );
 });
 
 const envcheck = [{
@@ -144,11 +161,11 @@ app.get("/autofix", (_req, res) => {
     autofix = _res => {};
 });
 
-app.get("/sample/:path", (req, res) => {
+app.get("/sample/this/:path", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = decodePath(req.params["path"]);
     process.exec(
-        `conda activate vis2021 && python ../back-end/sample.py ${ path } 1`,
+        `conda activate vis2021 && python ../back-end/sample_this.py ${ path }`,
         (error, stdout, stderr) => {
             // console.log(stdout);
             if (error || stderr) {
@@ -156,10 +173,10 @@ app.get("/sample/:path", (req, res) => {
                     status: false,
                     message: stdout || stderr || error
                 });
-            } else if (stdout === '0\r\n') {
+            } else if (!stdout.includes('Error')) {
                 res.json({
                     status: true,
-                    message: "done"
+                    message: "done" + "\n\n" + stdout
                 });
             } else {
                 res.json({
@@ -178,3 +195,5 @@ const server = app.listen(2369, () => {
     const port = server.address().port;
     console.log("Back-end server opened at http://" + host + ":" + port);
 });
+
+server.setTimeout(60 * 1e3 * 60);

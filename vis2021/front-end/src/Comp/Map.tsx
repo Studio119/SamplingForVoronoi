@@ -184,14 +184,18 @@ export class Map extends Component<MapProps, MapState, {}> {
      * 数据格式: [id, screenX, screenY, value(0-1)]
      *
      * @static
-     * @returns {Promise<[number, number, number, number][]>}
+     * @returns {Promise<MapSnapshot>}
      * @memberof Map
      */
-    public static async takeSnapshot(): Promise<[number, number, number, number][]> {
+    public static async takeSnapshot(): Promise<MapSnapshot> {
         let list: [number, number, number, number][] = [];
         const map = Map.list[0];
         if (!map || !map.map.current) {
-            return [];
+            return {
+                width: 0,
+                height: 0,
+                data: []
+            };
         }
         const max = map.props.max();
         (await map.props.data).forEach(d => {
@@ -203,7 +207,18 @@ export class Map extends Component<MapProps, MapState, {}> {
             list.push(item);
         });
 
-        return list;
+        return {
+            width: map.props.width,
+            height: map.props.height,
+            data: list
+        };
     }
 
+};
+
+
+export type MapSnapshot = {
+    width: number;
+    height: number;
+    data: [number, number, number, number][];
 };

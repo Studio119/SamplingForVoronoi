@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 14:25:15 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-16 19:28:51
+ * @Last Modified time: 2020-12-19 01:25:44
  */
 
 import React, { Component } from "react";
@@ -11,6 +11,7 @@ import { connect } from "react-redux";
 import { DataCenter } from "../reducers/DataCenter";
 import encodePath from "../Tools/pathEncoder";
 import { Map } from "./Map";
+import { Waiting } from "./Waiting";
 
 
 export interface ControlStripProps {
@@ -90,6 +91,57 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                 } >
                     { `origin` }
                 </label>
+                <label className="button" key="take snapshot" tabIndex={ 1 } style={{
+                    pointerEvents: this.state.sampleLock || this.props.sampled ? "none" : "inherit",
+                    opacity: this.state.sampleLock || this.props.sampled ? 0.5 : undefined,
+                    display: "inline-block",
+                    cursor: this.state.sampleLock || this.props.sampled ? undefined : "pointer",
+                    padding: "3px 8px 1.5px",
+                    userSelect: "none"
+                }}
+                onClick={
+                    () => {
+                        if (this.state.sampleLock) {
+                            return;
+                        }
+                        if (this.props.sampled) {
+                            alert("Do not apply sampling on sampled data.");
+                            return;
+                        }
+                        this.setState({
+                            sampleLock: true
+                        });
+                        Waiting.start(close => {
+                            const snapshot = Map.takeSnapshot();
+                            snapshot.then(data => {
+                                axios.post(`/snapshot`, {
+                                    path: encodePath(this.props.path),
+                                    data: data,
+                                    alpha: 1
+                                }).then(res0 => {
+                                    if (res0.data.status) {
+                                        // pass
+                                        close("Succeeded.");
+                                    } else {
+                                        console.error(res0.data.message);
+                                        close(JSON.stringify(res0.data.message));
+                                    }
+                                }).catch(reason => {
+                                    close(JSON.stringify(reason));
+                                }).finally(() => {
+                                    this.setState({
+                                        sampleLock: false
+                                    });
+                                });
+                            }).catch(err => {
+                                console.error(err);
+                                close(JSON.stringify(err));
+                            });
+                        });
+                    }
+                } >
+                    { `take snapshot` }
+                </label>
                 <label className="button" key="sample" tabIndex={ 1 } style={{
                     pointerEvents: this.state.sampleLock || this.props.sampled ? "none" : "inherit",
                     opacity: this.state.sampleLock || this.props.sampled ? 0.5 : undefined,
@@ -110,31 +162,22 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                         this.setState({
                             sampleLock: true
                         });
-                        const snapshot = Map.takeSnapshot();
-                        snapshot.then(data => {
-                            axios.post(`/snapshot`, {
-                                path: encodePath(this.props.path),
-                                data: data
-                            }).then(res0 => {
-                                if (res0.data.status) {
-                                    axios.get(`/sample/${ encodePath(this.props.path) }`).then(res => {
-                                        if (res.data.status) {
-                                            this.props.loadSample();
-                                        } else {
-                                            console.error(res.data.message);
-                                        }
-                                    }).catch(reason => {
-                                        console.error(reason);
-                                    });
+                        Waiting.start(close => {
+                            axios.get(`/sample/this/${ encodePath(this.props.path) }`).then(res => {
+                                if (res.data.status) {
+                                    this.props.loadSample();
+                                    close("Succeeded.");
                                 } else {
-                                    console.error(res0.data.message);
+                                    console.error(res.data.message);
+                                    close(JSON.stringify(res.data.message));
                                 }
-                            });
-                        }).catch(err => {
-                            console.error(err);
-                        }).finally(() => {
-                            this.setState({
-                                sampleLock: false
+                            }).catch(reason => {
+                                console.error(reason);
+                                close(JSON.stringify(reason));
+                            }).finally(() => {
+                                this.setState({
+                                    sampleLock: false
+                                });
                             });
                         });
                     }

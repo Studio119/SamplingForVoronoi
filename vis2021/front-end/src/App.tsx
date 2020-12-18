@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:51:17 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 19:21:16
+ * @Last Modified time: 2020-12-19 01:06:08
  */
 
 import React, { Component } from 'react';
@@ -12,6 +12,7 @@ import { NodeView } from './Comp/NodeView';
 import { Scatter3d } from './Comp/ScatterView3d';
 import { ControlStrip } from './Comp/ControlStrip';
 import { EnvCheckor } from './Comp/EnvCheckor';
+import { Waiting } from './Comp/Waiting';
 
 
 class App extends Component {
@@ -44,6 +45,7 @@ class App extends Component {
           <AppNodeView />
           <AppScatterView3d />
         </div>
+        <Waiting />
         <EnvCheckor checkors={[
           (fulfill: (res: any) => void, reject: (reason: any) => void) => {
             axios.get("/checkcondaenv/0").then(res => {
