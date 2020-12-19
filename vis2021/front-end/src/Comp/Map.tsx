@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-16 18:59:33
+ * @Last Modified time: 2020-12-19 20:19:08
  */
 
 import React, { Component } from "react";
@@ -17,7 +17,9 @@ export interface MapProps {
     width: number;
     height: number;
 
-    data: Promise<geodata[]>;
+    filter: "population" | "sample";
+    data: Promise<geodata<"population">[]>;
+    sample: Promise<geodata<"sample">[]> | null;
     colorize: (val: number) => string;
     max: () => number;
 };
@@ -29,6 +31,9 @@ export class Map extends Component<MapProps, MapState, {}> {
     private static list: Map[] = [];
 
     protected map: React.RefObject<MapBox>;
+
+    protected canvasBack: React.RefObject<HTMLCanvasElement>;
+    protected ctxBack: CanvasRenderingContext2D | null;
 
     protected canvasScatter: React.RefObject<HTMLCanvasElement>;
     protected ctxScatter: CanvasRenderingContext2D | null;
@@ -46,6 +51,8 @@ export class Map extends Component<MapProps, MapState, {}> {
         this.state = {};
 
         this.map = React.createRef<MapBox>();
+        this.canvasBack = React.createRef<HTMLCanvasElement>();
+        this.ctxBack = null;
         this.canvasScatter = React.createRef<HTMLCanvasElement>();
         this.ctxScatter = null;
 
@@ -108,11 +115,24 @@ export class Map extends Component<MapProps, MapState, {}> {
                         this.repaint();
                     } } />
                 </div>
-                <div key="canvas-container" style={{
+                <div key="canvas-container-0" style={{
                     display: "block",
                     width: this.props.width,
                     height: this.props.height,
                     top: 0 - this.props.height,
+                    position: "relative",
+                    pointerEvents: "none",
+                    opacity: 0.33
+                }} >
+                    <canvas ref={ this.canvasBack }
+                    width={ this.props.width } height={ this.props.height }
+                    style={{}} />
+                </div>
+                <div key="canvas-container-1" style={{
+                    display: "block",
+                    width: this.props.width,
+                    height: this.props.height,
+                    top: 0 - 2 * this.props.height,
                     position: "relative",
                     pointerEvents: "none"
                 }} >
@@ -133,6 +153,7 @@ export class Map extends Component<MapProps, MapState, {}> {
 
     public componentDidMount(): void {
         this.ctxScatter = this.canvasScatter.current!.getContext("2d");
+        this.ctxBack = this.canvasBack.current!.getContext("2d");
         Map.list.forEach(map => {
             this.synchronize(map);
         });

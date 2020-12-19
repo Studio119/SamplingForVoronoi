@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 12:04:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-16 19:27:59
+ * @Last Modified time: 2020-12-19 20:02:03
  */
 
 import { geodata } from "../types";
@@ -19,14 +19,15 @@ let max: number = 0;
 
 export interface DataReduxState {
     path: string;
-    sampled: boolean;
     data: Promise<geodata[]>;
+    sample: Promise<geodata<"sample">[]> | null;
+    filter: "population" | "sample";
     colorize: (val: number) => string;
     max: () => number;
 };
 
 export type DataActionType = (
-    "RELOAD" | "SAMPLE" | "RESET"
+    "RELOAD" | "SAMPLE" | "HOME"
 );
 
 export type DataActionReduxAction<AT extends DataActionType = DataActionType> = {
@@ -38,15 +39,16 @@ export type DataActionReduxAction<AT extends DataActionType = DataActionType> = 
         path: string;
     } : AT extends "SAMPLE" ? {
         index: 101;
-    } : AT extends "RESET" ? {
+    } : AT extends "HOME" ? {
         index: 102;
     } : {}
 );
 
 const initData: DataReduxState = {
     path: "undefined",
-    sampled: false,
+    sample: null,
     data: new Promise<geodata[]>(res => res([])),
+    filter: "population",
     colorize: val => colorize(val),
     max: () => max
 };
@@ -83,18 +85,19 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
                 });
 
                 return {
-                    sampled: false,
+                    sample: null,
                     path: reloadAction.path,
                     data: data,
+                    filter: "population",
                     colorize: state.colorize,
                     max: state.max
                 };
             }
             return state;
         case "SAMPLE":
-            const data = new Promise<geodata[]>((resolve, reject) => {
+            const data = new Promise<geodata<"sample">[]>((resolve, reject) => {
                 axios.get(`/fromsample/${ encodePath(state.path) }`).then(res => {
-                    const data: geodata[] = res.data;
+                    const data: geodata<"sample">[] = res.data;
                     // 派发
                     resolve(data);
                 }).catch(reason => {
@@ -103,27 +106,19 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
             });
             
             return {
-                sampled: true,
+                sample: data,
                 path: state.path,
-                data: data,
+                data: state.data,
+                filter: "sample",
                 colorize: state.colorize,
                 max: state.max
             };
-        case "RESET":
-            const dataHome = new Promise<geodata[]>((resolve, reject) => {
-                axios.get(`/fromfile/${ encodePath(state.path) }`).then(res => {
-                    const data: geodata[] = res.data;
-                    // 派发
-                    resolve(data);
-                }).catch(reason => {
-                    reject(reason);
-                });
-            });
-
+        case "HOME":
             return {
-                sampled: false,
+                sample: state.data,
                 path: state.path,
-                data: dataHome,
+                data: state.data,
+                filter: "population",
                 colorize: state.colorize,
                 max: state.max
             };
@@ -136,7 +131,8 @@ export const DataCenter = {
 
     mapStateToProps: (state: { DataRedux: DataReduxState; }) => {
         return Object.assign({}, {
-            sampled: state.DataRedux.sampled,
+            filter: state.DataRedux.filter,
+            sample: state.DataRedux.sample,
             path: state.DataRedux.path,
             data: state.DataRedux.data,
             colorize: state.DataRedux.colorize,
@@ -159,9 +155,9 @@ export const DataCenter = {
                     index: 101
                 });
             },
-            reset: () => {
+            home: () => {
                 return dispatch({
-                    type: "RESET",
+                    type: "HOME",
                     index: 102
                 });
             }

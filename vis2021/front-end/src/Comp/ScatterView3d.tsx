@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 10:51:28 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 16:41:22
+ * @Last Modified time: 2020-12-19 21:54:07
  */
 
 import React from "react";
@@ -19,8 +19,6 @@ import { Progress } from "../Subcomp/Progress";
 export class Scatter3d extends Map {
     
     protected readonly H: number = 128;
-
-    protected readonly steps = [0, 1 / 4, 1 / 2, 3 / 4];
 
     public render(): JSX.Element {
         return (
@@ -72,11 +70,24 @@ export class Scatter3d extends Map {
                         this.repaint();
                     } } />
                 </div>
-                <div key="canvas-container" style={{
+                <div key="canvas-container-0" style={{
                     display: "block",
                     width: this.props.width,
                     height: this.props.height,
                     top: 0 - this.props.height,
+                    position: "relative",
+                    pointerEvents: "none",
+                    opacity: 0.33
+                }} >
+                    <canvas ref={ this.canvasBack }
+                    width={ this.props.width } height={ this.props.height }
+                    style={{}} />
+                </div>
+                <div key="canvas-container-1" style={{
+                    display: "block",
+                    width: this.props.width,
+                    height: this.props.height,
+                    top: 0 - 2 * this.props.height,
                     position: "relative",
                     pointerEvents: "none"
                 }} >
@@ -107,28 +118,18 @@ export class Scatter3d extends Map {
     protected bufferPaintScatters(list: Array<{x: number; y:number; val: number;}>, step: number = 100): void {
         if (!this.ctxScatter) return;
 
-        let piece: Array<{x: number; y:number; val: number; h: number;}> = [];
+        let piece: Array<{x: number; y:number; val: number;}> = [];
 
-        const paint = (start: number) => {
-            const pieceCopy: {x: number; y:number; val: number; h: number;}[] = piece.map(d => d);
+        const paint = () => {
+            const pieceCopy: {x: number; y:number; val: number;}[] = piece.map(d => d);
             this.timers.push(
                 setTimeout(() => {
                     this.updated = true;
 
                     pieceCopy.forEach(d => {
-                        this.ctxScatter!.fillStyle = this.props.colorize(d.val).replace(
-                            "(", "a("
-                        ).replace(
-                            ")", ",0.8)"
-                        );
-                        const h = this.H * d.h / this.props.max();
-                        const l = this.H * start;
-                        this.ctxScatter!.fillRect(
-                            d.x - 1.5 + start * 4, d.y - 1.5 - h, 3, h + 0.5 - l
-                        );
                         this.ctxScatter!.fillStyle = this.props.colorize(d.val);
                         this.ctxScatter!.fillRect(
-                            d.x - 1.5 + start * 4, d.y - 1.5 - h, 3, 3
+                            d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
 
@@ -138,48 +139,97 @@ export class Scatter3d extends Map {
             piece = [];
         };
 
-        this.steps.forEach(l => {
+        list.forEach(d => {
+            if (
+                d.x < 0 - 1
+                || d.x >= this.props.width + 1
+                || d.y < 0 - 1
+                || d.y - this.H >= this.props.height + 1
+            ) return;
+            piece.push({
+                ...d
+            });
+            if (piece.length === step) {
+                paint();
+            }
+        });
+
+        if (piece.length) {
+            paint();
+        }
+
+        this.progress.current?.start(this.timers.length);
+    }
+
+    /**
+     * 绘制采样点.
+     *
+     * @protected
+     * @param {Array<{x: number; y:number; val: number; r: number;}>} list
+     * @param {number} [step=100]
+     * @returns {void}
+     * @memberof Map
+     */
+    protected bufferPaintDisks(list: Array<{x: number; y:number; val: number; r: number;}>, step: number = 100): void {
+        if (!this.ctxBack || !this.ctxScatter) return;
+
+        let piece: Array<{x: number; y:number; val: number; r: number;}> = [];
+
+        const paint = () => {
+            const pieceCopy: {x: number; y:number; val: number; r: number;}[] = piece.map(d => d);
             this.timers.push(
                 setTimeout(() => {
-                    const h = this.H * l;
-                    this.ctxScatter!.strokeStyle = "rgb(0,0,0)";
-                    this.ctxScatter!.fillStyle = l === 0 ? "rgb(30,30,30)" : "rgba(30,30,30,0.6)";
-                    this.ctxScatter!.beginPath();
-                    this.ctxScatter!.moveTo(this.props.width * 0.25, this.props.height * 0.25 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.12, this.props.height * 0.6 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.25, this.props.height * 0.95 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.75, this.props.height * 0.95 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.88, this.props.height * 0.6 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.75, this.props.height * 0.25 - h);
-                    this.ctxScatter!.closePath();
-                    this.ctxScatter!.stroke();
-                    this.ctxScatter!.fill();
+                    this.updated = true;
+
+                    pieceCopy.forEach(d => {
+                        if (isNaN(d.r)) {
+                            // this.ctxBack!.strokeStyle = this.props.colorize(d.val);
+                            // this.ctxBack!.strokeRect(
+                            //     d.x - 1.5 * 4, d.y - 1.5, 3, 3
+                            // );
+                        } else {
+                            this.ctxBack!.fillStyle = this.props.colorize(d.val).replace(
+                                "(", "a("
+                            ).replace(
+                                ")", ",0.5)"
+                            );
+                            this.ctxBack!.strokeStyle = this.props.colorize(d.val);
+                            this.ctxBack!.beginPath();
+                            this.ctxBack!.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                            this.ctxBack!.fill();
+                            this.ctxBack!.stroke();
+                            this.ctxBack!.closePath();
+                            this.ctxScatter!.fillStyle = this.props.colorize(d.val);
+                            this.ctxScatter!.fillRect(
+                                d.x - 1.5, d.y - 1.5, 3, 3
+                            );
+                        }
+                    });
 
                     this.progress.current?.next();
                 }, 1 * this.timers.length)
             );
+            piece = [];
+        };
 
-            list.forEach(d => {
-                if (
-                    d.x < 0 - 1
-                    || d.x >= this.props.width + 1
-                    || d.y < 0 - 1
-                    || d.y - this.H >= this.props.height + 1
-                ) return;
-                if (d.val / this.props.max() < l) return;
-                piece.push({
-                    ...d,
-                    h: Math.min(d.val, (l + this.steps[1] - this.steps[0]) * this.props.max())
-                });
-                if (piece.length === step) {
-                    paint(l);
-                }
+        list.forEach(d => {
+            if (
+                d.x < 0 - 1
+                || d.x >= this.props.width + 1
+                || d.y < 0 - 1
+                || d.y - this.H >= this.props.height + 1
+            ) return;
+            piece.push({
+                ...d
             });
-
-            if (piece.length) {
-                paint(l);
+            if (piece.length === step) {
+                paint();
             }
         });
+
+        if (piece.length) {
+            paint();
+        }
 
         this.progress.current?.start(this.timers.length);
     }
@@ -193,26 +243,13 @@ export class Scatter3d extends Map {
      */
     public repaint(waiting: boolean = true): void {
         if (waiting) {
-            if (this.ctxScatter) {
-                this.ctxScatter.fillStyle = "rgb(30,30,30)";
-                this.ctxScatter.fillRect(0, 0, this.props.width, this.props.height);
-                this.ctxScatter.strokeStyle = "rgb(0,0,0)";
-                this.steps.forEach(d => {
-                    this.ctxScatter!.fillStyle = d === 0 ? "rgb(30,30,30)" : "rgba(30,30,30,0.5)";
-                    const h = this.H * d;
-                    this.ctxScatter!.beginPath();
-                    this.ctxScatter!.moveTo(this.props.width * 0.25, this.props.height * 0.25 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.12, this.props.height * 0.6 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.25, this.props.height * 0.95 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.75, this.props.height * 0.95 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.88, this.props.height * 0.6 - h);
-                    this.ctxScatter!.lineTo(this.props.width * 0.75, this.props.height * 0.25 - h);
-                    this.ctxScatter!.closePath();
-                    this.ctxScatter!.stroke();
-                    this.ctxScatter!.fill();
-                });
-            }
             this.updated = false;
+            if (this.ctxScatter) {
+                this.ctxScatter.clearRect(0, 0, this.props.width, this.props.height);
+            }
+            if (this.ctxBack) {
+                this.ctxBack.clearRect(0, 0, this.props.width, this.props.height);
+            }
         }
         if (this.updated) {
             return;
@@ -226,16 +263,41 @@ export class Scatter3d extends Map {
                 }, 200);
                 return;
             }
-            this.props.data.then(res => {
-                let renderingQueue: Array<{x: number; y:number; val: number;}> = [];
-                res.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
-                    renderingQueue.push({
-                        ...this.map.current!.project(d),
-                        val: d.value
-                    })
+            if (this.props.filter === "population") {
+                this.props.data.then(res => {
+                    let renderingQueue: Array<{x: number; y:number; val: number;}> = [];
+                    res.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
+                        renderingQueue.push({
+                            ...this.map.current!.project(d),
+                            val: d.value
+                        });
+                    });
+                    this.bufferPaintScatters(renderingQueue);
                 });
-                this.bufferPaintScatters(renderingQueue);
-            });
+            } else {
+                this.props.data.then(res0 => {
+                    let renderingQueue: Array<{
+                        x: number; y:number; val: number; r: number;
+                    }> = [];
+                    res0.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
+                        renderingQueue.push({
+                            ...this.map.current!.project(d),
+                            val: d.value,
+                            r: NaN
+                        });
+                    });
+                    this.props.sample!.then(res => {
+                        res.sort((a, b) => b.lat - a.lat).forEach((d: geodata<"sample">) => {
+                            renderingQueue.push({
+                                ...this.map.current!.project(d),
+                                val: d.value,
+                                r: d.radius
+                            });
+                        });
+                        this.bufferPaintDisks(renderingQueue);
+                    });
+                });
+            }
         }
     }
 

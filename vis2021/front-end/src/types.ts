@@ -2,20 +2,27 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-21 12:41:26 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-15 10:52:26
+ * @Last Modified time: 2020-12-19 19:30:08
  */
 
 
 /**
  * 地图展示的数据.
  */
-export type geodata = {
+export type geodata<T extends "population" | "sample" = "population"> = {
     id: number;
     lng: number;
     lat: number;
-    // hilbertCode: string;
     value: number;
-};
+} & (
+    T extends "sample" ? {
+        // 当采样完成后，会得到这些属性
+        sampled: true;
+        diskId: number;
+        children: number[]; // 被椭球包含的点的 id
+        radius: number;     // x轴与 y轴的半径
+    } : {}
+);
 
 /**
  * 二叉树.

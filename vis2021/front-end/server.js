@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 02:36:16
+ * @Last Modified time: 2020-12-19 20:04:10
  */
 
 const express = require('express');
@@ -48,11 +48,10 @@ app.get("/fromsample/:path", (req, res) => {
 app.post("/snapshot", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = decodePath(req.body["path"]);
-    const alpha = req.body["alpha"];
     const data = req.body["data"];
     fs.writeFileSync("../storage/snapshot_" + path, JSON.stringify(data));
     process.exec(
-        `conda activate vis2021 && python ../back-end/kde.py ${ path } ${ alpha }`,
+        `conda activate vis2021 && python ../back-end/kde.py ${ path }`,
         (error, stdout, stderr) => {
             if (error || stderr) {
                 res.json({
@@ -161,11 +160,12 @@ app.get("/autofix", (_req, res) => {
     autofix = _res => {};
 });
 
-app.get("/sample/this/:path", (req, res) => {
+app.get("/sample/this/:path/:alpha", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = decodePath(req.params["path"]);
+    const alpha = decodePath(req.params["alpha"]);
     process.exec(
-        `conda activate vis2021 && python ../back-end/sample_this.py ${ path }`,
+        `conda activate vis2021 && python ../back-end/sample_this.py ${ path } ${ alpha }`,
         (error, stdout, stderr) => {
             // console.log(stdout);
             if (error || stderr) {
@@ -196,4 +196,4 @@ const server = app.listen(2369, () => {
     console.log("Back-end server opened at http://" + host + ":" + port);
 });
 
-server.setTimeout(60 * 1e3 * 60);
+server.setTimeout(60 * 1e3 * 10);
