@@ -9,7 +9,7 @@ import React, { Component } from 'react';
 import axios from "axios";
 import './App.css';
 import { NodeView } from './Comp/NodeView';
-import { Scatter3d } from './Comp/ScatterView3d';
+import { SamplingView } from './Comp/SamplingView';
 import { ControlStrip } from './Comp/ControlStrip';
 import { EnvCheckor } from './Comp/EnvCheckor';
 import { Waiting } from './Comp/Waiting';
@@ -27,10 +27,10 @@ class App extends Component {
       <NodeView
       id="map0" width={ 767 } height={ 500 } title="Node View" />
     ));
-    const AppScatterView3d = React.forwardRef<Scatter3d>(() => (
+    const AppScatterView3d = React.forwardRef<SamplingView>(() => (
       // @ts-ignore
-      <Scatter3d
-      id="map1" width={ 767 } height={ 500 } title="Scatter View 3D" />
+      <SamplingView
+      id="map1" width={ 767 } height={ 500 } title="Sampling View" />
     ));
 
     return (

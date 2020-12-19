@@ -16,9 +16,7 @@ import { Progress } from "../Subcomp/Progress";
 
 // @ts-ignore
 @connect(DataCenter.mapStateToProps)
-export class Scatter3d extends Map {
-    
-    protected readonly H: number = 128;
+export class SamplingView extends Map {
 
     public render(): JSX.Element {
         return (
@@ -144,7 +142,7 @@ export class Scatter3d extends Map {
                 d.x < 0 - 1
                 || d.x >= this.props.width + 1
                 || d.y < 0 - 1
-                || d.y - this.H >= this.props.height + 1
+                || d.y >= this.props.height + 1
             ) return;
             piece.push({
                 ...d
@@ -165,18 +163,18 @@ export class Scatter3d extends Map {
      * 绘制采样点.
      *
      * @protected
-     * @param {Array<{x: number; y:number; val: number; r: number;}>} list
+     * @param {Array<{x: number; y:number; val: number; averVal: number; r: number;}>} list
      * @param {number} [step=100]
      * @returns {void}
      * @memberof Map
      */
-    protected bufferPaintDisks(list: Array<{x: number; y:number; val: number; r: number;}>, step: number = 100): void {
+    protected bufferPaintDisks(list: Array<{x: number; y:number; val: number; averVal: number; r: number;}>, step: number = 100): void {
         if (!this.ctxBack || !this.ctxScatter) return;
 
-        let piece: Array<{x: number; y:number; val: number; r: number;}> = [];
+        let piece: Array<{x: number; y:number; val: number; averVal: number; r: number;}> = [];
 
         const paint = () => {
-            const pieceCopy: {x: number; y:number; val: number; r: number;}[] = piece.map(d => d);
+            const pieceCopy: {x: number; y:number; val: number; averVal: number; r: number;}[] = piece.map(d => d);
             this.timers.push(
                 setTimeout(() => {
                     this.updated = true;
@@ -188,12 +186,12 @@ export class Scatter3d extends Map {
                             //     d.x - 1.5 * 4, d.y - 1.5, 3, 3
                             // );
                         } else {
-                            this.ctxBack!.fillStyle = this.props.colorize(d.val).replace(
+                            this.ctxBack!.fillStyle = this.props.colorize(d.averVal).replace(
                                 "(", "a("
                             ).replace(
                                 ")", ",0.5)"
                             );
-                            this.ctxBack!.strokeStyle = this.props.colorize(d.val);
+                            this.ctxBack!.strokeStyle = this.props.colorize(d.averVal);
                             this.ctxBack!.beginPath();
                             this.ctxBack!.arc(d.x, d.y, d.r, 0, Math.PI * 2);
                             this.ctxBack!.fill();
@@ -217,7 +215,7 @@ export class Scatter3d extends Map {
                 d.x < 0 - 1
                 || d.x >= this.props.width + 1
                 || d.y < 0 - 1
-                || d.y - this.H >= this.props.height + 1
+                || d.y >= this.props.height + 1
             ) return;
             piece.push({
                 ...d
@@ -277,12 +275,13 @@ export class Scatter3d extends Map {
             } else {
                 this.props.data.then(res0 => {
                     let renderingQueue: Array<{
-                        x: number; y:number; val: number; r: number;
+                        x: number; y:number; val: number; averVal: number; r: number;
                     }> = [];
                     res0.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
                         renderingQueue.push({
                             ...this.map.current!.project(d),
                             val: d.value,
+                            averVal: NaN,
                             r: NaN
                         });
                     });
@@ -291,6 +290,7 @@ export class Scatter3d extends Map {
                             renderingQueue.push({
                                 ...this.map.current!.project(d),
                                 val: d.value,
+                                averVal: d.averVal,
                                 r: d.radius
                             });
                         });

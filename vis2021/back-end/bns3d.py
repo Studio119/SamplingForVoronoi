@@ -62,7 +62,7 @@ class BNS3d:
         next_ready = []
         next_active = []
 
-        children = []
+        children = [index]
         
         # 扫描剩余点
         for i in self.indexes["ready"]:

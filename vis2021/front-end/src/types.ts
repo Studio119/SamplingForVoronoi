@@ -21,6 +21,7 @@ export type geodata<T extends "population" | "sample" = "population"> = {
         diskId: number;
         children: number[]; // 被椭球包含的点的 id
         radius: number;     // x轴与 y轴的半径
+        averVal: number;
     } : {}
 );
 
