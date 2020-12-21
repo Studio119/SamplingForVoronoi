@@ -4,7 +4,7 @@ from random import random as rand
 """ 三维蓝噪声采样 """
 class BNS3d:
 
-    def __init__(self, points, R=2e-4):
+    def __init__(self, points, R=3e-4):
         # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
         self.points = []
         self.point_index = {}
@@ -89,6 +89,7 @@ class BNS3d:
 
                 if dist3 <= r3:
                     # (0, 1r] -> 加入失效点
+                    children.append(i)
                     self.indexes["disactivated"].append(i)
                     continue
 

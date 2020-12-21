@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 12:04:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 20:02:03
+ * @Last Modified time: 2020-12-21 13:13:47
  */
 
 import { geodata } from "../types";
@@ -21,13 +21,14 @@ export interface DataReduxState {
     path: string;
     data: Promise<geodata[]>;
     sample: Promise<geodata<"sample">[]> | null;
-    filter: "population" | "sample";
+    drifted: Promise<geodata<"drifted">[]> | null;
+    filter: "population" | "sample" | "drifted";
     colorize: (val: number) => string;
     max: () => number;
 };
 
 export type DataActionType = (
-    "RELOAD" | "SAMPLE" | "HOME"
+    "RELOAD" | "SAMPLE" | "HOME" | "DRIFT"
 );
 
 export type DataActionReduxAction<AT extends DataActionType = DataActionType> = {
@@ -41,19 +42,22 @@ export type DataActionReduxAction<AT extends DataActionType = DataActionType> = 
         index: 101;
     } : AT extends "HOME" ? {
         index: 102;
+    } : AT extends "DRIFT" ? {
+        index: 103;
     } : {}
 );
 
 const initData: DataReduxState = {
     path: "undefined",
-    sample: null,
     data: new Promise<geodata[]>(res => res([])),
+    sample: null,
+    drifted: null,
     filter: "population",
     colorize: val => colorize(val),
     max: () => max
 };
 
-export const DataRedux = (state: DataReduxState = initData, action: DataActionReduxAction) => {
+export const DataRedux = (state: DataReduxState = initData, action: DataActionReduxAction): DataReduxState => {
     switch (action.type) {
         case "RELOAD":
             const reloadAction = action as DataActionReduxAction<"RELOAD">;
@@ -85,9 +89,10 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
                 });
 
                 return {
-                    sample: null,
                     path: reloadAction.path,
                     data: data,
+                    sample: null,
+                    drifted: null,
                     filter: "population",
                     colorize: state.colorize,
                     max: state.max
@@ -106,22 +111,47 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
             });
             
             return {
-                sample: data,
                 path: state.path,
                 data: state.data,
+                sample: data,
+                drifted: null,
                 filter: "sample",
                 colorize: state.colorize,
                 max: state.max
             };
         case "HOME":
             return {
-                sample: state.data,
                 path: state.path,
                 data: state.data,
+                sample: state.sample,
+                drifted: null,
                 filter: "population",
                 colorize: state.colorize,
                 max: state.max
             };
+        case "DRIFT":
+            if (state.sample) {
+                const data = new Promise<geodata<"drifted">[]>((resolve, reject) => {
+                    axios.get(`/fromdrifted/${ encodePath(state.path) }`).then(res => {
+                        const data: geodata<"drifted">[] = res.data;
+                        // 派发
+                        resolve(data);
+                    }).catch(reason => {
+                        reject(reason);
+                    });
+                });
+
+                return {
+                    path: state.path,
+                    data: state.data,
+                    sample: state.sample,
+                    drifted: data,
+                    filter: "drifted",
+                    colorize: state.colorize,
+                    max: state.max
+                };
+            }
+            return state;
         default:
             return state;
     }
@@ -129,12 +159,13 @@ export const DataRedux = (state: DataReduxState = initData, action: DataActionRe
     
 export const DataCenter = {
 
-    mapStateToProps: (state: { DataRedux: DataReduxState; }) => {
+    mapStateToProps: (state: { DataRedux: DataReduxState; }): DataReduxState => {
         return Object.assign({}, {
             filter: state.DataRedux.filter,
-            sample: state.DataRedux.sample,
             path: state.DataRedux.path,
             data: state.DataRedux.data,
+            sample: state.DataRedux.sample,
+            drifted: state.DataRedux.drifted,
             colorize: state.DataRedux.colorize,
             max: state.DataRedux.max
         });
@@ -159,6 +190,12 @@ export const DataCenter = {
                 return dispatch({
                     type: "HOME",
                     index: 102
+                });
+            },
+            loadDrift: () => {
+                return dispatch({
+                    type: "DRIFT",
+                    index: 103
                 });
             }
         };

@@ -9,7 +9,7 @@
 /**
  * 地图展示的数据.
  */
-export type geodata<T extends "population" | "sample" = "population"> = {
+export type geodata<T extends "population" | "sample" | "drifted" = "population"> = {
     id: number;
     lng: number;
     lat: number;
@@ -22,6 +22,14 @@ export type geodata<T extends "population" | "sample" = "population"> = {
         children: number[]; // 被椭球包含的点的 id
         radius: number;     // x轴与 y轴的半径
         averVal: number;
+    } : T extends "drifted" ? {
+        sampled: true;
+        diskId: number;
+        children: number[]; // 被椭球包含的点的 id
+        radius: number;     // x轴与 y轴的半径
+        averVal: number;
+        x: number;
+        y: number;
     } : {}
 );
 

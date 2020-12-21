@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 10:51:28 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 21:54:07
+ * @Last Modified time: 2020-12-21 20:49:26
  */
 
 import React from "react";
@@ -211,12 +211,76 @@ export class SamplingView extends Map {
         };
 
         list.forEach(d => {
-            if (
-                d.x < 0 - 1
-                || d.x >= this.props.width + 1
-                || d.y < 0 - 1
-                || d.y >= this.props.height + 1
-            ) return;
+            piece.push({
+                ...d
+            });
+            if (piece.length === step) {
+                paint();
+            }
+        });
+
+        if (piece.length) {
+            paint();
+        }
+
+        this.progress.current?.start(this.timers.length);
+    }
+
+    /**
+     * 绘制采样点.
+     *
+     * @protected
+     * @param {Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}>} list
+     * @param {number} [step=100]
+     * @returns {void}
+     * @memberof Map
+     */
+    protected bufferPaintDriftedDisks(list: Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}>, step: number = 100): void {
+        if (!this.ctxBack || !this.ctxScatter) return;
+
+        let piece: Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}> = [];
+
+        const paint = () => {
+            const pieceCopy: {origin: [number, number]; x: number; y:number; val: number; r: number;}[] = piece.map(d => d);
+            this.timers.push(
+                setTimeout(() => {
+                    this.updated = true;
+
+                    pieceCopy.forEach(d => {
+                        this.ctxBack!.fillStyle = this.props.colorize(d.val).replace(
+                            "(", "a("
+                        ).replace(
+                            ")", ",0.5)"
+                        );
+                        this.ctxBack!.strokeStyle = this.props.colorize(d.val);
+                        this.ctxBack!.beginPath();
+                        this.ctxBack!.arc(d.origin[0], d.origin[1], d.r, 0, Math.PI * 2);
+                        this.ctxBack!.fill();
+                        this.ctxBack!.stroke();
+                        this.ctxBack!.closePath();
+                        this.ctxScatter!.strokeStyle = this.props.colorize(d.val).replace(
+                            "(", "a("
+                        ).replace(
+                            ")", ",0.5)"
+                        );
+                        this.ctxScatter!.beginPath();
+                        this.ctxScatter!.moveTo(d.origin[0], d.origin[1]);
+                        this.ctxScatter!.lineTo(d.x, d.y);
+                        this.ctxScatter!.stroke();
+                        this.ctxScatter!.closePath();
+                        this.ctxScatter!.fillStyle = this.props.colorize(d.val);
+                        this.ctxScatter!.fillRect(
+                            d.x - 1.5, d.y - 1.5, 3, 3
+                        );
+                    });
+
+                    this.progress.current?.next();
+                }, 1 * this.timers.length)
+            );
+            piece = [];
+        };
+
+        list.forEach(d => {
             piece.push({
                 ...d
             });
@@ -272,10 +336,28 @@ export class SamplingView extends Map {
                     });
                     this.bufferPaintScatters(renderingQueue);
                 });
+            } else if (this.props.filter === "drifted") {
+                let renderingQueue: Array<{
+                    origin: [number, number];
+                    x: number; y: number; val: number; r: number;
+                }> = [];
+                this.props.drifted!.then(res => {
+                    res.sort((a, b) => b.lat - a.lat).forEach((d: geodata<"drifted">) => {
+                        const pos = this.map.current!.project(d);
+                        renderingQueue.push({
+                            origin: [pos.x, pos.y],
+                            x: d.x,
+                            y: d.y,
+                            val: d.averVal,
+                            r: d.radius
+                        });
+                    });
+                    this.bufferPaintDriftedDisks(renderingQueue);
+                });
             } else {
                 this.props.data.then(res0 => {
                     let renderingQueue: Array<{
-                        x: number; y:number; val: number; averVal: number; r: number;
+                        x: number; y: number; val: number; averVal: number; r: number;
                     }> = [];
                     res0.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
                         renderingQueue.push({

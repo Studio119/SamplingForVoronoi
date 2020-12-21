@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 14:25:15 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 21:53:03
+ * @Last Modified time: 2020-12-21 14:05:45
  */
 
 import React, { Component } from "react";
@@ -15,11 +15,12 @@ import { Waiting } from "./Waiting";
 
 
 export interface ControlStripProps {
-    filter: "population" | "sample";
+    filter: "population" | "sample" | "drifted";
     path: string;
     loadDataset: (path: string) => any;
     loadSample: () => any;
     home: () => any;
+    loadDrift: () => any;
 };
 
 export interface ControlStripState {
@@ -191,6 +192,49 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                             }
                         } >
                             { `sample` }
+                        </label>
+                    )
+                    : null
+                }
+                { dataset && (this.props.filter === "sample" || this.props.filter === "drifted")
+                    ? (
+                        <label className="button" key="drift" tabIndex={ 1 } style={{
+                            pointerEvents: this.state.sampleLock ? "none" : "inherit",
+                            opacity: this.state.sampleLock ? 0.5 : undefined,
+                            display: "inline-block",
+                            cursor: this.state.sampleLock ? undefined : "pointer",
+                            padding: "3px 8px 1.5px",
+                            userSelect: "none"
+                        }}
+                        onClick={
+                            () => {
+                                if (this.state.sampleLock) {
+                                    return;
+                                }
+                                this.setState({
+                                    sampleLock: true
+                                });
+                                Waiting.start(close => {
+                                    axios.get(`/drift/${ encodePath(this.props.path) }/100`).then(res => {
+                                        if (res.data.status) {
+                                            this.props.loadDrift();
+                                            close("Succeeded.");
+                                        } else {
+                                            console.error(res.data.message);
+                                            close(JSON.stringify(res.data.message));
+                                        }
+                                    }).catch(reason => {
+                                        console.error(reason);
+                                        close(JSON.stringify(reason));
+                                    }).finally(() => {
+                                        this.setState({
+                                            sampleLock: false
+                                        });
+                                    });
+                                });
+                            }
+                        } >
+                            { `drift` }
                         </label>
                     )
                     : null

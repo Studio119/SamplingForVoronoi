@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 20:04:10
+ * @Last Modified time: 2020-12-21 13:13:23
  */
 
 const express = require('express');
@@ -36,6 +36,18 @@ app.get("/fromfile/:path", (req, res) => {
 app.get("/fromsample/:path", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = "../storage/sampled_" + decodePath(req.params["path"]);
+    fs.readFile(path, (err, data) => {
+        if (err) {
+            res.json(err);
+        } else {
+            res.json(JSON.parse(data));
+        }
+    });
+});
+
+app.get("/fromdrifted/:path", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = "../storage/drifted_" + decodePath(req.params["path"]);
     fs.readFile(path, (err, data) => {
         if (err) {
             res.json(err);
@@ -166,6 +178,34 @@ app.get("/sample/this/:path/:alpha", (req, res) => {
     const alpha = decodePath(req.params["alpha"]);
     process.exec(
         `conda activate vis2021 && python ../back-end/sample_this.py ${ path } ${ alpha }`,
+        (error, stdout, stderr) => {
+            // console.log(stdout);
+            if (error || stderr) {
+                res.json({
+                    status: false,
+                    message: stdout || stderr || error
+                });
+            } else if (!stdout.includes('Error')) {
+                res.json({
+                    status: true,
+                    message: "done" + "\n\n" + stdout
+                });
+            } else {
+                res.json({
+                    status: false,
+                    message: stdout
+                });
+            }
+        }
+    );
+});
+
+app.get("/drift/:path/:ticks", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = decodePath(req.params["path"]);
+    const ticks = parseInt(req.params["ticks"]);
+    process.exec(
+        `conda activate vis2021 && python ../back-end/drift.py ${ path } ${ ticks }`,
         (error, stdout, stderr) => {
             // console.log(stdout);
             if (error || stderr) {

@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 20:19:08
+ * @Last Modified time: 2020-12-21 13:16:12
  */
 
 import React, { Component } from "react";
@@ -17,9 +17,10 @@ export interface MapProps {
     width: number;
     height: number;
 
-    filter: "population" | "sample";
+    filter: "population" | "sample" | "drifted";
     data: Promise<geodata<"population">[]>;
     sample: Promise<geodata<"sample">[]> | null;
+    drifted: Promise<geodata<"drifted">[]> | null;
     colorize: (val: number) => string;
     max: () => number;
 };
