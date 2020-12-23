@@ -16,7 +16,9 @@ class DriftSystem:
             "vx": 0,
             "vy": 0,
             # 力学属性
-            "Q": disk["size"]
+            "Q": disk["size"],
+            # 运动日志
+            "move": []
         } for disk in disks]
         self.span = span            # 时间间隔
         self.max_step = max_step    # 质点单次最大移动距离
@@ -69,7 +71,7 @@ class DriftSystem:
                 r = sq_dist ** 0.5
                 if r < self.min_r:
                     # 受到排斥力-库仑力模型
-                    value = 100000 * self.k2 * disk["Q"] * target["Q"] / (max(r, 1) ** 2)
+                    value = 1e6 * self.k2 * disk["Q"] * target["Q"] / (max(r, 1) ** 2)
                     dx = (disk["x"] - target["x"]) / dist
                     dy = (disk["y"] - target["y"]) / dist
                     effect[disk["diskId"]].append({
@@ -168,6 +170,7 @@ class DriftSystem:
                     sy = next_state["y"] - y
                     dist = (sx ** 2 + sy ** 2) ** 0.5
                     pass
+                next_state["move"].append([next_state["x"], next_state["y"]])
                 # 统计
                 move += dist
                 pass
@@ -175,7 +178,7 @@ class DriftSystem:
             next_disks.append(next_state)
 
         self.disks = next_disks
-        self.span *= 0.8
+        self.span *= 0.9
         print(move)
         return move
 
@@ -214,6 +217,7 @@ if __name__ == "__main__":
     for i, disk in enumerate(system.disks):
         disks[i]["x"] = disk["x"]
         disks[i]["y"] = disk["y"]
+        disks[i]["move"] = disk["move"]
 
     with open("../storage/drifted_" + filename_origin, mode='w') as fout:
         json.dump(disks, fout)

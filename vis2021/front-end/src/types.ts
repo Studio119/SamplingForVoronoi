@@ -30,6 +30,7 @@ export type geodata<T extends "population" | "sample" | "drifted" = "population"
         averVal: number;
         x: number;
         y: number;
+        move: [number, number][];
     } : {}
 );
 

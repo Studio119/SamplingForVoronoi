@@ -84,7 +84,7 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                         this.props.loadDataset(path);
                     }
                 } />
-                { dataset && this.props.filter === "sample"
+                { dataset && this.props.filter !== "population"
                     ? (
                         <label className="button" key="origin" tabIndex={ 1 } style={{
                             display: "inline-block",

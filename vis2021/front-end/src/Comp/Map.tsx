@@ -2,13 +2,12 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-21 13:16:12
+ * @Last Modified time: 2020-12-22 15:38:21
  */
 
 import React, { Component } from "react";
 import MapBox from "../react-mapbox/MapBox";
 import { geodata } from "../types";
-import { Progress } from "../Subcomp/Progress";
 
 
 export interface MapProps {
@@ -27,19 +26,49 @@ export interface MapProps {
 
 export interface MapState {};
 
+export interface MapExtension {
+    type: "button" | "switch";
+    text: string;
+    executer: Function;
+};
+
+export interface MapButtonExtension extends MapExtension {
+    type: "button";
+    executer: () => void;
+};
+
+export interface MapSwitchExtension extends MapExtension {
+    type: "switch";
+    value: boolean;
+    executer: (value: boolean) => void;
+};
+
 export class Map extends Component<MapProps, MapState, {}> {
 
     private static list: Map[] = [];
 
     protected map: React.RefObject<MapBox>;
 
-    protected canvasBack: React.RefObject<HTMLCanvasElement>;
-    protected ctxBack: CanvasRenderingContext2D | null;
+    protected canvas0: React.RefObject<HTMLCanvasElement>;
+    protected ctx0: CanvasRenderingContext2D | null;
 
-    protected canvasScatter: React.RefObject<HTMLCanvasElement>;
-    protected ctxScatter: CanvasRenderingContext2D | null;
+    protected canvas1: React.RefObject<HTMLCanvasElement>;
+    protected ctx1: CanvasRenderingContext2D | null;
 
-    protected progress: React.RefObject<Progress>;
+    protected canvas2: React.RefObject<HTMLCanvasElement>;
+    protected ctx2: CanvasRenderingContext2D | null;
+
+    /** 工具栏扩展 */
+    protected extensions: Array<MapExtension> = [];
+
+    protected progress: {
+        count: number;
+        flag: number;
+        ref: React.RefObject<SVGRectElement>;
+        start: (len: number) => void;
+        next: () => void;
+        close: () => void;
+    };
 
     protected timers: Array<NodeJS.Timeout>;
     protected updated: boolean;
@@ -52,12 +81,47 @@ export class Map extends Component<MapProps, MapState, {}> {
         this.state = {};
 
         this.map = React.createRef<MapBox>();
-        this.canvasBack = React.createRef<HTMLCanvasElement>();
-        this.ctxBack = null;
-        this.canvasScatter = React.createRef<HTMLCanvasElement>();
-        this.ctxScatter = null;
+        this.canvas0 = React.createRef<HTMLCanvasElement>();
+        this.ctx0 = null;
+        this.canvas1 = React.createRef<HTMLCanvasElement>();
+        this.ctx1 = null;
+        this.canvas2 = React.createRef<HTMLCanvasElement>();
+        this.ctx2 = null;
 
-        this.progress = React.createRef<Progress>();
+        this.progress = {
+            count: 0,
+            flag: 0,
+            ref: React.createRef<SVGRectElement>(),
+            start: (len: number) => {
+                if (len && this.progress.ref.current) {
+                    this.progress.count = len;
+                    this.progress.flag = 0;
+                    this.progress.ref.current.style.visibility = "visible";
+                    this.progress.ref.current.setAttribute("width", "0");
+                }
+            },
+            next: () => {
+                if (this.progress.ref.current && this.progress.count) {
+                    this.progress.flag += 1;
+                    if (this.progress.flag === this.progress.count) {
+                        this.progress.close();
+                        return;
+                    }
+                    this.progress.ref.current.style.visibility = "visible";
+                    this.progress.ref.current.setAttribute("width", `${
+                        this.progress.flag / this.progress.count * 100
+                    }%`);
+                }
+            },
+            close: () => {
+                if (this.progress.ref.current) {
+                    this.progress.count = 0;
+                    this.progress.flag = 0;
+                    this.progress.ref.current.style.visibility = "hidden";
+                    this.progress.ref.current.setAttribute("width", "0");
+                }
+            }
+        };
 
         this.timers = [];
         this.updated = true;
@@ -99,6 +163,80 @@ export class Map extends Component<MapProps, MapState, {}> {
                     }} >
                         { this.props.title }
                     </label>
+                    <label key="span" style={{
+                        display: "inline-block",
+                        padding: "3.5px 0 1.5px",
+                        width: "16px"
+                    }} ></label>
+                    {
+                        this.extensions.map(e => {
+                            return e.type === "button" ? (
+                                <label key={ e.text } tabIndex={ 1 } style={{
+                                    display: "inline-block",
+                                    padding: "3.5px 4px 1.5px",
+                                    boxShadow: "2px 2px 2px #00000060",
+                                    border: "1px solid #ddd",
+                                    cursor: "pointer",
+                                    userSelect: "none"
+                                }}
+                                onClick={
+                                    () => {
+                                        e.executer();
+                                    }
+                                } >
+                                    { e.text }
+                                </label>
+                            ) : e.type === "switch" ? (
+                                <label key={ e.text } tabIndex={ 1 } style={{
+                                    display: "inline-block",
+                                    padding: "3.5px 4px 1.5px",
+                                    margin: "0 4px",
+                                    userSelect: "none",
+                                    // boxShadow: "2px 2px 2px #00000060",
+                                    border: "1px solid #ddd",
+                                    cursor: "pointer"
+                                }}
+                                onClick={
+                                    element => {
+                                        const t = e as MapSwitchExtension;
+                                        t.value = !t.value;
+                                        t.executer(t.value);
+                                        const span = element.currentTarget.getElementsByTagName("span")[0];
+                                        span.style.color = (
+                                            t.value ? "rgb(78,201,148)" : "rgb(125,125,125)"
+                                        );
+                                        span.innerText = (
+                                            t.value ? "+" : "-"
+                                        );
+                                    }
+                                } >
+                                    { e.text }
+                                    <span style={{
+                                        padding: "0 2px 0 8px",
+                                        color: (e as MapSwitchExtension).value ? "rgb(78,201,148)" : "rgb(125,125,125)"
+                                    }} >
+                                        { (e as MapSwitchExtension).value ? "+" : "-" }
+                                    </span>
+                                </label>
+                            ) : null;
+                        })
+                    }
+                </div>
+                <div key="progress" style={{
+                    display: "flex",
+                    width: this.props.width,
+                    padding: "0",
+                    marginTop: "-2.5px"
+                }} >
+                    <svg key="progress" style={{
+                        width: this.props.width,
+                        height: "2px"
+                    }} >
+                        <rect ref={ this.progress.ref }
+                        x="0" y="0" width="0" height="2" style={{
+                            fill: "rgb(198,131,61)"
+                        }} />
+                    </svg>
                 </div>
                 <div key="mapbox-container" id={ this.props.id } style={{
                     display: "block",
@@ -122,10 +260,9 @@ export class Map extends Component<MapProps, MapState, {}> {
                     height: this.props.height,
                     top: 0 - this.props.height,
                     position: "relative",
-                    pointerEvents: "none",
-                    opacity: 0.33
+                    pointerEvents: "none"
                 }} >
-                    <canvas ref={ this.canvasBack }
+                    <canvas ref={ this.canvas0 }
                     width={ this.props.width } height={ this.props.height }
                     style={{}} />
                 </div>
@@ -137,24 +274,30 @@ export class Map extends Component<MapProps, MapState, {}> {
                     position: "relative",
                     pointerEvents: "none"
                 }} >
-                    <canvas ref={ this.canvasScatter }
+                    <canvas ref={ this.canvas1 }
                     width={ this.props.width } height={ this.props.height }
                     style={{}} />
                 </div>
-                <Progress ref={ this.progress }
-                width={ this.props.width * 0.6 } height={ 6 }
-                padding={ [0, 0] } hideAfterCompleted={ true }
-                styleContainer={{
-                    top: this.props.height * 0.96 - 3,
-                    left: this.props.width * 0.2
-                }} />
+                <div key="canvas-container-2" style={{
+                    display: "block",
+                    width: this.props.width,
+                    height: this.props.height,
+                    top: 0 - 3 * this.props.height,
+                    position: "relative",
+                    pointerEvents: "none"
+                }} >
+                    <canvas ref={ this.canvas2 }
+                    width={ this.props.width } height={ this.props.height }
+                    style={{}} />
+                </div>
             </div>
         );
     }
 
     public componentDidMount(): void {
-        this.ctxScatter = this.canvasScatter.current!.getContext("2d");
-        this.ctxBack = this.canvasBack.current!.getContext("2d");
+        this.ctx0 = this.canvas0.current!.getContext("2d");
+        this.ctx1 = this.canvas1.current!.getContext("2d");
+        this.ctx2 = this.canvas2.current!.getContext("2d");
         Map.list.forEach(map => {
             this.synchronize(map);
         });
@@ -172,7 +315,7 @@ export class Map extends Component<MapProps, MapState, {}> {
     protected repaint(): void {};
 
     protected clearTimers(): void {
-        this.progress.current?.close();
+        this.progress.close();
         this.timers.forEach(timer => {
             clearTimeout(timer);
         });

@@ -2,106 +2,57 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 10:51:28 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-21 20:49:26
+ * @Last Modified time: 2020-12-22 15:39:55
  */
 
-import React from "react";
 import { geodata } from "../types";
-import { Map } from "./Map";
+import { Map, MapSwitchExtension } from "./Map";
 import { connect } from "react-redux";
 import { DataCenter } from "../reducers/DataCenter";
-import MapBox from "../react-mapbox/MapBox";
-import { Progress } from "../Subcomp/Progress";
 
 
 // @ts-ignore
 @connect(DataCenter.mapStateToProps)
 export class SamplingView extends Map {
 
-    public render(): JSX.Element {
-        return (
-            <div>
-                <div key="tools" style={{
-                    display: "flex",
-                    width: this.props.width - 14,
-                    border: "1px solid rgb(28,28,28)",
-                    padding: "3.5px 6px 4.5px",
-                    textAlign: "left",
-                    alignItems: "center",
-                    backgroundColor: "rgb(250,246,248)",
-                    fontSize: "14px",
-                    letterSpacing: "-0.2px"
-                }} >
-                    <label key="refresh" title="refresh" style={{
-                        display: "inline-block",
-                        width: "10px",
-                        height: "14px",
-                        boxShadow: "2px 2px 2px #00000060",
-                        border: "1px solid #ddd",
-                        marginRight: "4px",
-                        cursor: "pointer"
-                    }} onClick={
-                        () => {
-                            this.repaint();
-                        }
-                    } />
-                    <label key="name" style={{
-                        display: "inline-block",
-                        padding: "3.5px 4px 1.5px"
-                    }} >
-                        { this.props.title }
-                    </label>
-                </div>
-                <div key="mapbox-container" id={ this.props.id } style={{
-                    display: "block",
-                    width: this.props.width,
-                    height: this.props.height,
-                    backgroundColor: "rgb(27,27,27)"
-                }} >
-                    <MapBox ref={ this.map } containerID={ this.props.id }
-                    accessToken="pk.eyJ1IjoiaWNoZW4tYW50b2luZSIsImEiOiJjazF5bDh5eWUwZ2tiM2NsaXQ3bnFvNGJ1In0.sFDwirFIqR4UEjFQoKB8uA"
-                    center={ [-0.1132, 51.4936] } zoom={ 9.2 } allowInteraction={ true }
-                    styleURL="mapbox://styles/ichen-antoine/cke5cvr811xb419mi5hd9otc3"
-                    minZoom={ 1 } maxZoom={ 15 }
-                    onBoundsChanged={ () => {
-                        this.applySynchronizedBounds();
-                        this.repaint();
-                    } } />
-                </div>
-                <div key="canvas-container-0" style={{
-                    display: "block",
-                    width: this.props.width,
-                    height: this.props.height,
-                    top: 0 - this.props.height,
-                    position: "relative",
-                    pointerEvents: "none",
-                    opacity: 0.33
-                }} >
-                    <canvas ref={ this.canvasBack }
-                    width={ this.props.width } height={ this.props.height }
-                    style={{}} />
-                </div>
-                <div key="canvas-container-1" style={{
-                    display: "block",
-                    width: this.props.width,
-                    height: this.props.height,
-                    top: 0 - 2 * this.props.height,
-                    position: "relative",
-                    pointerEvents: "none"
-                }} >
-                    <canvas ref={ this.canvasScatter }
-                    width={ this.props.width } height={ this.props.height }
-                    style={{}} />
-                </div>
-                <Progress ref={ this.progress }
-                width={ this.props.width * 0.6 } height={ 6 }
-                padding={ [0, 0] } hideAfterCompleted={ true }
-                styleContainer={{
-                    top: this.props.height * 0.96 - 3,
-                    left: this.props.width * 0.2 + 767
-                }} />
-            </div>
-        );
+    protected readonly diskSwitch: MapSwitchExtension = {
+        type: "switch",
+        text: "disk",
+        value: true,
+        executer: (value: boolean) => {
+            this.diskSwitch.value = value;
+            if (value) {
+                this.canvas0.current!.style.visibility = "visible";
+            } else {
+                this.canvas0.current!.style.visibility = "hidden";
+            }
+        }
+    };
+
+    protected readonly traceSwitch: MapSwitchExtension = {
+        type: "switch",
+        text: "trace",
+        value: true,
+        executer: (value: boolean) => {
+            this.traceSwitch.value = value;
+            if (value) {
+                this.canvas1.current!.style.visibility = "visible";
+            } else {
+                this.canvas1.current!.style.visibility = "hidden";
+            }
+        }
+    };
+
+    public render() {
+        if (this.props.filter === "population") {
+            this.extensions = [];
+        } else if (this.props.filter === "sample") {
+            this.extensions = [this.diskSwitch];
+        } else if (this.props.filter === "drifted") {
+            this.extensions = [this.diskSwitch, this.traceSwitch];
+        }
+
+        return super.render();
     }
 
     /**
@@ -114,7 +65,7 @@ export class SamplingView extends Map {
      * @memberof Map
      */
     protected bufferPaintScatters(list: Array<{x: number; y:number; val: number;}>, step: number = 100): void {
-        if (!this.ctxScatter) return;
+        if (!this.ctx2) return;
 
         let piece: Array<{x: number; y:number; val: number;}> = [];
 
@@ -125,13 +76,13 @@ export class SamplingView extends Map {
                     this.updated = true;
 
                     pieceCopy.forEach(d => {
-                        this.ctxScatter!.fillStyle = this.props.colorize(d.val);
-                        this.ctxScatter!.fillRect(
+                        this.ctx2!.fillStyle = this.props.colorize(d.val);
+                        this.ctx2!.fillRect(
                             d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
 
-                    this.progress.current?.next();
+                    this.progress.next();
                 }, 1 * this.timers.length)
             );
             piece = [];
@@ -156,7 +107,7 @@ export class SamplingView extends Map {
             paint();
         }
 
-        this.progress.current?.start(this.timers.length);
+        this.progress.start(this.timers.length);
     }
 
     /**
@@ -169,7 +120,7 @@ export class SamplingView extends Map {
      * @memberof Map
      */
     protected bufferPaintDisks(list: Array<{x: number; y:number; val: number; averVal: number; r: number;}>, step: number = 100): void {
-        if (!this.ctxBack || !this.ctxScatter) return;
+        if (!this.ctx0 || !this.ctx1 || !this.ctx2) return;
 
         let piece: Array<{x: number; y:number; val: number; averVal: number; r: number;}> = [];
 
@@ -180,31 +131,24 @@ export class SamplingView extends Map {
                     this.updated = true;
 
                     pieceCopy.forEach(d => {
-                        if (isNaN(d.r)) {
-                            // this.ctxBack!.strokeStyle = this.props.colorize(d.val);
-                            // this.ctxBack!.strokeRect(
-                            //     d.x - 1.5 * 4, d.y - 1.5, 3, 3
-                            // );
-                        } else {
-                            this.ctxBack!.fillStyle = this.props.colorize(d.averVal).replace(
-                                "(", "a("
-                            ).replace(
-                                ")", ",0.5)"
-                            );
-                            this.ctxBack!.strokeStyle = this.props.colorize(d.averVal);
-                            this.ctxBack!.beginPath();
-                            this.ctxBack!.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-                            this.ctxBack!.fill();
-                            this.ctxBack!.stroke();
-                            this.ctxBack!.closePath();
-                            this.ctxScatter!.fillStyle = this.props.colorize(d.val);
-                            this.ctxScatter!.fillRect(
-                                d.x - 1.5, d.y - 1.5, 3, 3
-                            );
-                        }
+                        this.ctx0!.fillStyle = this.props.colorize(d.averVal).replace(
+                            "(", "a("
+                        ).replace(
+                            ")", ",0.5)"
+                        );
+                        this.ctx0!.strokeStyle = this.props.colorize(d.averVal);
+                        this.ctx0!.beginPath();
+                        this.ctx0!.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                        this.ctx0!.fill();
+                        this.ctx0!.stroke();
+                        this.ctx0!.closePath();
+                        this.ctx1!.fillStyle = this.props.colorize(d.val);
+                        this.ctx1!.fillRect(
+                            d.x - 1.5, d.y - 1.5, 3, 3
+                        );
                     });
 
-                    this.progress.current?.next();
+                    this.progress.next();
                 }, 1 * this.timers.length)
             );
             piece = [];
@@ -223,58 +167,60 @@ export class SamplingView extends Map {
             paint();
         }
 
-        this.progress.current?.start(this.timers.length);
+        this.progress.start(this.timers.length);
     }
 
     /**
      * 绘制采样点.
      *
      * @protected
-     * @param {Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}>} list
+     * @param {Array<{origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}>} list
      * @param {number} [step=100]
      * @returns {void}
      * @memberof Map
      */
-    protected bufferPaintDriftedDisks(list: Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}>, step: number = 100): void {
-        if (!this.ctxBack || !this.ctxScatter) return;
+    protected bufferPaintDriftedDisks(list: Array<{origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}>, step: number = 100): void {
+        if (!this.ctx0 || !this.ctx1 || !this.ctx2) return;
 
-        let piece: Array<{origin: [number, number]; x: number; y:number; val: number; r: number;}> = [];
+        let piece: Array<{origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}> = [];
 
         const paint = () => {
-            const pieceCopy: {origin: [number, number]; x: number; y:number; val: number; r: number;}[] = piece.map(d => d);
+            const pieceCopy: {origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}[] = piece.map(d => d);
             this.timers.push(
                 setTimeout(() => {
                     this.updated = true;
 
                     pieceCopy.forEach(d => {
-                        this.ctxBack!.fillStyle = this.props.colorize(d.val).replace(
+                        this.ctx0!.fillStyle = this.props.colorize(d.val).replace(
                             "(", "a("
                         ).replace(
                             ")", ",0.5)"
                         );
-                        this.ctxBack!.strokeStyle = this.props.colorize(d.val);
-                        this.ctxBack!.beginPath();
-                        this.ctxBack!.arc(d.origin[0], d.origin[1], d.r, 0, Math.PI * 2);
-                        this.ctxBack!.fill();
-                        this.ctxBack!.stroke();
-                        this.ctxBack!.closePath();
-                        this.ctxScatter!.strokeStyle = this.props.colorize(d.val).replace(
+                        this.ctx0!.strokeStyle = this.props.colorize(d.val);
+                        this.ctx0!.beginPath();
+                        this.ctx0!.arc(d.origin[0], d.origin[1], d.r, 0, Math.PI * 2);
+                        this.ctx0!.fill();
+                        this.ctx0!.stroke();
+                        this.ctx0!.closePath();
+                        this.ctx1!.strokeStyle = this.props.colorize(d.val).replace(
                             "(", "a("
                         ).replace(
-                            ")", ",0.5)"
+                            ")", ",0.2)"
                         );
-                        this.ctxScatter!.beginPath();
-                        this.ctxScatter!.moveTo(d.origin[0], d.origin[1]);
-                        this.ctxScatter!.lineTo(d.x, d.y);
-                        this.ctxScatter!.stroke();
-                        this.ctxScatter!.closePath();
-                        this.ctxScatter!.fillStyle = this.props.colorize(d.val);
-                        this.ctxScatter!.fillRect(
+                        this.ctx1!.beginPath();
+                        this.ctx1!.moveTo(d.origin[0], d.origin[1]);
+                        d.move.forEach(e => {
+                            this.ctx1!.lineTo(e[0], e[1]);
+                        });
+                        this.ctx1!.stroke();
+                        this.ctx1!.closePath();
+                        this.ctx2!.fillStyle = this.props.colorize(d.val);
+                        this.ctx2!.fillRect(
                             d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
 
-                    this.progress.current?.next();
+                    this.progress.next();
                 }, 1 * this.timers.length)
             );
             piece = [];
@@ -293,7 +239,7 @@ export class SamplingView extends Map {
             paint();
         }
 
-        this.progress.current?.start(this.timers.length);
+        this.progress.start(this.timers.length);
     }
     
     /**
@@ -306,11 +252,15 @@ export class SamplingView extends Map {
     public repaint(waiting: boolean = true): void {
         if (waiting) {
             this.updated = false;
-            if (this.ctxScatter) {
-                this.ctxScatter.clearRect(0, 0, this.props.width, this.props.height);
+            if (this.ctx0) {
+                this.ctx0.clearRect(0, 0, this.props.width, this.props.height);
+                this.canvas0.current!.style.opacity = "0.33";
             }
-            if (this.ctxBack) {
-                this.ctxBack.clearRect(0, 0, this.props.width, this.props.height);
+            if (this.ctx1) {
+                this.ctx1.clearRect(0, 0, this.props.width, this.props.height);
+            }
+            if (this.ctx2) {
+                this.ctx2.clearRect(0, 0, this.props.width, this.props.height);
             }
         }
         if (this.updated) {
@@ -339,7 +289,7 @@ export class SamplingView extends Map {
             } else if (this.props.filter === "drifted") {
                 let renderingQueue: Array<{
                     origin: [number, number];
-                    x: number; y: number; val: number; r: number;
+                    x: number; y: number; val: number; r: number; move: [number, number][];
                 }> = [];
                 this.props.drifted!.then(res => {
                     res.sort((a, b) => b.lat - a.lat).forEach((d: geodata<"drifted">) => {
@@ -349,35 +299,26 @@ export class SamplingView extends Map {
                             x: d.x,
                             y: d.y,
                             val: d.averVal,
-                            r: d.radius
+                            r: d.radius,
+                            move: d.move
                         });
                     });
                     this.bufferPaintDriftedDisks(renderingQueue);
                 });
             } else {
-                this.props.data.then(res0 => {
+                this.props.sample!.then(res => {
                     let renderingQueue: Array<{
                         x: number; y: number; val: number; averVal: number; r: number;
                     }> = [];
-                    res0.sort((a, b) => b.lat - a.lat).forEach((d: geodata) => {
+                    res.sort((a, b) => b.lat - a.lat).forEach((d: geodata<"sample">) => {
                         renderingQueue.push({
                             ...this.map.current!.project(d),
                             val: d.value,
-                            averVal: NaN,
-                            r: NaN
+                            averVal: d.averVal,
+                            r: d.radius
                         });
                     });
-                    this.props.sample!.then(res => {
-                        res.sort((a, b) => b.lat - a.lat).forEach((d: geodata<"sample">) => {
-                            renderingQueue.push({
-                                ...this.map.current!.project(d),
-                                val: d.value,
-                                averVal: d.averVal,
-                                r: d.radius
-                            });
-                        });
-                        this.bufferPaintDisks(renderingQueue);
-                    });
+                    this.bufferPaintDisks(renderingQueue);
                 });
             }
         }
