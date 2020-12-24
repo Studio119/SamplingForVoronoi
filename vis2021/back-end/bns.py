@@ -8,6 +8,7 @@ class BNS:
         # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
         self.points = []
         self.point_index = {}
+        self.disks = []
         for p in points:
             self.point_index[p[0]] = len(self.points)
             self.points.append({
@@ -16,9 +17,7 @@ class BNS:
                 "y": p[2],
                 "val": p[3],
 
-                "r": float(R) / p[4],
-
-                "state": 0  # @state: 0 for 就绪, 1 for 种子点, 2 for 被覆盖点(<1r)
+                "r": float(R) / p[4]
             })
         self.indexes = {
             "ready": [p["id"] for p in self.points],
@@ -32,12 +31,9 @@ class BNS:
         while len(self.indexes["ready"]) > 0:
             # 取一个种子点
             seed = self._get_random_point()
-            print("seed {}({})".format(len(self.indexes["seed"]), int(seed)))
             self._create_disk(seed)
-            print()
 
-        print("done")
-        return self.indexes["seed"]
+        return self.indexes["seed"], self.disks
 
     def _get_random_point(self):
         if len(self.indexes["active"]) == 0:
@@ -55,10 +51,18 @@ class BNS:
         seed = self.points[self.point_index[index]]
         r = seed["r"]
 
+        for disk in self.disks:
+            dist = (
+                (disk["x"] - seed["x"]) ** 2 + (disk["y"] - seed["y"]) ** 2
+            ) ** 0.5
+            r = min(r, dist)
+
         next_ready = []
-        a = b = 0
+        next_active = []
+
+        children = [index]
         
-        # 扫描剩余点
+        # 扫描剩余就绪点
         for i in self.indexes["ready"]:
             target = self.points[self.point_index[i]]
             dist = (
@@ -72,14 +76,36 @@ class BNS:
             elif dist > r:
                 # (1r, 2r] -> 加入活跃点
                 self.indexes["active"].append(i)
-                b += 1
             else:
                 # (0, r] -> 加入失效点
                 self.indexes["disactivated"].append(i)
-                a += 1
+                children.append(i)
+        
+        # 扫描剩余活跃点
+        for i in self.indexes["active"]:
+            target = self.points[self.point_index[i]]
+            dist = (
+                (target["x"] - seed["x"]) ** 2
+                + (target["y"] - seed["y"]) ** 2
+            ) ** 0.5
 
-        print("r = {}, 0~1r: {}, 1r~2r: {}".format(r, a, b))
+            if dist < r:
+                # (0, r] -> 加入失效点
+                self.indexes["disactivated"].append(i)
+                children.append(i)
+            else:
+                next_active.append(i)
+                
+        self.disks.append({
+            "id": len(self.indexes["seed"]) - 1,
+            "seedId": index,
+            "children": children,
+            "x": seed["x"],
+            "y": seed["y"],
+            "r": r
+        })
 
         self.indexes["ready"] = [i for i in next_ready]
+        self.indexes["active"] = [i for i in next_active]
 
         return

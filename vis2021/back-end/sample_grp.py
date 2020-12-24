@@ -1,20 +1,25 @@
 import sys
 import json
-from bns3d import BNS3d
+from kde import get_kde
+from bns import BNS
 
 
 if __name__ == "__main__":
     filename_origin = sys.argv[1]
-    alpha = float(sys.argv[2])      # 属性值维度的最大容许差异为 1 / alpha (归一化后)
-    
-    with open("../storage/kde_" + filename_origin, mode='r') as fin:
-        kde_data = json.load(fin)
-        population = kde_data["population"]
-        matrix = kde_data["matrix"]
+    alpha = int(sys.argv[2])      # 属性值维度的分层数量
 
-    bns3d = BNS3d(matrix)
+    kde_data = get_kde(filename_origin, alpha)
 
-    seeds, disks = bns3d.apply_sample(alpha)
+    disks = []
+
+    for i, kde in enumerate(kde_data):
+        population = kde["population"]
+        matrix = kde["matrix"]
+        bns = BNS(matrix, R=1.5e-4)
+
+        cur_seeds, cur_disks = bns.apply_sample()
+        # print(i, len(matrix), len(cur_disks))
+        disks += cur_disks
     
     point_link = {}
     data_processed = []

@@ -2,12 +2,13 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-22 15:38:21
+ * @Last Modified time: 2020-12-24 17:08:07
  */
 
 import React, { Component } from "react";
 import MapBox from "../react-mapbox/MapBox";
 import { geodata } from "../types";
+import * as d3 from "d3";
 
 
 export interface MapProps {
@@ -58,6 +59,9 @@ export class Map extends Component<MapProps, MapState, {}> {
     protected canvas2: React.RefObject<HTMLCanvasElement>;
     protected ctx2: CanvasRenderingContext2D | null;
 
+    protected canvas3: React.RefObject<HTMLCanvasElement>;
+    protected ctx3: CanvasRenderingContext2D | null;
+
     /** 工具栏扩展 */
     protected extensions: Array<MapExtension> = [];
 
@@ -75,6 +79,22 @@ export class Map extends Component<MapProps, MapState, {}> {
 
     private cloneObserver: Array<Map>;
     private recursiveLock: boolean;
+    
+    protected voronoiPolygons: d3.Delaunay.Polygon[] = [];
+    public static getVoronoiPolygons() {
+        const map = Map.list.filter(map => map.voronoiPolygons.length)[0];
+        let shapes: d3.Delaunay.Polygon[] = [];
+
+        if (map) {
+            shapes = map.voronoiPolygons;
+        }
+        
+        return {
+            width: map.props.width,
+            height: map.props.height,
+            data: shapes
+        };
+    }
 
     public constructor(props: MapProps) {
         super(props);
@@ -87,6 +107,8 @@ export class Map extends Component<MapProps, MapState, {}> {
         this.ctx1 = null;
         this.canvas2 = React.createRef<HTMLCanvasElement>();
         this.ctx2 = null;
+        this.canvas3 = React.createRef<HTMLCanvasElement>();
+        this.ctx3 = null;
 
         this.progress = {
             count: 0,
@@ -290,6 +312,18 @@ export class Map extends Component<MapProps, MapState, {}> {
                     width={ this.props.width } height={ this.props.height }
                     style={{}} />
                 </div>
+                <div key="canvas-container-3" style={{
+                    display: "block",
+                    width: this.props.width,
+                    height: this.props.height,
+                    top: 0 - 4 * this.props.height,
+                    position: "relative",
+                    pointerEvents: "none"
+                }} >
+                    <canvas ref={ this.canvas3 }
+                    width={ this.props.width } height={ this.props.height }
+                    style={{}} />
+                </div>
             </div>
         );
     }
@@ -298,6 +332,7 @@ export class Map extends Component<MapProps, MapState, {}> {
         this.ctx0 = this.canvas0.current!.getContext("2d");
         this.ctx1 = this.canvas1.current!.getContext("2d");
         this.ctx2 = this.canvas2.current!.getContext("2d");
+        this.ctx3 = this.canvas3.current!.getContext("2d");
         Map.list.forEach(map => {
             this.synchronize(map);
         });

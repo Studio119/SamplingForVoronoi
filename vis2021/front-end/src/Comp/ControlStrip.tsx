@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 14:25:15 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-21 14:05:45
+ * @Last Modified time: 2020-12-24 15:08:35
  */
 
 import React, { Component } from "react";
@@ -155,7 +155,50 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                 }
                 { dataset
                     ? (
-                        <label className="button" key="sample" tabIndex={ 1 } style={{
+                        <label className="button" key="sample-GRP" tabIndex={ 1 } style={{
+                            pointerEvents: this.state.sampleLock ? "none" : "inherit",
+                            opacity: this.state.sampleLock ? 0.5 : undefined,
+                            display: "inline-block",
+                            cursor: this.state.sampleLock ? undefined : "pointer",
+                            padding: "3px 8px 1.5px",
+                            userSelect: "none"
+                        }}
+                        onClick={
+                            () => {
+                                if (this.state.sampleLock) {
+                                    return;
+                                }
+                                this.setState({
+                                    sampleLock: true
+                                });
+                                Waiting.start(close => {
+                                    axios.get(`/sample/grp/${ encodePath(this.props.path) }/6`).then(res => {
+                                        if (res.data.status) {
+                                            this.props.loadSample();
+                                            close("Succeeded.");
+                                        } else {
+                                            console.error(res.data.message);
+                                            close(JSON.stringify(res.data.message));
+                                        }
+                                    }).catch(reason => {
+                                        console.error(reason);
+                                        close(JSON.stringify(reason));
+                                    }).finally(() => {
+                                        this.setState({
+                                            sampleLock: false
+                                        });
+                                    });
+                                });
+                            }
+                        } >
+                            { `sample-A` }
+                        </label>
+                    )
+                    : null
+                }
+                { dataset
+                    ? (
+                        <label className="button" key="sample-YZD" tabIndex={ 1 } style={{
                             pointerEvents: this.state.sampleLock ? "none" : "inherit",
                             opacity: this.state.sampleLock ? 0.5 : undefined,
                             display: "inline-block",
@@ -191,14 +234,14 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                                 });
                             }
                         } >
-                            { `sample` }
+                            { `sample-YZD` }
                         </label>
                     )
                     : null
                 }
                 { dataset && (this.props.filter === "sample" || this.props.filter === "drifted")
                     ? (
-                        <label className="button" key="drift" tabIndex={ 1 } style={{
+                        <label className="button" key="drift-A" tabIndex={ 1 } style={{
                             pointerEvents: this.state.sampleLock ? "none" : "inherit",
                             opacity: this.state.sampleLock ? 0.5 : undefined,
                             display: "inline-block",
@@ -215,7 +258,11 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                                     sampleLock: true
                                 });
                                 Waiting.start(close => {
-                                    axios.get(`/drift/${ encodePath(this.props.path) }/100`).then(res => {
+                                    axios.post(`/drift/grp`, {
+                                        data: Map.getVoronoiPolygons(),
+                                        path: this.props.path,
+                                        ticks: 100
+                                    }).then(res => {
                                         if (res.data.status) {
                                             this.props.loadDrift();
                                             close("Succeeded.");
@@ -234,7 +281,50 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                                 });
                             }
                         } >
-                            { `drift` }
+                            { `drift-A` }
+                        </label>
+                    )
+                    : null
+                }
+                { dataset && (this.props.filter === "sample" || this.props.filter === "drifted")
+                    ? (
+                        <label className="button" key="drift-YZD" tabIndex={ 1 } style={{
+                            pointerEvents: this.state.sampleLock ? "none" : "inherit",
+                            opacity: this.state.sampleLock ? 0.5 : undefined,
+                            display: "inline-block",
+                            cursor: this.state.sampleLock ? undefined : "pointer",
+                            padding: "3px 8px 1.5px",
+                            userSelect: "none"
+                        }}
+                        onClick={
+                            () => {
+                                if (this.state.sampleLock) {
+                                    return;
+                                }
+                                this.setState({
+                                    sampleLock: true
+                                });
+                                Waiting.start(close => {
+                                    axios.get(`/drift/this/${ encodePath(this.props.path) }/100`).then(res => {
+                                        if (res.data.status) {
+                                            this.props.loadDrift();
+                                            close("Succeeded.");
+                                        } else {
+                                            console.error(res.data.message);
+                                            close(JSON.stringify(res.data.message));
+                                        }
+                                    }).catch(reason => {
+                                        console.error(reason);
+                                        close(JSON.stringify(reason));
+                                    }).finally(() => {
+                                        this.setState({
+                                            sampleLock: false
+                                        });
+                                    });
+                                });
+                            }
+                        } >
+                            { `drift-YZD` }
                         </label>
                     )
                     : null

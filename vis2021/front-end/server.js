@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-21 13:13:23
+ * @Last Modified time: 2020-12-24 15:06:40
  */
 
 const express = require('express');
@@ -172,6 +172,33 @@ app.get("/autofix", (_req, res) => {
     autofix = _res => {};
 });
 
+app.get("/sample/grp/:path/:alpha", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = decodePath(req.params["path"]);
+    const alpha = decodePath(req.params["alpha"]);
+    process.exec(
+        `conda activate vis2021 && python ../back-end/sample_grp.py ${ path } ${ alpha }`,
+        (error, stdout, stderr) => {
+            if (error || stderr) {
+                res.json({
+                    status: false,
+                    message: stdout || stderr || error
+                });
+            } else if (!stdout.includes('Error')) {
+                res.json({
+                    status: true,
+                    message: "done" + "\n\n" + stdout
+                });
+            } else {
+                res.json({
+                    status: false,
+                    message: stdout
+                });
+            }
+        }
+    );
+});
+
 app.get("/sample/this/:path/:alpha", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = decodePath(req.params["path"]);
@@ -200,7 +227,7 @@ app.get("/sample/this/:path/:alpha", (req, res) => {
     );
 });
 
-app.get("/drift/:path/:ticks", (req, res) => {
+app.get("/drift/this/:path/:ticks", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = decodePath(req.params["path"]);
     const ticks = parseInt(req.params["ticks"]);
@@ -208,6 +235,35 @@ app.get("/drift/:path/:ticks", (req, res) => {
         `conda activate vis2021 && python ../back-end/drift.py ${ path } ${ ticks }`,
         (error, stdout, stderr) => {
             // console.log(stdout);
+            if (error || stderr) {
+                res.json({
+                    status: false,
+                    message: stdout || stderr || error
+                });
+            } else if (!stdout.includes('Error')) {
+                res.json({
+                    status: true,
+                    message: "done" + "\n\n" + stdout
+                });
+            } else {
+                res.json({
+                    status: false,
+                    message: stdout
+                });
+            }
+        }
+    );
+});
+
+app.post("/drift/grp", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const data = req.body["data"];
+    const path = decodePath(req.body["path"]);
+    const ticks = parseInt(req.body["ticks"]);
+    fs.writeFileSync("../storage/voronoi_" + path, JSON.stringify(data));
+    process.exec(
+        `conda activate vis2021 && python ../back-end/drift_grp.py ${ path } ${ ticks }`,
+        (error, stdout, stderr) => {
             if (error || stderr) {
                 res.json({
                     status: false,

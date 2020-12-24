@@ -72,8 +72,8 @@ class DriftSystem:
                 if r < self.min_r:
                     # 受到排斥力-库仑力模型
                     value = 1e6 * self.k2 * disk["Q"] * target["Q"] / (max(r, 1) ** 2)
-                    dx = (disk["x"] - target["x"]) / dist
-                    dy = (disk["y"] - target["y"]) / dist
+                    dx = (disk["x"] - target["x"]) / r
+                    dy = (disk["y"] - target["y"]) / r
                     effect[disk["diskId"]].append({
                         "dx": dx,
                         "dy": dy,
@@ -152,6 +152,7 @@ class DriftSystem:
                     sy = sy / dist * self.max_step
                     next_state["x"] = x + sx
                     next_state["y"] = y + sy
+                    dist = (sx ** 2 + sy ** 2) ** 0.5
                 # 判断是否出圈（额外向内收敛一个像素）
                 dx = next_state["x"] - next_state["origin"][0]
                 dy = next_state["y"] - next_state["origin"][1]

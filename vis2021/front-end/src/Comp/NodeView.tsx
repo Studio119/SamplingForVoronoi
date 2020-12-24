@@ -2,13 +2,13 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 10:51:28 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-22 18:03:03
+ * @Last Modified time: 2020-12-23 22:59:36
  */
 
 import { Map } from "./Map";
 import { connect } from "react-redux";
 import { DataCenter } from "../reducers/DataCenter";
-import kriging from "@sakitam-gis/kriging";
+// import kriging from "@sakitam-gis/kriging";
 
 
 // @ts-ignore

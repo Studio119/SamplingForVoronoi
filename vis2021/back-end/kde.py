@@ -31,7 +31,6 @@ def build_matrix(population):
     Z = np.reshape(kernel(positions).T, X.shape)
 
     time_end = time.time()
-    print('size={}, totally cost {}s'.format(len(population), time_end - time_start))
 
     kde = [kernel([p[1], p[2]])[0] for p in population]
     m4 = np.asarray(kde)
@@ -81,3 +80,30 @@ if __name__ == "__main__":
 
     pass
 
+
+def get_kde(filename_origin, alpha):
+    
+    with open("../storage/snapshot_" + filename_origin, mode='r') as f:
+        snapshot = json.load(f)
+        data_snapshot = snapshot['data']
+
+    # [id, x, y, val]][]
+    indexes = [d[0] for d in data_snapshot]
+    values = normalizated_array([[d[1], d[2], d[3]] for d in data_snapshot])
+    population = [
+        [indexes[i], values[i][0], values[i][1], values[i][2]] for i, _ in enumerate(data_snapshot)
+    ]
+
+    data = []
+    
+    for i in range(alpha):
+        start = i / alpha
+        end = (i + 1) / alpha
+        plist = [p for p in population if start <= p[3] < end]
+        matrix = build_matrix(plist)
+        data.append({
+            "population": plist,
+            "matrix": matrix.tolist()
+        })
+
+    return data

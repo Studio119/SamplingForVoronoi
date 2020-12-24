@@ -2,13 +2,14 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 10:51:28 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-22 15:39:55
+ * @Last Modified time: 2020-12-24 17:04:24
  */
 
 import { geodata } from "../types";
 import { Map, MapSwitchExtension } from "./Map";
 import { connect } from "react-redux";
 import { DataCenter } from "../reducers/DataCenter";
+import * as d3 from "d3";
 
 
 // @ts-ignore
@@ -43,13 +44,27 @@ export class SamplingView extends Map {
         }
     };
 
+    protected readonly voronoiSwitch: MapSwitchExtension = {
+        type: "switch",
+        text: "voronoi",
+        value: true,
+        executer: (value: boolean) => {
+            this.voronoiSwitch.value = value;
+            if (value) {
+                this.canvas2.current!.style.visibility = "visible";
+            } else {
+                this.canvas2.current!.style.visibility = "hidden";
+            }
+        }
+    };
+
     public render() {
         if (this.props.filter === "population") {
-            this.extensions = [];
+            this.extensions = [this.voronoiSwitch];
         } else if (this.props.filter === "sample") {
-            this.extensions = [this.diskSwitch];
+            this.extensions = [this.diskSwitch, this.voronoiSwitch];
         } else if (this.props.filter === "drifted") {
-            this.extensions = [this.diskSwitch, this.traceSwitch];
+            this.extensions = [this.diskSwitch, this.traceSwitch, this.voronoiSwitch];
         }
 
         return super.render();
@@ -65,7 +80,7 @@ export class SamplingView extends Map {
      * @memberof Map
      */
     protected bufferPaintScatters(list: Array<{x: number; y:number; val: number;}>, step: number = 100): void {
-        if (!this.ctx2) return;
+        if (!this.ctx3) return;
 
         let piece: Array<{x: number; y:number; val: number;}> = [];
 
@@ -76,8 +91,8 @@ export class SamplingView extends Map {
                     this.updated = true;
 
                     pieceCopy.forEach(d => {
-                        this.ctx2!.fillStyle = this.props.colorize(d.val);
-                        this.ctx2!.fillRect(
+                        this.ctx3!.fillStyle = this.props.colorize(d.val);
+                        this.ctx3!.fillRect(
                             d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
@@ -120,7 +135,7 @@ export class SamplingView extends Map {
      * @memberof Map
      */
     protected bufferPaintDisks(list: Array<{x: number; y:number; val: number; averVal: number; r: number;}>, step: number = 100): void {
-        if (!this.ctx0 || !this.ctx1 || !this.ctx2) return;
+        if (!this.ctx0 || !this.ctx1 || !this.ctx3) return;
 
         let piece: Array<{x: number; y:number; val: number; averVal: number; r: number;}> = [];
 
@@ -142,8 +157,8 @@ export class SamplingView extends Map {
                         this.ctx0!.fill();
                         this.ctx0!.stroke();
                         this.ctx0!.closePath();
-                        this.ctx1!.fillStyle = this.props.colorize(d.val);
-                        this.ctx1!.fillRect(
+                        this.ctx3!.fillStyle = this.props.colorize(d.val);
+                        this.ctx3!.fillRect(
                             d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
@@ -180,7 +195,7 @@ export class SamplingView extends Map {
      * @memberof Map
      */
     protected bufferPaintDriftedDisks(list: Array<{origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}>, step: number = 100): void {
-        if (!this.ctx0 || !this.ctx1 || !this.ctx2) return;
+        if (!this.ctx0 || !this.ctx1 || !this.ctx3) return;
 
         let piece: Array<{origin: [number, number]; x: number; y:number; val: number; r: number; move: [number, number][];}> = [];
 
@@ -214,8 +229,8 @@ export class SamplingView extends Map {
                         });
                         this.ctx1!.stroke();
                         this.ctx1!.closePath();
-                        this.ctx2!.fillStyle = this.props.colorize(d.val);
-                        this.ctx2!.fillRect(
+                        this.ctx3!.fillStyle = this.props.colorize(d.val);
+                        this.ctx3!.fillRect(
                             d.x - 1.5, d.y - 1.5, 3, 3
                         );
                     });
@@ -262,6 +277,9 @@ export class SamplingView extends Map {
             if (this.ctx2) {
                 this.ctx2.clearRect(0, 0, this.props.width, this.props.height);
             }
+            if (this.ctx3) {
+                this.ctx3.clearRect(0, 0, this.props.width, this.props.height);
+            }
         }
         if (this.updated) {
             return;
@@ -284,6 +302,7 @@ export class SamplingView extends Map {
                             val: d.value
                         });
                     });
+                    // this.paintVoronoi(res);
                     this.bufferPaintScatters(renderingQueue);
                 });
             } else if (this.props.filter === "drifted") {
@@ -303,6 +322,7 @@ export class SamplingView extends Map {
                             move: d.move
                         });
                     });
+                    this.paintVoronoi(res);
                     this.bufferPaintDriftedDisks(renderingQueue);
                 });
             } else {
@@ -318,10 +338,91 @@ export class SamplingView extends Map {
                             r: d.radius
                         });
                     });
+                    this.paintVoronoi(res);
                     this.bufferPaintDisks(renderingQueue);
                 });
             }
         }
+    }
+
+    /**
+     * 绘制维诺图.
+     *
+     * @protected
+     * @returns {void}
+     * @memberof Map
+     */
+    protected paintVoronoi(data: geodata[] | geodata<"drifted">[]): void {
+        if (!this.ctx2) return;
+
+        this.voronoiPolygons = this.makeVoronoi(data);
+
+        this.updated = true;
+
+        this.voronoiPolygons.forEach((polygon, i) => {
+            if (polygon) {
+                this.timers.push(
+                    setTimeout(() => {
+                        const color = this.props.colorize(data[i].value);
+                        this.ctx2!.fillStyle = color.replace("(", "a(").replace(")", ",0.5)");
+                        this.ctx2!.strokeStyle = "rgb(170,71,105)";
+                        this.ctx2!.beginPath();
+                        polygon.forEach((p, i) => {
+                            if (i) {
+                                this.ctx2!.lineTo(p[0], p[1]);
+                            } else {
+                                this.ctx2!.moveTo(p[0], p[1]);
+                            }
+                        });
+                        this.ctx2!.fill();
+                        this.ctx2!.stroke();
+                        this.ctx2!.closePath();
+
+                        this.progress.next();
+                    }, 1 * this.timers.length)
+                );
+            }
+        });
+    }
+
+    public makeVoronoi(data: geodata[] | geodata<"drifted">[]): d3.Delaunay.Polygon[] {
+        if (!this.map.current) {
+            return [];
+        }
+        
+        const delaunay = d3.Delaunay.from(
+            this.props.filter === "drifted" ? (
+                (data as geodata<"drifted">[]).map(d => {
+                    try {
+                        // return [d.x, d.y];
+                        const a = this.map.current!.project([d.lng, d.lat]);
+                        
+                        return [a.x, a.y];
+                    } catch (error) {
+                        console.warn(d, error)
+                        
+                        return [0, 0];
+                    }
+                })
+            ) : (
+                (data as geodata[]).map(d => {
+                    try {
+                        const a = this.map.current!.project([d.lng, d.lat]);
+                        
+                        return [a.x, a.y];
+                    } catch (error) {
+                        console.warn(d, error)
+                        
+                        return [0, 0];
+                    }
+                })
+            )
+        );
+        const voronoi = delaunay.voronoi(
+            [ -0.5, -0.5, this.props.width + 1, this.props.height + 1]
+        );
+        
+        return (data as geodata[]).map((_, i) => voronoi.cellPolygon(i));
     }
 
 };
