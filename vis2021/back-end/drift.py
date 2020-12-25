@@ -186,16 +186,32 @@ class DriftSystem:
 
 
 if __name__ == "__main__":
-    filename_origin = sys.argv[1]
+    filename = sys.argv[1]
+    dataset = filename.split("_")[1]
     ticks = int(sys.argv[2])
 
-    with open("../storage/snapshot_" + filename_origin, mode='r') as f:
+    polygons = []
+
+    with open("../storage/voronoi_" + dataset, mode='r') as f:
+        snapshot = json.load(f)
+        voronoi = snapshot["data"]
+        for v in voronoi:
+            borders = []
+            if v != None and len(v) > 2:
+                for i in range(len(v) - 1):
+                    pa = v[i]
+                    pb = v[i + 1]
+                    borders.append((pa, pb))
+            polygons.append(borders)
+            pass
+
+    with open("../storage/snapshot_" + dataset, mode='r') as f:
         snapshot = json.load(f)["data"]
         position = {}
         for d in snapshot:
             position[d[0]] = (d[1], d[2])
 
-    with open("../storage/sampled_" + filename_origin, mode='r') as f:
+    with open("../storage/" + filename, mode='r') as f:
         data = json.load(f)
         disks = [{
             "diskId": d["diskId"],
@@ -208,8 +224,20 @@ if __name__ == "__main__":
             "lat": d["lat"],
             "value": d["value"],
             "children": d["children"],
-            "averVal": d["averVal"],
+            "averVal": d["averVal"]
         } for d in data]
+        for disk in disks:
+            p = disk["origin"]
+            idx = -1
+            borders = []
+            for i, v in enumerate(polygons):
+                flag, _ = DriftSystem._is_point_included(p, v, 1, 1)
+                if flag:
+                    idx = i
+                    break
+            if idx != -1:
+                borders = polygons.pop(idx)
+            disk["borders"] = borders
 
     system = DriftSystem(disks)
     
@@ -220,7 +248,7 @@ if __name__ == "__main__":
         disks[i]["y"] = disk["y"]
         disks[i]["move"] = disk["move"]
 
-    with open("../storage/drifted_" + filename_origin, mode='w') as fout:
+    with open("../storage/drifted_" + dataset, mode='w') as fout:
         json.dump(disks, fout)
 
     print(0)    # 程序运行完成

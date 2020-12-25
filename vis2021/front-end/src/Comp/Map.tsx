@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-24 17:08:07
+ * @Last Modified time: 2020-12-25 16:43:13
  */
 
 import React, { Component } from "react";
@@ -35,13 +35,13 @@ export interface MapExtension {
 
 export interface MapButtonExtension extends MapExtension {
     type: "button";
-    executer: () => void;
+    executer: (finish: () => void) => void;
 };
 
 export interface MapSwitchExtension extends MapExtension {
     type: "switch";
     value: boolean;
-    executer: (value: boolean) => void;
+    executer: (value: boolean, finish: () => void) => void;
 };
 
 export class Map extends Component<MapProps, MapState, {}> {
@@ -90,8 +90,8 @@ export class Map extends Component<MapProps, MapState, {}> {
         }
         
         return {
-            width: map.props.width,
-            height: map.props.height,
+            width: map?.props.width || 0,
+            height: map?.props.height || 0,
             data: shapes
         };
     }
@@ -196,14 +196,26 @@ export class Map extends Component<MapProps, MapState, {}> {
                                 <label key={ e.text } tabIndex={ 1 } style={{
                                     display: "inline-block",
                                     padding: "3.5px 4px 1.5px",
-                                    boxShadow: "2px 2px 2px #00000060",
+                                    boxShadow: "1.5px 1.5px 0 #00000060",
                                     border: "1px solid #ddd",
                                     cursor: "pointer",
                                     userSelect: "none"
                                 }}
                                 onClick={
-                                    () => {
-                                        e.executer();
+                                    ev => {
+                                        const element = ev.currentTarget;
+                                        if (element.getAttribute("lock") === "true") {
+                                            return;
+                                        }
+                                        element.setAttribute("locked", "true");
+                                        element.style.pointerEvents = "none";
+                                        element.style.opacity = "0.5";
+                                        (e as MapButtonExtension).executer(() => {
+                                            element.setAttribute("locked", "false");
+                                            element.style.pointerEvents = "";
+                                            element.style.opacity = "";
+                                        });
+                                        element.innerText = e.text;
                                     }
                                 } >
                                     { e.text }
@@ -214,16 +226,28 @@ export class Map extends Component<MapProps, MapState, {}> {
                                     padding: "3.5px 4px 1.5px",
                                     margin: "0 4px",
                                     userSelect: "none",
-                                    // boxShadow: "2px 2px 2px #00000060",
+                                    boxShadow: "1.5px 1.5px 0 #00000060",
                                     border: "1px solid #ddd",
                                     cursor: "pointer"
                                 }}
                                 onClick={
-                                    element => {
+                                    ev => {
+                                        const element = ev.currentTarget;
+                                        if ((element as any).lock === "true") {
+                                            return;
+                                        }
+                                        element.setAttribute("locked", "true");
+                                        element.style.pointerEvents = "none";
+                                        element.style.opacity = "0.5";
                                         const t = e as MapSwitchExtension;
                                         t.value = !t.value;
-                                        t.executer(t.value);
-                                        const span = element.currentTarget.getElementsByTagName("span")[0];
+                                        t.executer(t.value, () => {
+                                            element.setAttribute("locked", "false");
+                                            element.style.pointerEvents = "";
+                                            element.style.opacity = "";
+                                        });
+                                        element.getElementsByTagName("span")[0].innerText = e.text;
+                                        const span = element.getElementsByTagName("span")[1];
                                         span.style.color = (
                                             t.value ? "rgb(78,201,148)" : "rgb(125,125,125)"
                                         );
@@ -232,8 +256,10 @@ export class Map extends Component<MapProps, MapState, {}> {
                                         );
                                     }
                                 } >
-                                    { e.text }
-                                    <span style={{
+                                    <span key="0" >
+                                        { e.text }
+                                    </span>
+                                    <span key="1" style={{
                                         padding: "0 2px 0 8px",
                                         color: (e as MapSwitchExtension).value ? "rgb(78,201,148)" : "rgb(125,125,125)"
                                     }} >

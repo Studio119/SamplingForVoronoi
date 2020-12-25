@@ -3,7 +3,7 @@ import json
 from math import tan, pi, isinf
 
 
-class DriftSystemGrp:
+class DriftSystemGrp2:
 
     def __init__(self, disks, span=1, min_move=100, max_step=2, k=1e6, min_r=8):
         self.disks = [{
@@ -114,7 +114,7 @@ class DriftSystemGrp:
                 dx = next_state["x"] - next_state["origin"][0]
                 dy = next_state["y"] - next_state["origin"][1]
                 cur_dist = (dx ** 2 + dy ** 2) ** 0.5
-                flag, r = DriftSystemGrp._is_point_included(
+                flag, r = DriftSystemGrp2._is_point_included(
                     [next_state["x"], next_state["y"]],
                     disk["borders"], dx, dy
                 )
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             idx = -1
             borders = []
             for i, v in enumerate(polygons):
-                flag, _ = DriftSystemGrp._is_point_included(p, v, 1, 1)
+                flag, _ = DriftSystemGrp2._is_point_included(p, v, 1, 1)
                 if flag:
                     idx = i
                     break
@@ -313,7 +313,7 @@ if __name__ == "__main__":
                 borders = polygons.pop(idx)
             disk["borders"] = borders
 
-    system = DriftSystemGrp(disks)
+    system = DriftSystemGrp2(disks)
     
     system.tick(times=ticks)
 

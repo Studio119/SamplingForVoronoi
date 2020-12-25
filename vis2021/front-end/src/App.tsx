@@ -2,13 +2,13 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:51:17 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-19 01:06:08
+ * @Last Modified time: 2020-12-25 16:15:29
  */
 
 import React, { Component } from 'react';
 import axios from "axios";
 import './App.css';
-import { NodeView } from './Comp/NodeView';
+// import { NodeView } from './Comp/NodeView';
 import { SamplingView } from './Comp/SamplingView';
 import { ControlStrip } from './Comp/ControlStrip';
 import { EnvCheckor } from './Comp/EnvCheckor';
@@ -22,12 +22,17 @@ class App extends Component {
   }
 
   public render(): JSX.Element {
-    const AppNodeView = React.forwardRef<NodeView>(() => (
+    // const AppNodeView = React.forwardRef<NodeView>(() => (
+    //   // @ts-ignore
+    //   <NodeView
+    //   id="map0" width={ 767 } height={ 500 } title="Node View" />
+    // ));
+    const AppScatterView3d0 = React.forwardRef<SamplingView>(() => (
       // @ts-ignore
-      <NodeView
-      id="map0" width={ 767 } height={ 500 } title="Node View" />
+      <SamplingView
+      id="map0" width={ 767 } height={ 500 } title="Sampling View" />
     ));
-    const AppScatterView3d = React.forwardRef<SamplingView>(() => (
+    const AppScatterView3d1 = React.forwardRef<SamplingView>(() => (
       // @ts-ignore
       <SamplingView
       id="map1" width={ 767 } height={ 500 } title="Sampling View" />
@@ -42,8 +47,9 @@ class App extends Component {
           justifyContent: "space-between",
           width: "100vw"
         }} >
-          <AppNodeView />
-          <AppScatterView3d />
+          {/* <AppNodeView /> */}
+          <AppScatterView3d0 />
+          <AppScatterView3d1 />
         </div>
         <Waiting />
         <EnvCheckor checkors={[

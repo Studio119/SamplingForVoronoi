@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-12-15 14:25:15 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-24 15:08:35
+ * @Last Modified time: 2020-12-25 15:58:00
  */
 
 import React, { Component } from "react";
@@ -260,7 +260,9 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                                 Waiting.start(close => {
                                     axios.post(`/drift/grp`, {
                                         data: Map.getVoronoiPolygons(),
-                                        path: this.props.path,
+                                        path: this.props.filter === "drifted"
+                                            ? "drifted_" + this.props.path
+                                            : "sampled_" + this.props.path,
                                         ticks: 100
                                     }).then(res => {
                                         if (res.data.status) {
@@ -305,7 +307,11 @@ class FfControlStrip extends Component<ControlStripProps, ControlStripState> {
                                     sampleLock: true
                                 });
                                 Waiting.start(close => {
-                                    axios.get(`/drift/this/${ encodePath(this.props.path) }/100`).then(res => {
+                                    axios.get(`/drift/this/${ encodePath(
+                                        this.props.filter === "drifted"
+                                            ? "drifted_" + this.props.path
+                                            : "sampled_" + this.props.path
+                                    ) }/100`).then(res => {
                                         if (res.data.status) {
                                             this.props.loadDrift();
                                             close("Succeeded.");

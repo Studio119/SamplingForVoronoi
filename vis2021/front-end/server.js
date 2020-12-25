@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2019-11-15 21:47:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-12-24 15:06:40
+ * @Last Modified time: 2020-12-25 16:00:27
  */
 
 const express = require('express');
@@ -259,8 +259,9 @@ app.post("/drift/grp", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const data = req.body["data"];
     const path = decodePath(req.body["path"]);
+    const dataset = path.split("_")[1];
     const ticks = parseInt(req.body["ticks"]);
-    fs.writeFileSync("../storage/voronoi_" + path, JSON.stringify(data));
+    fs.writeFileSync("../storage/voronoi_" + dataset, JSON.stringify(data));
     process.exec(
         `conda activate vis2021 && python ../back-end/drift_grp.py ${ path } ${ ticks }`,
         (error, stdout, stderr) => {
