@@ -2,18 +2,21 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-18 00:24:35
+ * @Last Modified time: 2021-01-18 20:47:10
  */
 
-import { useState, createRef, useLayoutEffect } from 'react';
+import { useState, createRef, useEffect, useLayoutEffect, Component } from 'react';
 import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
+import ContextMenu, { ContextMenuItem } from './ContextMenu.client';
 
+
+let lastState = {};
 
 const DatasetItem = props => {
-  const [state, setState] = useState({
-    expand:   true,
-    showStat: true,
+  const [state, setState] = useState(lastState[props.name] || {
+    expand:     true,
+    showStat:   true,
     showSample: true,
     showCharts: true
   });
@@ -51,6 +54,8 @@ const DatasetItem = props => {
   });
   path += " L100,100";
 
+  const menu = createRef();
+  const menuSamples = createRef();
   const svg = createRef();
 
   useLayoutEffect(() => {
@@ -60,8 +65,40 @@ const DatasetItem = props => {
     }
   });
 
+  useEffect(() => {
+    lastState[props.name] = state;
+  });
+
   return (
-    <section className="DatasetItem" >
+    <section className="DatasetItem"
+    onContextMenu={
+      e => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (menu.current) {
+          const x = e.clientX;
+          const y = e.clientY;
+          menu.current.style.display = "flex";
+          menu.current.style.left = x + "px";
+          menu.current.style.top = y + "px";
+          const close = document.addEventListener('click', ev => {
+            if (!menu.current) {
+              document.removeEventListener('click', close);
+              return;
+            }
+            const dx = ev.clientX - x;
+            const dy = ev.clientY - y;
+            if (dx < -2 || dx > menu.current.offsetWidth + 2) {
+              menu.current.style.display = "none";
+              document.removeEventListener('click', close);
+            } else if (dy < -2 || dy > menu.current.offsetHeight + 2) {
+              menu.current.style.display = "none";
+              document.removeEventListener('click', close);
+            }
+          });
+        }
+      }
+    } >
       <label
         onClick={
           () => {
@@ -140,7 +177,21 @@ const DatasetItem = props => {
       <section key="samples"
       style={{
         height: state.expand ? undefined : 0
-      }} >
+      }}
+      onContextMenu={
+        e => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (menuSamples.current) {
+            menuSamples.current.setState({
+              x:    e.clientX,
+              y:    e.clientY,
+              open: true,
+              focus: null
+            });
+          }
+        }
+      } >
         <label
           style={{ color: "rgb(50,121,58)" }}
           onClick={
@@ -166,11 +217,31 @@ const DatasetItem = props => {
             {
               props.samples.map((sample, i) => {
                 return (
-                  <tr key={ i } >
-                    <th>{ sample.name }</th>
-                    <td>
-                      { "(" + sample.data.length + ")" }
-                    </td>
+                  <tr key={ i }
+                    onContextMenu={
+                      e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (menuSamples.current) {
+                          menuSamples.current.setState({
+                            open: true,
+                            x:    e.clientX,
+                            y:    e.clientY,
+                            focus: {
+                              name: props.name,
+                              src:  sample.name
+                            }
+                          });
+                        }
+                      }
+                    }
+                    style={{
+                      cursor: "pointer"
+                    }} >
+                      <th>{ sample.name }</th>
+                      <td>
+                        { "(" + sample.data.length + ")" }
+                      </td>
                   </tr>
                 );
               })
@@ -212,12 +283,28 @@ const DatasetItem = props => {
           }
         </div>
       </section>
+      <ContextMenu key="menu" menu={ menu } >
+        <ContextMenuItem key="new"
+          listener={ Root.fileDialogOpen } >
+            New dataset
+        </ContextMenuItem>
+        <ContextMenuItem key="close"
+          listener={ () => Root.close(props.name) } >
+            { "Close [" + props.name + "]" }
+        </ContextMenuItem>
+      </ContextMenu>
+      <ContextMenuSample ref={ menuSamples } />
     </section>
   );
 };
 
 const ChartRef = props => {
-  const [showing, show] = useState(true);
+  const name = props.chart.dataset + "." + props.chart.name;
+  const [showing, show] = useState(lastState[name] || true);
+
+  useEffect(() => {
+    lastState[name] = showing;
+  });
 
   return (
     <section
@@ -241,7 +328,7 @@ const ChartRef = props => {
             }
           }  >
             <ExpandSign expanded={ showing } />
-            { props.chart.src }
+            { props.chart.name }
         </label>
         <table style={{
           display: showing ? undefined : "none",
@@ -274,18 +361,15 @@ const ChartRef = props => {
                         } >
                           { layer.active ? "+" : "-" }
                       </th>
-                      <td
-                        style={{
-                          cursor: "pointer"
-                        }}
-                        onClick={
-                          () => {
-                            layer.active = !layer.active;
+                      <OpacityBar
+                        layer={ layer }
+                        value={ layer.opacity }
+                        setValue={
+                          d => {
+                            layer.opacity = d;
                             Root.refresh();
                           }
-                        }>
-                          { layer.label }
-                      </td>
+                        } />
                       {
                         layer.active && (
                           i !== 0 ? (
@@ -374,6 +458,131 @@ const ChartRef = props => {
         </table>
     </section>
   );
+};
+
+const OpacityBar = props => {
+  const d = Math.min(98.5, Math.max(2, (props.value * 100).toFixed(0)));
+
+  return (
+    <td
+      style={{
+        cursor: "pointer",
+        padding: "0 4px",
+        background: props.layer.active ? (
+          "linear-gradient(to right, rgb(103,179,230) 2%, rgba(103,179,230,0.24) 2%,"
+            + " rgba(103,179,230,0.24) " + d + "%, #0000 " + d
+            + "%, #0000 98.5%, rgb(103,179,230) 98.5%)"
+        ) : "none",
+        userSelect: "none"
+      }}
+      onClick={
+        e => {
+          if (!props.layer.active) {
+            props.layer.active = !props.layer.active;
+            Root.refresh();
+          } else {
+            const x = (
+              e.clientX - e.currentTarget.getBoundingClientRect().x
+            ) / e.currentTarget.getBoundingClientRect().width;
+            const val = parseFloat(x.toFixed(2));
+            props.setValue(val);
+          }
+        }
+      } >
+        { props.layer.label }
+    </td>
+  );
+};
+
+class ContextMenuSample extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      open:   false,
+      x:      0,
+      y:      0,
+      focus:  null
+    };
+    this.ref = createRef();
+  }
+
+  render() {
+    return (
+      <ContextMenu menu={ this.ref } >
+        <ContextMenuItem key="new"
+          listener={ () => {
+            this.setState({
+              open: false,
+              focus: null
+            });
+          } } >
+            New sample
+        </ContextMenuItem>
+        {
+          this.state.focus && this.state.focus.src !== "total" && (
+            <ContextMenuItem key="remove"
+              listener={
+                () => {
+                  Root.closeSample(this.state.focus.name, this.state.focus.src);
+                  this.setState({
+                    open: false,
+                    focus: null
+                  });
+                }
+              } >
+                { "Remove [" + this.state.focus.name + "." + this.state.focus.src + "]" }
+            </ContextMenuItem>
+          )
+        }
+        {
+          this.state.focus && this.state.focus.name !== "total" && (
+            <ContextMenuItem key="chart"
+              listener={
+                () => {
+                  Root.paint(this.state.focus.name, this.state.focus.src);
+                  this.setState({
+                    open: false,
+                    focus: null
+                  });
+                }
+              } >
+                { "New chart [" + this.state.focus.name + "." + this.state.focus.src + "]" }
+            </ContextMenuItem>
+          )
+        }
+      </ContextMenu>
+    );
+  }
+
+  componentDidUpdate() {
+    if (this.state.open) {
+      const ref = this.ref;
+      ref.current.style.display = "flex";
+      ref.current.style.left = this.state.x + "px";
+      ref.current.style.top = this.state.y + "px";
+      const close = document.addEventListener('click', ev => {
+        if (!ref.current) {
+          document.removeEventListener('click', close);
+          return;
+        }
+        const dx = ev.clientX - this.state.x;
+        const dy = ev.clientY - this.state.y;
+        if (dx < -2 || dx > ref.current.offsetWidth + 2) {
+          ref.current.style.display = "none";
+          document.removeEventListener('click', close);
+        } else if (dy < -2 || dy > ref.current.offsetHeight + 2) {
+          ref.current.style.display = "none";
+          document.removeEventListener('click', close);
+        }
+        this.setState({
+          open: false,
+          focus: null
+        });
+      });
+    }
+  }
+
 };
 
 

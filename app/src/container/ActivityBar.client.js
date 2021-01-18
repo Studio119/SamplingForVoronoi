@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 15:28:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-17 23:00:43
+ * @Last Modified time: 2021-01-18 17:36:41
  */
 
 import { createRef } from 'react';
@@ -18,13 +18,10 @@ const ActivityBar = props => {
   return (
     <section className="ActivityBar"
       style={{
-        display:      "flex",
-        flexDirection:    "column",
-        alignItems:       "stretch",
-        justifyContent:   "stretch",
         width:        "240px",
+        height:       "calc(100vh - 16px)",
         padding:      "8px 10px",
-        overflowX:    "hidden",
+        overflow:     "hidden auto",
         background:   "rgb(232,235,248)",
         userSelect:   "none"
       }} >

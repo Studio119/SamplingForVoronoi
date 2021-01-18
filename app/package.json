@@ -63,6 +63,7 @@
   "nodemonConfig": {
     "ignore": [
       "build/*",
+      "datasets/*",
       "src-t/*",
       "src-t/**"
     ]

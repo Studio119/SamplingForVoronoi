@@ -213,6 +213,10 @@
         overflow: hidden;
       }
 
+      *:focus {
+        outline: none;
+      }
+
       label.Button {
         display: inline-block;
         background: rgb(147, 206, 248);
@@ -285,7 +289,8 @@
         background: rgb(245,245,245);
         min-width:  100px;
         padding:    8px 0;
-        box-shadow: 1px 1px 3px #888888
+        box-shadow: 1px 1px 3px #888888;
+        z-index: 9999;
       }
       div.contextMenu>label {
         display: inline-block;

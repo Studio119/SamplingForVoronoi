@@ -7,28 +7,18 @@
  */
 
 import ActivityBar from './container/ActivityBar.client';
-import WorkSpace from './container/WorkSpace.client';
+
 
 export const Root = {
+  close:          () => {},
+  closeSample:    () => {},
+  paint:          () => {},
   refresh:        () => {},
   fileDialogOpen: () => {}
 };
 
 export default function App(props) {
   return (
-    <div className="main"
-      style={{
-        width:      "100vw",
-        minHeight:  "100vh",
-        display:        "flex",
-        alignItems:     "stretch",
-        justifyContent: "space-between"
-      }}
-      onContextMenu={
-        e => e.preventDefault()
-      } >
-        <ActivityBar datasets={ props.datasets } />
-        <WorkSpace datasets={ props.datasets } />
-    </div>
+    <ActivityBar datasets={ props.datasets } />
   );
 }
