@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-18 20:48:49
+ * @Last Modified time: 2021-01-19 15:26:03
  */
 
 import { createRef, Component } from 'react';
@@ -40,7 +40,7 @@ class WorkSpace extends Component {
           name: chart.name,
           src: chart.src,
           data: data,
-          colorize: chart.colorize,
+          colorize: dataset.colorize,
           layers: chart.layers.map(layer => {
             return {
               label: layer.label,

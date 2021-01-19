@@ -9,8 +9,8 @@
 import { useState, createRef, useEffect } from 'react';
 import App, { Root } from "./App.server";
 import { createPortal } from 'react-dom';
-import Color from "./UI/Color.js";
 import WorkSpace from './container/WorkSpace.client';
+import SampleDialog from './UI/SampleDialog.server';
 
 
 const loadJSON = content => {
@@ -32,13 +32,6 @@ const createChart = (src, rename=undefined) => {
   return {
     name: rename || src,
     src:  src,
-    colorize: (val, max) => {
-      return Color.interpolate(
-        "rgb(100,156,247)",
-        "rgb(255,13,10)",
-        Math.pow(val / max, 2)
-      );
-    },
     layers: [{
       label:  "scatters",
       active: true,
@@ -72,6 +65,8 @@ const AppRoot = () => {
     }
   });
 
+  const sampleDialog = createRef();
+
   const fileDialogRef = createRef();
 
   const fileDialog = createPortal(
@@ -101,6 +96,7 @@ const AppRoot = () => {
                 datasets: state.datasets.concat({
                   name: name.split("\\").reverse()[0].replace(/\.json/, ""),
                   data: content,
+                  colorize: ["rgb(38,178,27)", "rgb(255,0,0)", 0.7],
                   samples:  [{
                     name: "total",
                     data: content
@@ -112,7 +108,7 @@ const AppRoot = () => {
                     data: content.filter(_ => Math.random() < 0.1)
                   }],
                   charts:   [
-                    createChart("total"),
+                    // createChart("total"),
                     // createChart("20%"),
                     // createChart("10%")
                   ]
@@ -155,6 +151,40 @@ const AppRoot = () => {
           ...dataset,
           samples: dataset.samples.filter(s => s.name !== src),
           charts: dataset.charts.filter(c => c.src !== src)
+        } : dataset;
+      })
+    });
+  };
+
+  Root.closeChart = (datasetName, name) => {
+    setState({
+      ...state,
+      time:   (new Date()).getTime(),
+      datasets: state.datasets.map(dataset => {
+        return dataset.name === datasetName ? {
+          ...dataset,
+          charts: dataset.charts.filter(c => c.name !== name)
+        } : dataset;
+      })
+    });
+  };
+
+  Root.sample = dataset => {
+    sampleDialog.current.setState({
+      show: true,
+      dataset
+    });
+  };
+
+  Root.pushSample = (datasetName, name, data) => {
+    setState({
+      ...state,
+      time:   (new Date()).getTime(),
+      datasets: state.datasets.map(dataset => {
+        return dataset.name === datasetName ? {
+          ...dataset,
+          samples: dataset.samples.concat({ name, data }),
+          charts: dataset.charts.concat(createChart(name))
         } : dataset;
       })
     });
@@ -207,6 +237,7 @@ const AppRoot = () => {
         <App datasets={ state.datasets } />
         <WorkSpace key="only" ref={ workSpace } />
         { fileDialog }
+        <SampleDialog ref={ sampleDialog } />
     </div>
   );
 };

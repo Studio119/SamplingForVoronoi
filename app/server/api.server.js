@@ -8,6 +8,8 @@
 
 'use strict';
 
+const process = require('child_process');
+
 const register = require('react-server-dom-webpack/node-register');
 register();
 const babelRegister = require('@babel/register');
@@ -20,7 +22,7 @@ babelRegister({
 
 const express = require('express');
 const compress = require('compression');
-const {readFileSync} = require('fs');
+const fs = require('fs');
 const {unlink, writeFile} = require('fs/promises');
 const {pipeToNodeWritable} = require('react-server-dom-webpack/writer');
 const path = require('path');
@@ -31,12 +33,17 @@ const React = require('react');
 
 const PORT = 4000;
 const app = express();
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json());
 
 app.use(compress());
 app.use(express.json());
 
 app.listen(PORT, () => {
-  console.log('React Notes listening at 4000...');
+  console.log('React app listening at 4000...');
 });
 
 function handleErrors(fn) {
@@ -53,7 +60,7 @@ app.get(
   '/',
   handleErrors(async function(_req, res) {
     await waitForWebpack();
-    const html = readFileSync(
+    const html = fs.readFileSync(
       path.resolve(__dirname, '../build/index.html'),
       'utf8'
     );
@@ -64,9 +71,81 @@ app.get(
   })
 );
 
+app.post("/snapshot", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+  const name = req.body["name"];
+  const data = req.body["data"];
+
+  const target = "./storage/snapshot_" + name + ".json";
+
+  if (fs.existsSync(target)) {
+    res.json({
+      status: true,
+      message: "Snapshot already storaged."
+    });
+    return;
+  }
+  
+  fs.writeFileSync(target, JSON.stringify(data));
+  
+  process.exec(
+    `conda activate vis2021 && python ./python/kde.py ${ name }.json`,
+    (error, stdout, stderr) => {
+      if (error || stderr) {
+        res.json({
+          status: false,
+          message: stdout || stderr || error
+        });
+      } else if (stdout.endsWith('0\r\n')) {
+        res.json({
+          status: true,
+          message: "Snapshot storaged successfully."
+        });
+      } else {
+        res.json({
+          status: false,
+          message: stdout
+        });
+      }
+    }
+  );
+});
+
+app.get("/sample/sb/:dataset/:n_step", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = req.params["dataset"];
+    const n_step = req.params["n_step"];
+    process.exec(
+      `conda activate vis2021 && python ./python/sample_sb.py ${ path } ${ n_step }`,
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          res.json({
+            status: false,
+            message: stdout || stderr || error
+          });
+        } else if (!stdout.includes('Error')) {
+          res.json({
+            status: true,
+            message: "Completed",
+            data: JSON.parse(
+              fs.readFileSync(
+                "./storage/sb_" + path + "_" + n_step + ".json"
+              )
+            )
+          });
+        } else {
+          res.json({
+            status: false,
+            message: stdout
+          });
+        }
+      }
+    );
+});
+
 async function renderReactTree(res, props) {
   await waitForWebpack();
-  const manifest = readFileSync(
+  const manifest = fs.readFileSync(
     path.resolve(__dirname, '../build/react-client-manifest.json'),
     'utf8'
   );
@@ -116,7 +195,7 @@ app.on('error', function(error) {
 async function waitForWebpack() {
   while (true) {
     try {
-      readFileSync(path.resolve(__dirname, '../build/index.html'));
+      fs.readFileSync(path.resolve(__dirname, '../build/index.html'));
       return;
     } catch (err) {
       console.log(

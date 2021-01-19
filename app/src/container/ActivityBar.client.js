@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 15:28:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-18 17:36:41
+ * @Last Modified time: 2021-01-19 17:21:17
  */
 
 import { createRef } from 'react';
@@ -19,20 +19,24 @@ const ActivityBar = props => {
     <section className="ActivityBar"
       style={{
         width:        "240px",
-        height:       "calc(100vh - 16px)",
+        height:       "100vh",
         padding:      "8px 10px",
-        overflow:     "hidden auto",
+        overflow:     "hidden",
         background:   "rgb(232,235,248)",
         userSelect:   "none"
       }} >
         <section key="datasets"
           style={{
-            flex:         1,
-            display:      "flex",
+            flex:             1,
+            display:          "flex",
             flexDirection:    "column",
             alignItems:       "stretch",
             justifyContent:   "flex-start",
-            padding:      "8px 0"
+            padding:          "0 0 8px",
+            minHeight:        "40vh",
+            maxHeight:        "calc(100vh - 24px)",
+            overflow:         "hidden auto",
+            background:       "rgba(255,255,255,0.7)"
           }}
           onContextMenu={
             e => {
@@ -60,6 +64,14 @@ const ActivityBar = props => {
               }
             }
           } >
+            <label key="title"
+              style={{
+                padding:      "3px 1.2rem",
+                marginBottom: "4px",
+                background:   "rgb(186,227,255)"
+              }} >
+                DATASETS
+            </label>
             {
               props.datasets.length ? (
                 props.datasets.map(dataset => {
@@ -69,7 +81,10 @@ const ActivityBar = props => {
                 })
               ) : (
                 <Button
-                  listener={ Root.fileDialogOpen } >
+                  listener={ Root.fileDialogOpen }
+                  style={{
+                    margin: "6px 0.8rem"
+                  }} >
                     Import dataset
                 </Button>
               )
@@ -77,7 +92,7 @@ const ActivityBar = props => {
             <ContextMenu menu={ menu } >
               <ContextMenuItem
                 listener={ Root.fileDialogOpen } >
-                  New dataset
+                  Import
               </ContextMenuItem>
             </ContextMenu>
         </section>

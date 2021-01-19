@@ -217,9 +217,30 @@
         outline: none;
       }
 
+      input[type=number] {  
+        -moz-appearance:textfield;  
+      }  
+      input[type=number]::-webkit-inner-spin-button,  
+      input[type=number]::-webkit-outer-spin-button {  
+        -webkit-appearance: none;  
+        margin: 0;  
+      }
+
+      @keyframes rotating {
+        from {
+          transform: rotate(0deg);
+        } to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading {
+        animation: rotating 3s linear infinite;
+      }
+
       label.Button {
         display: inline-block;
-        background: rgb(147, 206, 248);
+        background: rgb(105, 187, 231);
         color: rgb(240,240,240);
         text-align: center;
         padding: 0.1rem 0.6rem;

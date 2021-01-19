@@ -12,6 +12,10 @@
 /build
 /dist
 
+# data
+/datasets
+/storage
+
 # misc
 .DS_Store
 .eslintcache

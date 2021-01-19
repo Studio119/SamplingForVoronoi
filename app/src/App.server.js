@@ -12,7 +12,10 @@ import ActivityBar from './container/ActivityBar.client';
 export const Root = {
   close:          () => {},
   closeSample:    () => {},
+  closeChart:     () => {},
+  sample:         () => {},
   paint:          () => {},
+  pushSample:     () => {},
   refresh:        () => {},
   fileDialogOpen: () => {}
 };
