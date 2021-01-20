@@ -269,7 +269,7 @@
         transition: background-color 400ms;
       }
       section.DatasetItem > label:first-child:hover {
-        background: rgba(79, 138, 221, 0.1);
+        background: rgba(120,188,240,0.5);
       }
       section.DatasetItem > section {
         display:      flex;
@@ -279,14 +279,32 @@
         margin-left:      0.95rem;
         border-left: 1px solid rgb(65,100,148);
         overflow-y: hidden;
-        transition: height 300ms;
+        transition: height 300ms, background-color 400ms;
         font-size: 90%;
+      }
+      section.DatasetItem>section:nth-child(2):hover,
+      section.DatasetItem>section:nth-child(3):hover {
+        background: rgba(120,188,240,0.5);
+      }
+      section.DatasetItem>section:nth-child(2),
+      section.DatasetItem>section:nth-child(3) {
+        cursor:     pointer;
       }
       section.DatasetItem > section > label {
         display: inline-flex;
         align-items: center;
         padding: 0 0.6rem;
-        cursor: pointer;
+      }
+      section.DatasetItem>section:nth-child(4)>table>tbody>tr:hover {
+        background: rgba(120,188,240,0.5);
+      }
+      section.DatasetItem>section>div>section:hover {
+        background: rgba(120,188,240,0.15);
+      }
+      section.DatasetItem>section:nth-child(4)>table>tbody>tr,
+      section.DatasetItem>section>div>section {
+        cursor:     pointer;
+        transition: background-color 400ms;
       }
       
       svg.expand {
@@ -303,7 +321,6 @@
       div.contextMenu {
         font-size: 90%;
         position:   fixed;
-        display:    none;
         flex-direction:  column;
         align-items:     stretch;
         justify-content: flex-start;

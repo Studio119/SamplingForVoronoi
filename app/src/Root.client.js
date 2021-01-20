@@ -1,9 +1,8 @@
-/**
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
+/*
+ * @Author: Kanata You 
+ * @Date: 2021-01-20 18:22:31 
+ * @Last Modified by: Kanata You
+ * @Last Modified time: 2021-01-20 18:55:31
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -11,6 +10,7 @@ import App, { Root } from "./App.server";
 import { createPortal } from 'react-dom';
 import WorkSpace from './container/WorkSpace.client';
 import SampleDialog from './UI/SampleDialog.server';
+import ContextMenu from './container/ContextMenu.client';
 
 
 const loadJSON = content => {
@@ -47,7 +47,7 @@ const createChart = (src, rename=undefined) => {
     }, {
       label:  "disks",
       active: false,
-      opacity: 0.4
+      opacity: 0.7
     }]
   };
 };
@@ -222,6 +222,21 @@ const AppRoot = () => {
     });
   };
 
+  Root.getDataset = name => {
+    return state.datasets.filter(dataset => dataset.name === name)[0];
+  };
+
+  Root.getPopulation = name => {
+    let data = [];
+    for (let i = 0; i < state.datasets.length; i++) {
+      if (state.datasets[i].name === name) {
+        data = state.datasets[i].data;
+        break;
+      }
+    }
+    return data;
+  };
+
   return (
     <div className="main"
       style={{
@@ -238,6 +253,7 @@ const AppRoot = () => {
         <WorkSpace key="only" ref={ workSpace } />
         { fileDialog }
         <SampleDialog ref={ sampleDialog } />
+        <ContextMenu />
     </div>
   );
 };

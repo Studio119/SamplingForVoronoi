@@ -2,19 +2,16 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 15:28:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-19 17:21:17
+ * @Last Modified time: 2021-01-20 14:11:53
  */
 
-import { createRef } from 'react';
 import Button from '../UI/Button.client';
 import { Root } from '../App.server';
 import DatasetItem from './DatasetItem.client';
-import ContextMenu, { ContextMenuItem } from './ContextMenu.client';
+import { callContextMenu } from './ContextMenu.client';
 
 
 const ActivityBar = props => {
-  const menu = createRef();
-  
   return (
     <section className="ActivityBar"
       style={{
@@ -40,28 +37,12 @@ const ActivityBar = props => {
           }}
           onContextMenu={
             e => {
-              if (menu.current) {
-                const x = e.clientX;
-                const y = e.clientY;
-                menu.current.style.display = "flex";
-                menu.current.style.left = x + "px";
-                menu.current.style.top = y + "px";
-                const close = document.addEventListener('click', ev => {
-                  if (!menu.current) {
-                    document.removeEventListener('click', close);
-                    return;
-                  }
-                  const dx = ev.clientX - x;
-                  const dy = ev.clientY - y;
-                  if (dx < -2 || dx > menu.current.offsetWidth + 2) {
-                    menu.current.style.display = "none";
-                    document.removeEventListener('click', close);
-                  } else if (dy < -2 || dy > menu.current.offsetHeight + 2) {
-                    menu.current.style.display = "none";
-                    document.removeEventListener('click', close);
-                  }
-                });
-              }
+              callContextMenu(
+                e, [{
+                  action: Root.fileDialogOpen,
+                  text:   "Import"
+                }]
+              );
             }
           } >
             <label key="title"
@@ -89,12 +70,6 @@ const ActivityBar = props => {
                 </Button>
               )
             }
-            <ContextMenu menu={ menu } >
-              <ContextMenuItem
-                listener={ Root.fileDialogOpen } >
-                  Import
-              </ContextMenuItem>
-            </ContextMenu>
         </section>
     </section>
   );

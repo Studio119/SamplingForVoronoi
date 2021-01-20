@@ -2,12 +2,11 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-19 15:26:03
+ * @Last Modified time: 2021-01-20 21:33:09
  */
 
 import { createRef, Component } from 'react';
-// import { Root } from '../App.server';
-import ContextMenu from './ContextMenu.client';
+import { Root } from '../App.server';
 import Map from '../UI/Map.client';
 
 
@@ -21,8 +20,26 @@ class WorkSpace extends Component {
       charts: [],
       idx:    0
     };
-    this.menu = createRef();
     this.map = createRef();
+
+    Root.openChart = (datasetName, src) => {
+      let idx = -1;
+      for (let i = 0; i < this.state.charts.length; i++) {
+        if (this.state.charts[i].dataset === datasetName && this.state.charts[i].src === src) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx === -1) {
+        Root.paint(datasetName, src);
+        return false;
+      } else if (idx !== this.state.idx) {
+        this.setState({ idx });
+        return true;
+      } else {
+        return true;
+      }
+    };
   }
 
   setDatasets(datasets) {
@@ -142,36 +159,8 @@ class WorkSpace extends Component {
               alignItems:       "stretch",
               justifyContent:   "flex-start",
               padding:      "6px 0"
-            }}
-            onContextMenu={
-              e => {
-                if (menu.current) {
-                  const x = e.clientX;
-                  const y = e.clientY;
-                  menu.current.style.display = "flex";
-                  menu.current.style.left = x + "px";
-                  menu.current.style.top = y + "px";
-                  const close = document.addEventListener('click', ev => {
-                    if (!menu.current) {
-                      document.removeEventListener('click', close);
-                      return;
-                    }
-                    const dx = ev.clientX - x;
-                    const dy = ev.clientY - y;
-                    if (dx < -2 || dx > menu.current.offsetWidth + 2) {
-                      menu.current.style.display = "none";
-                      document.removeEventListener('click', close);
-                    } else if (dy < -2 || dy > menu.current.offsetHeight + 2) {
-                      menu.current.style.display = "none";
-                      document.removeEventListener('click', close);
-                    }
-                  });
-                }
-              }
-            } >
+            }} >
               <Map ref={ this.map } />
-              <ContextMenu menu={ this.menu } >
-              </ContextMenu>
           </section>
       </section>
     );
@@ -184,7 +173,7 @@ class WorkSpace extends Component {
         const name = chart.dataset + "." + chart.name;
         this.map.current.update(name, chart.data, chart.layers, chart.colorize);
       } else {
-        this.map.current.update(null, [], [], () => "#888888");
+        this.map.current.update(null, [], [], ["#888888", "#888888", 1]);
       }
     }
   }

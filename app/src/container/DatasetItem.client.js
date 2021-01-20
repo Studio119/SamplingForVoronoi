@@ -2,13 +2,13 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-19 20:04:07
+ * @Last Modified time: 2021-01-20 22:46:47
  */
 
-import { useState, createRef, useEffect, useLayoutEffect, Component } from 'react';
+import { useState, useEffect } from 'react';
 import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
-import ContextMenu, { ContextMenuItem } from './ContextMenu.client';
+import { callContextMenu } from './ContextMenu.client';
 import * as d3 from "d3";
 
 
@@ -16,6 +16,16 @@ const rgb2code = rgb => {
   return "#" + rgb.split(",").map(
     d => parseInt(/\d+/.exec(d)[0]).toString(16).padStart(2, "0")
   ).join("");
+};
+
+const code2rgb = code => {
+  return `rgb(${
+    parseInt(code.slice(1, 3), 16)
+  },${
+    parseInt(code.slice(3, 5), 16)
+  },${
+    parseInt(code.slice(5, 7), 16)
+  })`;
 };
 
 
@@ -70,10 +80,6 @@ const DatasetItem = props => {
     curve += " L" + i + "," + ((1 - y) * 20).toFixed(1);
   }
 
-  const menu = createRef();
-  const menuSamples = createRef();
-  const menuCharts = createRef();
-
   useEffect(() => {
     lastState[props.name] = state;
   });
@@ -82,30 +88,18 @@ const DatasetItem = props => {
     <section className="DatasetItem"
     onContextMenu={
       e => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (menu.current) {
-          const x = e.clientX;
-          const y = e.clientY;
-          menu.current.style.display = "flex";
-          menu.current.style.left = x + "px";
-          menu.current.style.top = y + "px";
-          const close = document.addEventListener('click', ev => {
-            if (!menu.current) {
-              document.removeEventListener('click', close);
-              return;
-            }
-            const dx = ev.clientX - x;
-            const dy = ev.clientY - y;
-            if (dx < -2 || dx > menu.current.offsetWidth + 2) {
-              menu.current.style.display = "none";
-              document.removeEventListener('click', close);
-            } else if (dy < -2 || dy > menu.current.offsetHeight + 2) {
-              menu.current.style.display = "none";
-              document.removeEventListener('click', close);
-            }
-          });
-        }
+        callContextMenu(
+          e, [{
+            action: Root.fileDialogOpen,
+            text:   "Import"
+          }, {
+            action: () => Root.sample(props),
+            text:   "Sample [" + props.name + "]"
+          }, {
+            action: () => Root.close(props),
+            text:   "Close [" + props.name + "]"
+          }]
+        );
       }
     } >
       <label
@@ -148,7 +142,7 @@ const DatasetItem = props => {
           }} >
             <tbody>
               <tr>
-                <td colSpan="3" >
+                <td colSpan="4" >
                   <svg width="150px" height="6px" >
                     {
                       new Array(20).fill(0).map((_, i) => {
@@ -174,9 +168,15 @@ const DatasetItem = props => {
                   }}>
                     min
                 </td>
-                <td>
-                  { rgb2code(props.colorize[0]) }
-                </td>
+                <ColorTd
+                  value={ props.colorize[0] }
+                  settor={
+                    val => {
+                      props.colorize[0] = val;
+                      Root.colorizeChanged = true;
+                      Root.refresh();
+                    }
+                  } />
                 <td
                   style={{
                     width: "16px",
@@ -191,9 +191,15 @@ const DatasetItem = props => {
                   }}>
                     max
                 </td>
-                <td>
-                  { rgb2code(props.colorize[1]) }
-                </td>
+                <ColorTd
+                  value={ props.colorize[1] }
+                  settor={
+                    val => {
+                      props.colorize[1] = val;
+                      Root.colorizeChanged = true;
+                      Root.refresh();
+                    }
+                  } />
                 <td
                   style={{
                     width: "16px",
@@ -208,9 +214,15 @@ const DatasetItem = props => {
                   }}>
                     exp
                 </td>
-                <td>
-                  { props.colorize[2] }
-                </td>
+                <NumberTd
+                  value={ props.colorize[2] }
+                  settor={
+                    val => {
+                      props.colorize[2] = val;
+                      Root.colorizeChanged = true;
+                      Root.refresh();
+                    }
+                  } />
                 <td>
                   <svg viewBox="0 0 20 20"
                     style={{
@@ -302,21 +314,7 @@ const DatasetItem = props => {
       <section key="samples"
       style={{
         height: state.expand ? undefined : 0
-      }}
-      onContextMenu={
-        e => {
-          e.stopPropagation();
-          e.preventDefault();
-          if (menuSamples.current) {
-            menuSamples.current.setState({
-              x:    e.clientX,
-              y:    e.clientY,
-              open: true,
-              focus: null
-            });
-          }
-        }
-      } >
+      }} >
         <label
           style={{ color: "rgb(50,121,58)" }}
           onClick={
@@ -345,18 +343,35 @@ const DatasetItem = props => {
                   <tr key={ i }
                     onContextMenu={
                       e => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (menuSamples.current) {
-                          menuSamples.current.setState({
-                            open: true,
-                            x:    e.clientX,
-                            y:    e.clientY,
-                            focus: {
-                              name: props.name,
-                              src:  sample.name
-                            }
-                          });
+                        if (sample.name === "total") {
+                          callContextMenu(
+                            e, [{
+                              action: () => Root.sample(props),
+                              text:   "Sample [" + props.name + "]"
+                            }, {
+                              action: () => {
+                                Root.paint(props.name, sample.name);
+                              },
+                              text: "New chart [" + props.name + "." + sample.name + "]"
+                            }]
+                          );
+                        } else {
+                          callContextMenu(
+                            e, [{
+                              action: () => Root.sample(props),
+                              text:   "Sample [" + props.name + "]"
+                            }, {
+                              action: () => {
+                                Root.paint(props.name, sample.name);
+                              },
+                              text: "New chart [" + props.name + "." + sample.name + "]"
+                            }, {
+                              action: () => {
+                                Root.closeSample(props.name, sample.name);
+                              },
+                              text: "Remove sample [" + props.name + "." + sample.name + "]"
+                            }]
+                          );
                         }
                       }
                     }
@@ -401,24 +416,18 @@ const DatasetItem = props => {
         }} >
           {
             props.charts.map((chart, i) => {
-              const dataset = props.name;
-              const name = chart.name;
-              const focus = { dataset, name };
-
               return (
                 <ChartRef key={ i } chart={ chart }
                   onContextMenu={
                     e => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (menuCharts.current) {
-                        menuCharts.current.setState({
-                          open: true,
-                          x:    e.clientX,
-                          y:    e.clientY,
-                          focus
-                        });
-                      }
+                      callContextMenu(
+                        e, [{
+                          action: () => {
+                            Root.closeChart(props.name, chart.name);
+                          },
+                          text: "Close chart [" + props.name + "." + chart.name + "]"
+                        }]
+                      );
                     }
                   } />
               );
@@ -426,25 +435,6 @@ const DatasetItem = props => {
           }
         </div>
       </section>
-      <ContextMenu key="menu" menu={ menu } >
-        <ContextMenuItem key="new"
-          listener={ Root.fileDialogOpen } >
-            Import
-        </ContextMenuItem>
-        <ContextMenuItem key="sample"
-          listener={ () => {
-            menu.current.style.display = "none";
-            Root.sample(props);
-          } } >
-            { "Sample [" + props.name + "]" }
-        </ContextMenuItem>
-        <ContextMenuItem key="close"
-          listener={ () => Root.close(props.name) } >
-            { "Close [" + props.name + "]" }
-        </ContextMenuItem>
-      </ContextMenu>
-      <ContextMenuSample ref={ menuSamples } />
-      <ContextMenuChart ref={ menuCharts } />
     </section>
   );
 };
@@ -647,166 +637,126 @@ const OpacityBar = props => {
   );
 };
 
-class ContextMenuSample extends Component {
+const NumberTd = props => {
+  const [editing, edit] = useState(false);
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      open:   false,
-      x:      0,
-      y:      0,
-      focus:  null
-    };
-    this.ref = createRef();
-  }
-
-  render() {
-    return (
-      <ContextMenu menu={ this.ref } >
-        <ContextMenuItem key="new"
-          listener={ () => {
-            this.setState({
-              open: false,
-              focus: null
-            });
-          } } >
-            New sample
-        </ContextMenuItem>
-        {
-          this.state.focus && this.state.focus.name !== "total" && (
-            <ContextMenuItem key="chart"
-              listener={
-                () => {
-                  Root.paint(this.state.focus.name, this.state.focus.src);
-                  this.setState({
-                    open: false,
-                    focus: null
-                  });
+  return editing ? (
+    <>
+      <td
+        style={{
+          width: "76px"
+        }} >
+          <input type="number" defaultValue={ props.value }
+            style={{
+              width:  "60px",
+              height: "18px"
+            }} />
+      </td>
+      <td
+        style={{
+          width: "16px"
+        }} >
+          <svg viewBox="4 4 32 32"
+            style={{
+              cursor: "pointer"
+            }}
+            onClick={
+              e => {
+                const input = e.target.parentElement.parentElement.children[1].children[0];
+                const value = parseFloat(input.value);
+                edit(false);
+                setTimeout(() => {
+                  if (value !== props.value) {
+                    props.settor(value);
+                  }
+                }, 20);
+              }
+            } >
+              <path d={
+                  "M32,22 A16.5,16.5,0,0,0,32,18 L29,18 A13.5,13.5,0,0,0,28,15"
+                  + " L30,13 A16.5,16.5,0,0,0,27,10 L25,12 A13.5,13.5,0,0,0,22,11"
+                  + " L22,8 A16.5,16.5,0,0,0,18,8 L18,11 A13.5,13.5,0,0,0,15,12"
+                  + " L13,10 A16.5,16.5,0,0,0,10,13 L12,15 A13.5,13.5,0,0,0,11,18"
+                  + " L8,18 A16.5,16.5,0,0,0,8,22 L11,22 A13.5,13.5,0,0,0,12,25"
+                  + " L10,27 A16.5,16.5,0,0,0,13,30 L15,28 A13.5,13.5,0,0,0,18,29"
+                  + " L18,32 A16.5,16.5,0,0,0,22,32 L22,29 A13.5,13.5,0,0,0,25,28"
+                  + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
                 }
-              } >
-                { "New chart [" + this.state.focus.name + "." + this.state.focus.src + "]" }
-            </ContextMenuItem>
-          )
-        }
-        {
-          this.state.focus && this.state.focus.src !== "total" && (
-            <ContextMenuItem key="remove"
-              listener={
-                () => {
-                  Root.closeSample(this.state.focus.name, this.state.focus.src);
-                  this.setState({
-                    open: false,
-                    focus: null
-                  });
+                style={{
+                  fill:   'rgb(127,213,254)',
+                  pointerEvents:  "none"
+                }} />
+          </svg>
+      </td>
+    </>
+  ) : (
+    <>
+      <td
+        style={{
+          width: "76px"
+        }} >
+          { props.value }
+      </td>
+      <td
+        style={{
+          width: "16px"
+        }} >
+          <svg viewBox="4 4 32 32"
+            style={{
+              cursor: "pointer"
+            }}
+            onClick={
+              () => edit(true)
+            } >
+              <path d={
+                  "M32,22 A16.5,16.5,0,0,0,32,18 L29,18 A13.5,13.5,0,0,0,28,15"
+                  + " L30,13 A16.5,16.5,0,0,0,27,10 L25,12 A13.5,13.5,0,0,0,22,11"
+                  + " L22,8 A16.5,16.5,0,0,0,18,8 L18,11 A13.5,13.5,0,0,0,15,12"
+                  + " L13,10 A16.5,16.5,0,0,0,10,13 L12,15 A13.5,13.5,0,0,0,11,18"
+                  + " L8,18 A16.5,16.5,0,0,0,8,22 L11,22 A13.5,13.5,0,0,0,12,25"
+                  + " L10,27 A16.5,16.5,0,0,0,13,30 L15,28 A13.5,13.5,0,0,0,18,29"
+                  + " L18,32 A16.5,16.5,0,0,0,22,32 L22,29 A13.5,13.5,0,0,0,25,28"
+                  + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
                 }
-              } >
-                { "Remove [" + this.state.focus.name + "." + this.state.focus.src + "]" }
-            </ContextMenuItem>
-          )
-        }
-      </ContextMenu>
-    );
-  }
-
-  componentDidUpdate() {
-    if (this.state.open) {
-      const ref = this.ref;
-      ref.current.style.display = "flex";
-      ref.current.style.left = this.state.x + "px";
-      ref.current.style.top = this.state.y + "px";
-      const close = document.addEventListener('click', ev => {
-        if (!ref.current) {
-          document.removeEventListener('click', close);
-          return;
-        }
-        const dx = ev.clientX - this.state.x;
-        const dy = ev.clientY - this.state.y;
-        if (dx < -2 || dx > ref.current.offsetWidth + 2) {
-          ref.current.style.display = "none";
-          document.removeEventListener('click', close);
-        } else if (dy < -2 || dy > ref.current.offsetHeight + 2) {
-          ref.current.style.display = "none";
-          document.removeEventListener('click', close);
-        }
-        this.setState({
-          open: false,
-          focus: null
-        });
-      });
-    } else {
-      this.ref.current.style.display = "none";
-    }
-  }
-
+                style={{
+                  fill:   'rgb(65,100,148)'
+                }} />
+          </svg>
+      </td>
+    </>
+  );
 };
 
-class ContextMenuChart extends Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      open:   false,
-      x:      0,
-      y:      0,
-      focus:  null
-    };
-    this.ref = createRef();
-  }
-
-  render() {
-    return (
-      <ContextMenu menu={ this.ref } >
-        {
-          this.state.focus && (
-            <ContextMenuItem key="remove"
-              listener={
-                () => {
-                  Root.closeChart(this.state.focus.dataset, this.state.focus.name);
-                  this.setState({
-                    open: false,
-                    focus: null
-                  });
+const ColorTd = props => {
+  return (
+    <>
+      <td
+        style={{
+          width: "76px"
+        }} >
+          { rgb2code(props.value) }
+      </td>
+      <td
+        style={{
+          width: "16px"
+        }} >
+          <input type="color" defaultValue={ rgb2code(props.value) }
+            style={{
+              width:  "1rem",
+              height: "1rem"
+            }}
+            onChange={
+              e => {
+                const value = code2rgb(e.target.value);
+                if (props.value !== value) {
+                  Root.colorizeChanged = true;
+                  props.settor(value);
                 }
-              } >
-                { "Remove [" + this.state.focus.dataset + "." + this.state.focus.name + "]" }
-            </ContextMenuItem>
-          )
-        }
-      </ContextMenu>
-    );
-  }
-
-  componentDidUpdate() {
-    if (this.state.open) {
-      const ref = this.ref;
-      ref.current.style.display = "flex";
-      ref.current.style.left = this.state.x + "px";
-      ref.current.style.top = this.state.y + "px";
-      const close = document.addEventListener('click', ev => {
-        if (!ref.current) {
-          document.removeEventListener('click', close);
-          return;
-        }
-        const dx = ev.clientX - this.state.x;
-        const dy = ev.clientY - this.state.y;
-        if (dx < -2 || dx > ref.current.offsetWidth + 2) {
-          ref.current.style.display = "none";
-          document.removeEventListener('click', close);
-        } else if (dy < -2 || dy > ref.current.offsetHeight + 2) {
-          ref.current.style.display = "none";
-          document.removeEventListener('click', close);
-        }
-        this.setState({
-          open: false,
-          focus: null
-        });
-      });
-    } else {
-      this.ref.current.style.display = "none";
-    }
-  }
-
+              }
+            } />
+      </td>
+    </>
+  );
 };
-
 
 export default DatasetItem;

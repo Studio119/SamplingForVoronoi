@@ -2,12 +2,13 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-19 19:46:07
+ * @Last Modified time: 2021-01-20 22:42:17
  */
 
 import React, { Component, createRef } from "react";
 import MapBox from "../react-mapbox/MapBox";
 import * as d3 from "d3";
+import { Root } from "../App.server";
 
 
 const encodeLayers = layers => {
@@ -89,9 +90,10 @@ class Map extends Component {
         this.map.current.fitBounds([ [xmax, ymin], [xmin, ymax] ]);
       }
     } else {
-      if (this.state.colorize.toString() !== colorize.toString()) {
+      if (Root.colorizeChanged) {
         // 映射规则改变
         // console.log("映射规则改变");
+        Root.colorizeChanged = false;
         this.repaint();
       } else if (encodeLayers(this.state.layers)!== encodeLayers(layers)) {
         // 调整图层
@@ -310,6 +312,24 @@ class Map extends Component {
           this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
           this.makeVoronoi();
           this.paintVoronoi();
+        } else if (target === "disks") {
+          this.ctx["disks"].clearRect(0, 0, this.width, this.height);
+          let renderingQueue = [];
+          this.state.data.forEach(d => {
+            if (d.bounds) {
+              renderingQueue.push({
+                diskId:   d.diskId,
+                children: d.children,
+                averVal:  d.averVal,
+                lat:      d.lat,
+                lng:      d.lng,
+                bounds:   d.bounds
+              });
+            }
+          });
+          this.bufferPaintDisks(
+            renderingQueue.sort((a, b) => a.diskId - b.diskId)
+          );
         }
         this.end[target] = true;
         if (this.timers.length) {
@@ -371,6 +391,29 @@ class Map extends Component {
       } else {
         this.end["polygons"] = false;
       }
+      // BNS disks
+      if (this.state.layers.filter(d => d.label === "disks")[0].active) {
+        document.getElementById("layer-disks").style.visibility = "visible";
+        this.ctx["disks"].clearRect(0, 0, this.width, this.height);
+        let renderingQueue = [];
+        this.state.data.forEach(d => {
+          if (d.bounds) {
+            renderingQueue.push({
+              diskId:   d.diskId,
+              children: d.children,
+              averVal:  d.averVal,
+              lat:      d.lat,
+              lng:      d.lng,
+              bounds:   d.bounds
+            });
+          }
+        });
+        this.bufferPaintDisks(
+          renderingQueue.sort((a, b) => a.diskId - b.diskId)
+        );
+      } else {
+        this.end["disks"] = false;
+      }
 
       this.updated = true;
       if (this.timers.length) {
@@ -387,6 +430,26 @@ class Map extends Component {
     this.timers = [];
   }
 
+  static async waitTillReady() {
+    const map = Map.cur;
+    if (!map || !map.map.current) {
+      throw "Cannot get Map instance";
+    }
+
+    if (
+      !map.map.current.ready() || !map.map.current.map._fullyLoaded
+      || map.map.current.map._moving || map.map.current.map._zooming
+    ) {
+      return await new Promise(resolve => {
+        setTimeout(() => {
+          resolve(Map.waitTillReady());
+        }, 400);
+      });
+    }
+
+    return true;
+  }
+
   /**
    * 数据格式: [id, screenX, screenY, value(0-1)]
    *
@@ -394,7 +457,7 @@ class Map extends Component {
    * @returns {MapSnapshot}
    * @memberof Map
    */
-  static takeSnapshot() {
+  static async takeSnapshot() {
     let list = [];
     const map = Map.cur;
     if (!map || !map.map.current) {
@@ -404,6 +467,18 @@ class Map extends Component {
         data: []
       };
     }
+    
+    if (
+      !map.map.current.ready() || !map.map.current.map._fullyLoaded
+      || map.map.current.map._moving || map.map.current.map._zooming
+    ) {
+      return await new Promise(resolve => {
+        setTimeout(() => {
+          resolve(Map.takeSnapshot());
+        }, 400);
+      });
+    }
+    
     const max = map.max;
     map.state.data.forEach(d => {
       const pos = map.map.current.project(d);
@@ -419,6 +494,14 @@ class Map extends Component {
       height: map.height,
       data: list
     };
+  }
+  
+  static project(lng, lat) {
+    const map = Map.cur;
+    if (!map || !map.map.current) {
+      return [NaN, NaN];
+    }
+    return map.map.current.project({ lng, lat });
   }
 
   /**
@@ -494,6 +577,8 @@ class Map extends Component {
     const ctx = this.ctx["disks"];
     if (!ctx) return;
 
+    const total = Root.getPopulation(this.state.name.split(".")[0]);
+
     let piece = [];
 
     const paint = () => {
@@ -503,23 +588,54 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            ctx.fillStyle = d3.interpolateHsl(
+            const color = d3.interpolateHsl(
               this.state.colorize[0], this.state.colorize[1]
             )(Math.pow(d.averVal / this.max, this.state.colorize[2]));
-            ctx.strokeStyle = d3.interpolateHsl(
-              this.state.colorize[0], this.state.colorize[1]
-            )(Math.pow(d.averVal / this.max, this.state.colorize[2]));
+            ctx.strokeStyle = color;
+            const { x, y } = this.map.current.project(d);
+            const at_n = this.map.current.project([d.lng, d.bounds[1][1]]).y;
+            const at_s = this.map.current.project([d.lng, d.bounds[0][1]]).y;
+            const at_w = this.map.current.project([d.bounds[1][0], d.lat]).x;
+            const at_e = this.map.current.project([d.bounds[0][0], d.lat]).x;
+            const lo_n = y + (at_n - y) / 1.057;
+            const lo_s = y + (at_s - y) / 1.057;
+            const lo_w = x + (at_w - x) / 1.057;
+            const lo_e = x + (at_e - x) / 1.057;
             ctx.beginPath();
-            ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(x, at_n);
+            ctx.quadraticCurveTo(lo_e, lo_n, at_e, y);
+            ctx.quadraticCurveTo(lo_e, lo_s, x, at_s);
+            ctx.quadraticCurveTo(lo_w, lo_s, at_w, y);
+            ctx.quadraticCurveTo(lo_w, lo_n, x, at_n);
             ctx.stroke();
             ctx.closePath();
-            ctx.fillStyle = d3.interpolateHsl(
-              this.state.colorize[0], this.state.colorize[1]
-            )(Math.pow(d.val / this.max, this.state.colorize[2]));
-            ctx.fillRect(
-                d.x - 1.5, d.y - 1.5, 3, 3
-            );
+
+            ctx.globalAlpha = 0.08;
+            d.children.forEach(i => {
+              const p = total[i];
+              const { x: px, y: py } = this.map.current.project(p);
+              ctx.strokeStyle = d3.interpolateHsl(
+                this.state.colorize[0], this.state.colorize[1]
+              )(Math.pow(p.value / this.max, this.state.colorize[2]));
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+              ctx.closePath();
+            });
+
+            ctx.globalAlpha = 0.4;
+            d.children.forEach(i => {
+              const p = total[i];
+              const { x: px, y: py } = this.map.current.project(p);
+              ctx.strokeStyle = d3.interpolateHsl(
+                this.state.colorize[0], this.state.colorize[1]
+              )(Math.pow(p.value / this.max, this.state.colorize[2]));
+              ctx.strokeRect(px - 1, py - 1, 2, 2);
+              ctx.clearRect(px - 0.5, py - 0.5, 1, 1);
+            });
+
+            ctx.globalAlpha = 1;
           });
 
           this.progress.next();

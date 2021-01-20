@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-19 21:48:19
+ * @Last Modified time: 2021-01-20 20:18:16
  */
 
 import React from 'react';
@@ -73,10 +73,10 @@ class SampleDialog extends React.Component {
                                 width:  "8vmin",
                                 height: "8vmin",
                                 borderRadius: "4vmin",
-                                borderLeft: "4px solid rgba(156,220,254,0.56)",
+                                borderLeft: "4px solid rgba(156,220,254,0.64)",
                                 borderTop: "4px solid rgba(156,220,254,1)",
-                                borderRight: "4px solid rgba(156,220,254,0.2)",
-                                borderBottom: "4px solid rgba(156,220,254,0.4)"
+                                borderRight: "4px solid rgba(156,220,254,0.22)",
+                                borderBottom: "4px solid rgba(156,220,254,0.44)"
                               }} />
                         </div>
                       )
@@ -131,28 +131,36 @@ class SampleDialog extends React.Component {
                             {
                               algos.map((d, i) => {
                                 return (
-                                  <label key={ d }
-                                    style={{
-                                      padding:  "0.4rem 0.4rem",
-                                      width:    "9.4rem",
-                                      textAlign:  "center",
-                                      border:   "1.4px solid",
-                                      borderRadius: "1rem",
-                                      cursor:   "pointer",
-                                      color:    i === this.state.algo
-                                                  ? "rgb(44,122,214)" : "rgb(200,200,200)"
-                                    }}
-                                    onClick={
-                                      () => {
-                                        if (i !== this.state.algo) {
-                                          this.setState({
-                                            algo: i
-                                          });
-                                        }
-                                      }
-                                    } >
-                                      { d }
-                                  </label>
+                                  <div key={ d } style={{
+                                      textAlign:    "center",
+                                      display:      "flex",
+                                      borderRadius: "1.2rem 1.2rem 0rem 1.2rem",
+                                      color:        i === this.state.algo
+                                                    ? "rgb(44,122,214)" : "rgb(200,200,200)",
+                                      background: i === this.state.algo
+                                                    ? "rgb(44, 122, 214)" : undefined
+                                    }} >
+                                      <label
+                                        style={{
+                                          padding:  "0.4rem 0.4rem",
+                                          width:    "9.4rem",
+                                          border:   "1.4px solid",
+                                          borderRadius: "1.2rem",
+                                          cursor:   "pointer",
+                                          background: "white"
+                                        }}
+                                        onClick={
+                                          () => {
+                                            if (i !== this.state.algo) {
+                                              this.setState({
+                                                algo: i
+                                              });
+                                            }
+                                          }
+                                        } >
+                                          { d }
+                                      </label>
+                                  </div>
                                 );
                               })
                             }
@@ -236,6 +244,9 @@ class SampleDialog extends React.Component {
                           listener={
                             () => {
                               // TODO
+                              if (this.log.current) {
+                                this.log.current.setState({ info: null });
+                              }
                               if (this.state.algo === 0) {
                                 // Random Sampling
                                 console.log("RUN");
@@ -320,9 +331,6 @@ class SampleDialog extends React.Component {
   }
 
   componentDidUpdate() {
-    if (this.log.current) {
-      this.log.current.setState({ info: null });
-    }
     document.getElementsByClassName("main")[0].style.filter = this.state.show ? "blur(2px)" : "none";
   }
 
@@ -354,7 +362,25 @@ class RealTimeLog extends React.Component {
 };
 
 const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
-  const snapshot = Map.takeSnapshot();
+  output("Locating canvas");
+
+  await new Promise((resolve, _reject) => {
+    const loop = () => {
+      output("Locating canvas");
+      if (Root.openChart(dataset, "total")) {
+        resolve(true);
+      } else {
+        setTimeout(loop, 200);
+      }
+    };
+    setTimeout(loop, 200);
+  });
+
+  await Map.waitTillReady();
+  
+  output("Taking snapshot");
+
+  const snapshot = await Map.takeSnapshot();
 
   output("Starting calculating KDE");
 
@@ -378,7 +404,59 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
 
   if (sampling.data.status) {
     output(sampling.data.message);
-    onfulfilled(sampling.data.data);
+    const data = sampling.data.data.map(d => {
+      const radius = d.radius * 1.248; // 单位偏差
+
+      const cx = d.lng;
+      const cy = d.lat;
+      
+      const center = Map.project(cx, cy);
+      const ru = Map.project(cx + 0.0001, cy);
+
+      const dx = radius / (ru.x - center.x) * 0.0001;
+      let ly = dx;
+      let uu = Map.project(cx, cy + ly);
+      // 迭代逼近
+      for (let i = 0; i < 10; i++) {
+        const dist = center.y - uu.y;
+        const rate = dist / radius;
+        if (rate > 0.99 && rate < 1.01) {
+          // 足够逼近
+          break;
+        } else {
+          ly /= rate;
+          uu = Map.project(cx, cy + ly);
+        }
+      }
+      const tu = ly;
+      ly = dx;
+      let du = Map.project(cx, cy - ly);
+      // 迭代逼近
+      for (let i = 0; i < 10; i++) {
+        const dist = du.y - center.y;
+        const rate = dist / radius;
+        if (rate > 0.99 && rate < 1.01) {
+          // 足够逼近
+          break;
+        } else {
+          ly /= rate;
+          du = Map.project(cx, cy - ly);
+        }
+      }
+      const td = ly;
+
+      return {
+        diskId:   d.diskId,
+        children: d.children,
+        averVal:  d.averVal,
+        id:       d.id,       // 这个 id 是采样点在原始列表的索引，和数据的 id 无关
+        lat:      cy,
+        lng:      cx,
+        value:    d.value,
+        bounds:   [ [ cx + dx, cy - td ], [ cx - dx, cy + tu ] ]
+      };
+    });
+    onfulfilled(data);
   } else {
     onrejected(sampling.data.message);
     return;

@@ -1,9 +1,8 @@
-/**
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
+/*
+ * @Author: Kanata You 
+ * @Date: 2021-01-20 18:22:23 
+ * @Last Modified by: Kanata You
+ * @Last Modified time: 2021-01-20 22:42:52
  */
 
 import ActivityBar from './container/ActivityBar.client';
@@ -17,7 +16,11 @@ export const Root = {
   paint:          () => {},
   pushSample:     () => {},
   refresh:        () => {},
-  fileDialogOpen: () => {}
+  fileDialogOpen: () => {},
+  getPopulation:  () => {},
+  getDataset:     () => {},
+  openChart:      () => {},
+  colorizeChanged:false
 };
 
 export default function App(props) {
