@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-20 20:18:16
+ * @Last Modified time: 2021-01-21 15:00:06
  */
 
 import React from 'react';
@@ -13,7 +13,7 @@ import Map from './Map.client';
 import { Root } from '../App.server';
 
 
-const algos = ["Random Sampling", "Stratified BNS", "3D BNS"];
+const algos = ["Random Sampling", "Active BNS", "Stratified BNS", "3D BNS"];
 
 class SampleDialog extends React.Component {
 
@@ -95,8 +95,9 @@ class SampleDialog extends React.Component {
                               listener={
                                 () => {
                                   this.setState({
-                                    running: false,
-                                    show: false
+                                    running:  false,
+                                    show:     false,
+                                    done:     false
                                   });
                                 }
                               }
@@ -124,6 +125,7 @@ class SampleDialog extends React.Component {
                         <section
                           style={{
                             display: "flex",
+                            flexWrap: "wrap",
                             alignItems: "stretch",
                             justifyContent: "space-between",
                             padding: "4px 1rem"
@@ -135,6 +137,7 @@ class SampleDialog extends React.Component {
                                       textAlign:    "center",
                                       display:      "flex",
                                       borderRadius: "1.2rem 1.2rem 0rem 1.2rem",
+                                      margin:       "0.8rem 0",
                                       color:        i === this.state.algo
                                                     ? "rgb(44,122,214)" : "rgb(200,200,200)",
                                       background: i === this.state.algo
@@ -204,10 +207,7 @@ class SampleDialog extends React.Component {
                               )
                             }
                             {
-                              (
-                                algos[this.state.algo] === "Stratified BNS"
-                                || algos[this.state.algo] === "3D BNS"
-                              ) && (
+                              algos[this.state.algo].includes("BNS") && (
                                 <label key="steps"
                                   style={{
                                     padding:  "0.4rem 1rem",
@@ -215,11 +215,9 @@ class SampleDialog extends React.Component {
                                     alignItems: "center",
                                     justifyContent: "space-around"
                                   }} >
-                                    <label>N_steps</label>
+                                    <label>N_cols</label>
                                     <input type="number" min="0" max="1"
-                                      placeholder={
-                                        algos[this.state.algo] === "Stratified BNS" ? 6 : 8
-                                      }
+                                      defaultValue={ 6 }
                                       name="steps"
                                       style={{
                                         width:    "9.4rem",
@@ -251,11 +249,45 @@ class SampleDialog extends React.Component {
                                 // Random Sampling
                                 console.log("RUN");
                               } else if (this.state.algo === 1) {
+                                // Active BNS
+                                const dataset = this.state.dataset.name;
+                                const steps = parseInt(
+                                  document.getElementsByName("steps")[0].value || "6"
+                                );
+                                runActiveBNS(
+                                  dataset,
+                                  steps,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "Active BNS (steps=" + steps + ")",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                );
+                              } else if (this.state.algo === 2) {
                                 // Stratified BNS
                                 const dataset = this.state.dataset.name;
                                 const steps = parseInt(
-                                  document.getElementsByName("steps")[0].value
-                                  || document.getElementsByName("steps")[0].placeholder
+                                  document.getElementsByName("steps")[0].value || "6"
                                 );
                                 runStratifiedBNS(
                                   dataset,
@@ -286,9 +318,41 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
-                              } else if (this.state.algo === 2) {
+                              } else if (this.state.algo === 3) {
                                 // 3D BNS
-                                console.log("RUN");
+                                const dataset = this.state.dataset.name;
+                                const steps = parseInt(
+                                  document.getElementsByName("steps")[0].value || "6"
+                                );
+                                runBNS3D(
+                                  dataset,
+                                  steps,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "3D BNS (steps=" + steps + ")",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                );
                               }
                               setTimeout(() => {
                                 this.setState({
@@ -361,7 +425,62 @@ class RealTimeLog extends React.Component {
 
 };
 
-const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
+const resolveBNS = res => {
+  return res.map(d => {
+    const radius = d.radius * 1.248; // 单位偏差
+
+    const cx = d.lng;
+    const cy = d.lat;
+    
+    const center = Map.project(cx, cy);
+    const ru = Map.project(cx + 0.0001, cy);
+
+    const dx = radius / (ru.x - center.x) * 0.0001;
+    let ly = dx;
+    let uu = Map.project(cx, cy + ly);
+    // 迭代逼近
+    for (let i = 0; i < 10; i++) {
+      const dist = center.y - uu.y;
+      const rate = dist / radius;
+      if (rate > 0.99 && rate < 1.01) {
+        // 足够逼近
+        break;
+      } else {
+        ly /= rate;
+        uu = Map.project(cx, cy + ly);
+      }
+    }
+    const tu = ly;
+    ly = dx;
+    let du = Map.project(cx, cy - ly);
+    // 迭代逼近
+    for (let i = 0; i < 10; i++) {
+      const dist = du.y - center.y;
+      const rate = dist / radius;
+      if (rate > 0.99 && rate < 1.01) {
+        // 足够逼近
+        break;
+      } else {
+        ly /= rate;
+        du = Map.project(cx, cy - ly);
+      }
+    }
+    const td = ly;
+
+    return {
+      diskId:   d.diskId,
+      children: d.children,
+      averVal:  d.averVal,
+      id:       d.id,       // 这个 id 是采样点在原始列表的索引，和数据的 id 无关
+      lat:      cy,
+      lng:      cx,
+      value:    d.value,
+      bounds:   [ [ cx + dx, cy - td ], [ cx - dx, cy + tu ] ]
+    };
+  });
+};
+
+const readyBNS = async (dataset, output) => {
   output("Locating canvas");
 
   await new Promise((resolve, _reject) => {
@@ -377,6 +496,10 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
   });
 
   await Map.waitTillReady();
+};
+
+const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
+  await readyBNS(dataset, output);
   
   output("Taking snapshot");
 
@@ -404,58 +527,81 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
 
   if (sampling.data.status) {
     output(sampling.data.message);
-    const data = sampling.data.data.map(d => {
-      const radius = d.radius * 1.248; // 单位偏差
+    const data = resolveBNS(sampling.data.data);
+    onfulfilled(data);
+  } else {
+    onrejected(sampling.data.message);
+    return;
+  }
+};
 
-      const cx = d.lng;
-      const cy = d.lat;
-      
-      const center = Map.project(cx, cy);
-      const ru = Map.project(cx + 0.0001, cy);
+const runBNS3D = async (dataset, nStep, output, onfulfilled, onrejected) => {
+  await readyBNS(dataset, output);
+  
+  output("Taking snapshot");
 
-      const dx = radius / (ru.x - center.x) * 0.0001;
-      let ly = dx;
-      let uu = Map.project(cx, cy + ly);
-      // 迭代逼近
-      for (let i = 0; i < 10; i++) {
-        const dist = center.y - uu.y;
-        const rate = dist / radius;
-        if (rate > 0.99 && rate < 1.01) {
-          // 足够逼近
-          break;
-        } else {
-          ly /= rate;
-          uu = Map.project(cx, cy + ly);
-        }
-      }
-      const tu = ly;
-      ly = dx;
-      let du = Map.project(cx, cy - ly);
-      // 迭代逼近
-      for (let i = 0; i < 10; i++) {
-        const dist = du.y - center.y;
-        const rate = dist / radius;
-        if (rate > 0.99 && rate < 1.01) {
-          // 足够逼近
-          break;
-        } else {
-          ly /= rate;
-          du = Map.project(cx, cy - ly);
-        }
-      }
-      const td = ly;
+  const snapshot = await Map.takeSnapshot();
 
-      return {
-        diskId:   d.diskId,
-        children: d.children,
-        averVal:  d.averVal,
-        id:       d.id,       // 这个 id 是采样点在原始列表的索引，和数据的 id 无关
-        lat:      cy,
-        lng:      cx,
-        value:    d.value,
-        bounds:   [ [ cx + dx, cy - td ], [ cx - dx, cy + tu ] ]
-      };
-    });
+  output("Starting calculating KDE");
+
+  const kde = await axios.post(
+    `/snapshot`, {
+      name: dataset,
+      data: snapshot
+    }
+  );
+
+  if (kde.data.status) {
+    output(kde.data.message);
+  } else {
+    onrejected(kde.data.message);
+    return;
+  }
+  
+  output("Starting sampling");
+
+  const sampling = await axios.get(`/sample/b3/${dataset}/${nStep}`);
+
+  if (sampling.data.status) {
+    output(sampling.data.message);
+    const data = resolveBNS(sampling.data.data);
+    onfulfilled(data);
+  } else {
+    onrejected(sampling.data.message);
+    return;
+  }
+};
+
+const runActiveBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
+  await readyBNS(dataset, output);
+  
+  output("Taking snapshot");
+
+  const snapshot = await Map.takeSnapshot();
+
+  output("Starting calculating KDE");
+
+  const kde = await axios.post(
+    `/snapshot`, {
+      name: dataset,
+      data: snapshot
+    }
+  );
+
+  if (kde.data.status) {
+    output(kde.data.message);
+  } else {
+    onrejected(kde.data.message);
+    return;
+  }
+  
+  output("Starting sampling");
+
+  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}`);
+
+  if (sampling.data.status) {
+    output(sampling.data.message);
+    const data = resolveBNS(sampling.data.data);
     onfulfilled(data);
   } else {
     onrejected(sampling.data.message);

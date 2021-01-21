@@ -63,6 +63,38 @@ class BNS3d:
         next_active = []
 
         children = [index]
+
+        for i in self.indexes["active"]:
+
+            target = self.points[self.point_index[i]]
+            sq_dist = (
+                (target["x"] - seed["x"]) ** 2
+                + (target["y"] - seed["y"]) ** 2
+            )
+
+            dist3 = abs(target["val"] - seed["val"])
+
+            if sq_dist <= r2d ** 2:
+                """
+                - 由于在属性值的维度上，距离上界（椭球的高）是固定的，表示地理位置的两个维度构成正圆，
+                - 计算由 (dx, dy) 确定的位置的上界为 r3：
+                - 假设图形为球，则高度 h(dx,dy) = sqrt(r2d ^ 2 - (dx^2 + dy^2))
+                - 取 dx=dy=0 的位置，有 h(0,0) = r2d
+                - 属性值的值域（已经过归一化，即 [0, 1]，半径=差异=1）：h_normalized_max = 1
+                - 此时缩放为：h_normalized(dx,dy) = h(dx,dy) / r2d
+                - 加入参数 alpha：r3(dx,dy) = h_normalized(dx,dy) / alpha
+                """
+                r3 = (r2d ** 2 - sq_dist) ** 0.5 / r2d / alpha
+
+                if dist3 <= r3:
+                    # (0, 1r] -> 加入失效点
+                    self.indexes["disactivated"].append(i)
+                    continue
+
+            # 放回
+            next_active.append(i)
+
+            pass
         
         # 扫描剩余点
         for i in self.indexes["ready"]:
@@ -98,43 +130,11 @@ class BNS3d:
 
                 if dist3 <= r3:
                     # (1r, 2r] -> 加入活跃点
-                    self.indexes["active"].append(i)
+                    next_active.append(i)
                     continue
 
             # 放回
             next_ready.append(i)
-
-            pass
-
-        for i in self.indexes["active"]:
-
-            target = self.points[self.point_index[i]]
-            sq_dist = (
-                (target["x"] - seed["x"]) ** 2
-                + (target["y"] - seed["y"]) ** 2
-            )
-
-            dist3 = abs(target["val"] - seed["val"])
-
-            if sq_dist <= r2d ** 2:
-                """
-                - 由于在属性值的维度上，距离上界（椭球的高）是固定的，表示地理位置的两个维度构成正圆，
-                - 计算由 (dx, dy) 确定的位置的上界为 r3：
-                - 假设图形为球，则高度 h(dx,dy) = sqrt(r2d ^ 2 - (dx^2 + dy^2))
-                - 取 dx=dy=0 的位置，有 h(0,0) = r2d
-                - 属性值的值域（已经过归一化，即 [0, 1]，半径=差异=1）：h_normalized_max = 1
-                - 此时缩放为：h_normalized(dx,dy) = h(dx,dy) / r2d
-                - 加入参数 alpha：r3(dx,dy) = h_normalized(dx,dy) / alpha
-                """
-                r3 = (r2d ** 2 - sq_dist) ** 0.5 / r2d / alpha
-
-                if dist3 <= r3:
-                    # (0, 1r] -> 加入失效点
-                    self.indexes["disactivated"].append(i)
-                    continue
-
-            # 放回
-            next_active.append(i)
 
             pass
 

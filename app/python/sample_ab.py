@@ -1,25 +1,21 @@
 import sys
 import json
 from kde import get_kde
-from bns import BNS
+from active_bns import ABNS
 
 
 if __name__ == "__main__":
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])      # 属性值维度的分层数量
 
-    kde_data = get_kde(filename_origin + ".json", n_cols)
+    with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
+        kde_data = json.load(fin)
+        population = kde_data["population"]
+        matrix = kde_data["matrix"]
 
-    disks = []
+    a_bns = ABNS(matrix)
 
-    for i, kde in enumerate(kde_data):
-        population = kde["population"]
-        matrix = kde["matrix"]
-        bns = BNS(matrix, R=1.5e-4)
-
-        cur_seeds, cur_disks = bns.apply_sample()
-        # print(i, len(matrix), len(cur_disks))
-        disks += cur_disks
+    seeds, disks = a_bns.apply_sample(n_cols)
     
     point_link = {}
     data_processed = []
@@ -51,7 +47,7 @@ if __name__ == "__main__":
         
         data_processed.append(point)
 
-    with open("./storage/sb_" + filename_origin + "_" + str(n_cols) + ".json", mode='w') as f:
+    with open("./storage/ab_" + filename_origin + "_" + str(n_cols) + ".json", mode='w') as f:
         json.dump(data_processed, f)
 
     print(0)    # 程序运行完成

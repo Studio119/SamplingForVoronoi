@@ -28,7 +28,7 @@ class BNS:
 
     def apply_sample(self):
         # 迭代
-        while len(self.indexes["ready"]) > 0:
+        while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
             # 取一个种子点
             seed = self._get_random_point()
             self._create_disk(seed)
@@ -62,25 +62,6 @@ class BNS:
 
         children = [index]
         
-        # 扫描剩余就绪点
-        for i in self.indexes["ready"]:
-            target = self.points[self.point_index[i]]
-            dist = (
-                (target["x"] - seed["x"]) ** 2
-                + (target["y"] - seed["y"]) ** 2
-            ) ** 0.5
-
-            if dist > 2 * r:
-                # 放回
-                next_ready.append(i)
-            elif dist > r:
-                # (1r, 2r] -> 加入活跃点
-                self.indexes["active"].append(i)
-            else:
-                # (0, r] -> 加入失效点
-                self.indexes["disactivated"].append(i)
-                children.append(i)
-        
         # 扫描剩余活跃点
         for i in self.indexes["active"]:
             target = self.points[self.point_index[i]]
@@ -95,6 +76,25 @@ class BNS:
                 children.append(i)
             else:
                 next_active.append(i)
+        
+        # 扫描剩余就绪点
+        for i in self.indexes["ready"]:
+            target = self.points[self.point_index[i]]
+            dist = (
+                (target["x"] - seed["x"]) ** 2
+                + (target["y"] - seed["y"]) ** 2
+            ) ** 0.5
+
+            if dist > 2 * r:
+                # 放回
+                next_ready.append(i)
+            elif dist > r:
+                # (1r, 2r] -> 加入活跃点
+                next_active.append(i)
+            else:
+                # (0, r] -> 加入失效点
+                self.indexes["disactivated"].append(i)
+                children.append(i)
                 
         self.disks.append({
             "id": len(self.indexes["seed"]) - 1,
