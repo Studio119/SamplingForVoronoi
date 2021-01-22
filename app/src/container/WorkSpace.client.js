@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-20 21:33:09
+ * @Last Modified time: 2021-01-22 22:28:39
  */
 
 import { createRef, Component } from 'react';
@@ -120,7 +120,7 @@ class WorkSpace extends Component {
             style={{
               background:   "rgb(236,229,244)",
               display:      "flex",
-              alignItems:       "center",
+              alignItems:       "stretch",
               justifyContent:   "flex-start"
             }}>
               {

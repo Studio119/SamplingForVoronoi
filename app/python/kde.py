@@ -27,7 +27,10 @@ def build_matrix(population):
 
     positions = np.vstack([X.ravel(), Y.ravel()])
     values = np.vstack([m1, m2])
-    kernel = stats.gaussian_kde(values)
+    try:
+        kernel = stats.gaussian_kde(values)
+    except:
+        print(values)
     Z = np.reshape(kernel(positions).T, X.shape)
 
     time_end = time.time()

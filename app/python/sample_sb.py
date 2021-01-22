@@ -8,14 +8,19 @@ if __name__ == "__main__":
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])      # 属性值维度的分层数量
 
-    kde_data = get_kde(filename_origin + ".json", n_cols)
+    # kde_data = get_kde(filename_origin + ".json", n_cols)
+    with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
+        kde_data = json.load(fin)
+        population = kde_data["population"]
+        matrix = kde_data["matrix"]
 
     disks = []
 
-    for i, kde in enumerate(kde_data):
-        population = kde["population"]
-        matrix = kde["matrix"]
-        bns = BNS(matrix, R=1.5e-4)
+    for i in range(n_cols):
+        _min = 1 / n_cols * i
+        _max = 1 / n_cols * (i + 1)
+        M = [d for d in matrix if d[3] >= _min and d[3] < _max]
+        bns = BNS(M, R=1.5e-4)
 
         cur_seeds, cur_disks = bns.apply_sample()
         # print(i, len(matrix), len(cur_disks))

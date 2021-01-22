@@ -2,13 +2,14 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-20 22:42:17
+ * @Last Modified time: 2021-01-22 23:29:23
  */
 
 import React, { Component, createRef } from "react";
 import MapBox from "../react-mapbox/MapBox";
 import * as d3 from "d3";
 import { Root } from "../App.server";
+import { HilbertEncodeXY } from "../help/hilbertEncoder";
 
 
 const encodeLayers = layers => {
@@ -111,6 +112,34 @@ class Map extends Component {
     this.setState({ name, data, layers, colorize });
   }
 
+  setInterpolationConfig(config) {
+    let shouldUpdate = false;
+    for (const key in config) {
+      if (config.hasOwnProperty(key)) {
+        const value = config[key];
+        if (value !== this.state.interpolationConfig[key]) {
+          shouldUpdate = true;
+        }
+      }
+    }
+    if (!shouldUpdate) {
+      return;
+    }
+
+    this.setState({
+      interpolationConfig: {
+        ...this.state.interpolationConfig,
+        ...config
+      }
+    });
+
+    if (this.state.name && this.state.layers.filter(d => d.label === "interpolation")[0].active) {
+      // 更新
+      this.clearTimers();
+      this.paintInterpolation();
+    }
+  }
+
   constructor(props) {
     super(props);
     this.state = {
@@ -118,7 +147,14 @@ class Map extends Component {
       name:       null,
       data:       [],
       layers:     [],
-      colorize:   ["rgb(100,156,247)", "rgb(255,13,10)", 0.5]
+      colorize:   ["rgb(100,156,247)", "rgb(255,13,10)", 0.5],
+      interpolationConfig: {
+        pixelStep:  4,
+        differ:     false,
+        maxDist:    200,
+        minNeigh:   10,
+        manhattan:  false
+      }
     };
 
     Map.cur = this;
@@ -137,15 +173,15 @@ class Map extends Component {
 
     this.ctx = {
       "scatters": null,
-      "trace":    null,
       "polygons": null,
-      "disks":    null
+      "disks":    null,
+      "interpolation":    null
     };
     this.end = {
       "scatters": true,
-      "trace":    true,
       "polygons": true,
-      "disks":    true
+      "disks":    true,
+      "interpolation":    true
     };
 
     this.progress = {
@@ -330,6 +366,9 @@ class Map extends Component {
           this.bufferPaintDisks(
             renderingQueue.sort((a, b) => a.diskId - b.diskId)
           );
+        } else if (target === "interpolation") {
+          this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
+          this.paintInterpolation();
         }
         this.end[target] = true;
         if (this.timers.length) {
@@ -411,8 +450,18 @@ class Map extends Component {
         this.bufferPaintDisks(
           renderingQueue.sort((a, b) => a.diskId - b.diskId)
         );
+        this.end["disks"] = true;
       } else {
         this.end["disks"] = false;
+      }
+      // interpolation
+      if (this.state.layers.filter(d => d.label === "interpolation")[0].active) {
+        document.getElementById("layer-interpolation").style.visibility = "visible";
+        this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
+        this.paintInterpolation();
+        this.end["interpolation"] = true;
+      } else {
+        this.end["interpolation"] = false;
       }
 
       this.updated = true;
@@ -680,7 +729,7 @@ class Map extends Component {
                 this.state.colorize[0], this.state.colorize[1]
               )(Math.pow(this.state.data[i].value / this.max, this.state.colorize[2]));
               ctx.fillStyle = color;
-              ctx.strokeStyle = "rgb(105,105,105)";
+              // ctx.strokeStyle = "rgb(105,105,105)";
               ctx.beginPath();
               polygon.forEach((p, i) => {
                 if (i) {
@@ -690,7 +739,7 @@ class Map extends Component {
                 }
               });
               ctx.fill();
-              ctx.stroke();
+              // ctx.stroke();
               ctx.closePath();
             } catch {}
 
@@ -724,6 +773,166 @@ class Map extends Component {
     );
     
     this.voronoiPolygons = this.state.data.map((_, i) => voronoi.cellPolygon(i));
+  }
+
+  getIDW(x, y, data, code, origin) {
+    const {
+      differ,
+      maxDist,
+      minNeigh,
+      manhattan
+    } = this.state.interpolationConfig;
+
+    // 当前样本数据
+    let countNeighbors = true;
+    let curVal = 0;
+    let curWeight = 0;
+    let curReal = 0;
+    let curRealCount = 0;
+    const _data = data.map(d => {
+      return {
+        ...d,
+        dist: Math.abs(
+          parseInt(code, 2) - parseInt(d.code, 2)
+        )
+      };
+    }).sort((a, b) => a.dist - b.dist).slice(
+      0, minNeigh * 2
+    ).map(d => {
+      const dist = manhattan ? (
+        Math.abs(d.x - x) + Math.abs(d.y - y)
+      ) : (
+        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
+      );
+      if (dist < 1) {
+        // 视为重叠
+        countNeighbors = false;
+      }
+      return {
+        ...d,
+        dist
+      };
+    });
+    for (let i = 0; i < _data.length; i++) {
+      if (_data[i].dist > maxDist && i >= minNeigh) {
+        // 范围超出且数量满足
+        break;
+      } else if (!countNeighbors && _data[i].dist >= 1) {
+        // 权重为0
+        break;
+      }
+      if (countNeighbors) {
+        const w = 1 / _data[i].dist;
+        curVal += _data[i].value * w;
+        curWeight += w;
+      } else {
+        curReal += _data[i].value;
+        curRealCount += 1;
+      }
+    }
+    const curInterpolation = countNeighbors ? (
+      curVal / curWeight
+    ) : (curReal / curRealCount);
+
+    if (!differ) {
+      return curInterpolation;
+    }
+
+    // 计算原始
+    countNeighbors = true;
+    curVal = 0;
+    curWeight = 0;
+    curReal = 0;
+    curRealCount = 0;
+    const _origin = origin.map(d => {
+      return {
+        ...d,
+        dist: Math.abs(
+          parseInt(code, 2) - parseInt(d.code, 2)
+        )
+      };
+    }).sort((a, b) => a.dist - b.dist).slice(
+      0, minNeigh * 2
+    ).map(d => {
+      const dist = manhattan ? (
+        Math.abs(d.x - x) + Math.abs(d.y - y)
+      ) : (
+        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
+      );
+      if (dist < 1) {
+        // 视为重叠
+        countNeighbors = false;
+      }
+      return {
+        ...d,
+        dist
+      };
+    });
+    for (let i = 0; i < _origin.length; i++) {
+      if (_origin[i].dist > maxDist && i >= minNeigh) {
+        // 范围超出且数量满足
+        break;
+      } else if (!countNeighbors && _origin[i].dist >= 1) {
+        // 权重为0
+        break;
+      }
+      if (countNeighbors) {
+        const w = 1 / _origin[i].dist;
+        curVal += _origin[i].value * w;
+        curWeight += w;
+      } else {
+        curReal += _origin[i].value;
+        curRealCount += 1;
+      }
+    }
+    const preInterpolation = countNeighbors ? (
+      curVal / curWeight
+    ) : (curReal / curRealCount);
+    return Math.abs(curInterpolation - preInterpolation);
+  }
+
+  paintInterpolation() {
+    const ctx = this.ctx["interpolation"];
+    if (!ctx) return;
+
+    this.updated = true;
+
+    // 用 Hilbert 编码优化查找
+    const size = Math.max(this.width, this.height);
+    const data = this.state.data.map(d => {
+      const { x, y } = this.map.current.project([d.lng, d.lat]);
+      return {
+        x, y,
+        value: d.value,
+        code: HilbertEncodeXY(x, y, size, 16)
+      };
+    });
+    const origin = this.state.interpolationConfig.differ
+      ? Root.getPopulation(this.state.name.split(".")[0]) : [];
+
+    for (let _y = 0; _y < this.height; _y += this.state.interpolationConfig.pixelStep) {
+      const y = _y + this.state.interpolationConfig.pixelStep / 2;
+      for (let _x = 0; _x < this.width; _x += this.state.interpolationConfig.pixelStep) {
+        const x = _x + this.state.interpolationConfig.pixelStep / 2;
+        const code = HilbertEncodeXY(x, y, size, 16);
+        this.timers.push(
+          setTimeout(() => {
+            const val = this.getIDW(x, y, data, code, origin);
+            const color = d3.interpolateHsl(
+              this.state.colorize[0], this.state.colorize[1]
+            )(Math.pow(val / this.max, this.state.colorize[2]));
+            ctx.fillStyle = color;
+            ctx.fillRect(
+              _x, _y,
+              this.state.interpolationConfig.pixelStep,
+              this.state.interpolationConfig.pixelStep
+            );
+
+            this.progress.next();
+          }, 0)
+        );
+      }
+    }
   }
 
 };

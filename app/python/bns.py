@@ -30,6 +30,13 @@ class BNS:
         # 迭代
         while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
             # 取一个种子点
+            print({
+                "ready": len(self.indexes["ready"]),
+                "active": len(self.indexes["active"]),
+                "seed": len(self.indexes["seed"]),
+                "disactivated": len(self.indexes["disactivated"]),
+                "total": len(self.points)
+            })
             seed = self._get_random_point()
             self._create_disk(seed)
 
