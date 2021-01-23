@@ -72,6 +72,12 @@ class BNS3d:
                 + (target["y"] - seed["y"]) ** 2
             )
 
+            if sq_dist <= 16:
+                # (0, 1r] -> 加入失效点
+                children.append(i)
+                self.indexes["disactivated"].append(i)
+                continue
+
             dist3 = abs(target["val"] - seed["val"])
 
             if sq_dist <= r2d ** 2:
@@ -104,6 +110,12 @@ class BNS3d:
                 (target["x"] - seed["x"]) ** 2
                 + (target["y"] - seed["y"]) ** 2
             )
+
+            if sq_dist <= 16:
+                # (0, 1r] -> 加入失效点
+                children.append(i)
+                self.indexes["disactivated"].append(i)
+                continue
 
             dist3 = abs(target["val"] - seed["val"])
 

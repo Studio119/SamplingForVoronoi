@@ -9,7 +9,6 @@ class ABNS:
     self.points = []
     self.point_index = {}
     self.disks = []
-    self.cache_disks = {} # 缓存泊松盘信息
     self.radius = 0.5 / n_cols
 
     for p in points:
@@ -69,6 +68,18 @@ class ABNS:
       ) ** 0.5
       r = min(r, dist)
 
+    # 通过查找内部是否包含其他点缩小半径
+    for i in (self.indexes["active"] + self.indexes["ready"]):
+      target = self.points[self.point_index[i]]
+      dist = (
+        (target["x"] - seed["x"]) ** 2 + (target["y"] - seed["y"]) ** 2
+      ) ** 0.5
+      if dist < r / 2:
+        # (0, r]
+        if abs(target["val"] - seed["val"]) > self.radius:
+          # -> 缩小
+          r = min(r, dist * 2)
+          
     next_ready = []
     next_active = []
 

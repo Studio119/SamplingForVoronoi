@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-22 23:29:23
+ * @Last Modified time: 2021-01-23 15:43:58
  */
 
 import React, { Component, createRef } from "react";
@@ -149,10 +149,10 @@ class Map extends Component {
       layers:     [],
       colorize:   ["rgb(100,156,247)", "rgb(255,13,10)", 0.5],
       interpolationConfig: {
-        pixelStep:  4,
+        pixelStep:  5,
         differ:     false,
-        maxDist:    200,
-        minNeigh:   10,
+        maxDist:    100,
+        minNeigh:   8,
         manhattan:  false
       }
     };
@@ -783,67 +783,12 @@ class Map extends Component {
       manhattan
     } = this.state.interpolationConfig;
 
-    // 当前样本数据
+    // 原始样本数据
     let countNeighbors = true;
     let curVal = 0;
     let curWeight = 0;
     let curReal = 0;
     let curRealCount = 0;
-    const _data = data.map(d => {
-      return {
-        ...d,
-        dist: Math.abs(
-          parseInt(code, 2) - parseInt(d.code, 2)
-        )
-      };
-    }).sort((a, b) => a.dist - b.dist).slice(
-      0, minNeigh * 2
-    ).map(d => {
-      const dist = manhattan ? (
-        Math.abs(d.x - x) + Math.abs(d.y - y)
-      ) : (
-        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
-      );
-      if (dist < 1) {
-        // 视为重叠
-        countNeighbors = false;
-      }
-      return {
-        ...d,
-        dist
-      };
-    });
-    for (let i = 0; i < _data.length; i++) {
-      if (_data[i].dist > maxDist && i >= minNeigh) {
-        // 范围超出且数量满足
-        break;
-      } else if (!countNeighbors && _data[i].dist >= 1) {
-        // 权重为0
-        break;
-      }
-      if (countNeighbors) {
-        const w = 1 / _data[i].dist;
-        curVal += _data[i].value * w;
-        curWeight += w;
-      } else {
-        curReal += _data[i].value;
-        curRealCount += 1;
-      }
-    }
-    const curInterpolation = countNeighbors ? (
-      curVal / curWeight
-    ) : (curReal / curRealCount);
-
-    if (!differ) {
-      return curInterpolation;
-    }
-
-    // 计算原始
-    countNeighbors = true;
-    curVal = 0;
-    curWeight = 0;
-    curReal = 0;
-    curRealCount = 0;
     const _origin = origin.map(d => {
       return {
         ...d,
@@ -888,6 +833,61 @@ class Map extends Component {
     const preInterpolation = countNeighbors ? (
       curVal / curWeight
     ) : (curReal / curRealCount);
+
+    if (!differ) {
+      return preInterpolation;
+    }
+
+    // 计算当前
+    countNeighbors = true;
+    curVal = 0;
+    curWeight = 0;
+    curReal = 0;
+    curRealCount = 0;
+    const _data = data.map(d => {
+      return {
+        ...d,
+        dist: Math.abs(
+          parseInt(code, 2) - parseInt(d.code, 2)
+        )
+      };
+    }).sort((a, b) => a.dist - b.dist).slice(
+      0, minNeigh * 2
+    ).map(d => {
+      const dist = manhattan ? (
+        Math.abs(d.x - x) + Math.abs(d.y - y)
+      ) : (
+        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
+      );
+      if (dist < 1) {
+        // 视为重叠
+        countNeighbors = false;
+      }
+      return {
+        ...d,
+        dist
+      };
+    });
+    for (let i = 0; i < _data.length; i++) {
+      if (_data[i].dist > maxDist && i >= minNeigh) {
+        // 范围超出且数量满足
+        break;
+      } else if (!countNeighbors && _data[i].dist >= 1) {
+        // 权重为0
+        break;
+      }
+      if (countNeighbors) {
+        const w = 1 / _data[i].dist;
+        curVal += _data[i].value * w;
+        curWeight += w;
+      } else {
+        curReal += _data[i].value;
+        curRealCount += 1;
+      }
+    }
+    const curInterpolation = countNeighbors ? (
+      curVal / curWeight
+    ) : (curReal / curRealCount);
     return Math.abs(curInterpolation - preInterpolation);
   }
 
@@ -907,8 +907,14 @@ class Map extends Component {
         code: HilbertEncodeXY(x, y, size, 16)
       };
     });
-    const origin = this.state.interpolationConfig.differ
-      ? Root.getPopulation(this.state.name.split(".")[0]) : [];
+    const origin = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
+      const { x, y } = this.map.current.project([d.lng, d.lat]);
+      return {
+        x, y,
+        value: d.value,
+        code: HilbertEncodeXY(x, y, size, 16)
+      };
+    });
 
     for (let _y = 0; _y < this.height; _y += this.state.interpolationConfig.pixelStep) {
       const y = _y + this.state.interpolationConfig.pixelStep / 2;
@@ -929,7 +935,7 @@ class Map extends Component {
             );
 
             this.progress.next();
-          }, 0)
+          }, 2 * this.timers.length)
         );
       }
     }
