@@ -71,6 +71,20 @@ app.get(
   })
 );
 
+app.get('/process', (_req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+  if (fs.existsSync("./storage/log.txt")) {
+    res.json({
+      status: true,
+      data:   fs.readFileSync("./storage/log.txt").toString()
+    });
+  } else {
+    res.json({
+      status: false
+    });
+  }
+});
+
 app.post("/snapshot", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
   const name = req.body["name"];

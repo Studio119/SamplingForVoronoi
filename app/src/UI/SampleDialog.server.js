@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-21 15:00:06
+ * @Last Modified time: 2021-01-24 15:44:35
  */
 
 import React from 'react';
@@ -195,7 +195,7 @@ class SampleDialog extends React.Component {
                                     justifyContent: "space-around"
                                   }} >
                                     <label>Sampling Rate</label>
-                                    <input type="number" min="0" max="1" placeholder="0.2"
+                                    <input type="number" min="0" max="1" defaultValue="0.08"
                                       name="rate"
                                       style={{
                                         width:    "9.4rem",
@@ -247,7 +247,39 @@ class SampleDialog extends React.Component {
                               }
                               if (this.state.algo === 0) {
                                 // Random Sampling
-                                console.log("RUN");
+                                const dataset = this.state.dataset.name;
+                                const rate = parseFloat(
+                                  document.getElementsByName("rate")[0].value || 0.08
+                                );
+                                runRandomSampling(
+                                  dataset,
+                                  rate,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "Random Sampling (rate=" + rate + ")",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                );
                               } else if (this.state.algo === 1) {
                                 // Active BNS
                                 const dataset = this.state.dataset.name;
@@ -498,6 +530,27 @@ const readyBNS = async (dataset, output) => {
   await Map.waitTillReady();
 };
 
+const readProcess = log => {
+  let next = true;
+  const loop = () => {
+    axios.get("/process").then(res => {
+      if (!next) {
+        return;
+      }
+      if (res.data.status && res.data.data) {
+        log(res.data.data);
+      }
+      setTimeout(loop, 100);
+    });
+  };
+
+  setTimeout(loop, 100);
+
+  return {
+    close: () => next = false
+  };
+};
+
 const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
@@ -523,7 +576,11 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
   
   output("Starting sampling");
 
+  const RealTimeLog = readProcess(output);
+
   const sampling = await axios.get(`/sample/sb/${dataset}/${nStep}`);
+
+  RealTimeLog.close();
 
   if (sampling.data.status) {
     output(sampling.data.message);
@@ -560,7 +617,11 @@ const runBNS3D = async (dataset, nStep, output, onfulfilled, onrejected) => {
   
   output("Starting sampling");
 
+  const RealTimeLog = readProcess(output);
+
   const sampling = await axios.get(`/sample/b3/${dataset}/${nStep}`);
+
+  RealTimeLog.close();
 
   if (sampling.data.status) {
     output(sampling.data.message);
@@ -597,7 +658,11 @@ const runActiveBNS = async (dataset, nStep, output, onfulfilled, onrejected) => 
   
   output("Starting sampling");
 
+  const RealTimeLog = readProcess(output);
+
   const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}`);
+
+  RealTimeLog.close();
 
   if (sampling.data.status) {
     output(sampling.data.message);
@@ -607,6 +672,33 @@ const runActiveBNS = async (dataset, nStep, output, onfulfilled, onrejected) => 
     onrejected(sampling.data.message);
     return;
   }
+};
+
+const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected) => {
+  output("Starting sampling");
+
+  let data = Root.getPopulation(dataset);
+  const target = Math.round(data.length * rate);
+  let list = [];
+
+  await new Promise(resolve => {
+    for (let i = 0; i < target; i++) {
+      setTimeout(() => {
+        const index = Math.floor(Math.random() * data.length);
+        const item = data[index];
+        list.push(item);
+        data = data.slice(0, index).concat(data.slice(index + 1, data.length));
+        console.log((list.length / target * 100).toFixed(2) + "%");
+        output((list.length / target * 100).toFixed(2) + "%");
+        if (list.length === target) {
+          resolve(list);
+        }
+      }, i);
+    }
+  });
+
+  output("Completed");
+  onfulfilled(list);
 };
 
 export default SampleDialog;

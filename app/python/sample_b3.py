@@ -1,9 +1,12 @@
 import sys
 import json
 from bns3d import BNS3d
+from real_time_log import clear_log
 
 
 if __name__ == "__main__":
+    clear_log()
+
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])      # 属性值维度的最大容许差异为 1 / n_cols (归一化后)
     
@@ -15,6 +18,8 @@ if __name__ == "__main__":
     bns3d = BNS3d(matrix)
 
     seeds, disks = bns3d.apply_sample(n_cols)
+
+    clear_log()
     
     point_link = {}
     data_processed = []

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-22 22:05:25
+ * @Last Modified time: 2021-01-24 14:46:20
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -100,17 +100,9 @@ const AppRoot = () => {
                   samples:  [{
                     name: "total",
                     data: content
-                  }, {
-                    name: "20%",
-                    data: content.filter(_ => Math.random() < 0.2)
-                  }, {
-                    name: "10%",
-                    data: content.filter(_ => Math.random() < 0.1)
                   }],
                   charts:   [
-                    // createChart("total"),
-                    // createChart("20%"),
-                    // createChart("10%")
+                    createChart("total")
                   ]
                 })
               });

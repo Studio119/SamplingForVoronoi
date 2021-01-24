@@ -2,9 +2,12 @@ import sys
 import json
 from kde import get_kde
 from bns import BNS
+from real_time_log import clear_log
 
 
 if __name__ == "__main__":
+    clear_log()
+
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])      # 属性值维度的分层数量
 
@@ -28,6 +31,8 @@ if __name__ == "__main__":
     
     point_link = {}
     data_processed = []
+    
+    clear_log()
 
     with open("./datasets/" + filename_origin + ".json", mode='r') as f1:
         data_origin = json.load(f1)

@@ -1,4 +1,5 @@
 from random import random as rand
+from real_time_log import log
 
 
 """ 二维蓝噪声采样 """
@@ -30,13 +31,10 @@ class BNS:
         # 迭代
         while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
             # 取一个种子点
-            print({
-                "ready": len(self.indexes["ready"]),
-                "active": len(self.indexes["active"]),
-                "seed": len(self.indexes["seed"]),
-                "disactivated": len(self.indexes["disactivated"]),
-                "total": len(self.points)
-            })
+            log(
+                len(self.indexes["seed"]) + len(self.indexes["disactivated"]),
+                len(self.points)
+            )
             seed = self._get_random_point()
             self._create_disk(seed)
 
