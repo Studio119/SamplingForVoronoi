@@ -10,6 +10,7 @@ class BNS:
         self.points = []
         self.point_index = {}
         self.disks = []
+        self.n_cols = 1
         for p in points:
             self.point_index[p[0]] = len(self.points)
             self.points.append({
@@ -27,7 +28,8 @@ class BNS:
             "disactivated": []
         }
 
-    def apply_sample(self):
+    def apply_sample(self, n_cols):
+        self.n_cols = n_cols
         # 迭代
         while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
             # 取一个种子点
@@ -66,10 +68,20 @@ class BNS:
         next_active = []
 
         children = [index]
+
+        cur_level = int(seed["val"] * self.n_cols)
+        print(cur_level, end=" ")
         
         # 扫描剩余活跃点
         for i in self.indexes["active"]:
             target = self.points[self.point_index[i]]
+
+            level = int(target["val"] * self.n_cols)
+
+            if level != cur_level:
+                next_active.append(i)
+                continue
+
             dist = (
                 (target["x"] - seed["x"]) ** 2
                 + (target["y"] - seed["y"]) ** 2
@@ -85,6 +97,13 @@ class BNS:
         # 扫描剩余就绪点
         for i in self.indexes["ready"]:
             target = self.points[self.point_index[i]]
+
+            level = int(target["val"] * self.n_cols)
+
+            if level != cur_level:
+                next_ready.append(i)
+                continue
+
             dist = (
                 (target["x"] - seed["x"]) ** 2
                 + (target["y"] - seed["y"]) ** 2

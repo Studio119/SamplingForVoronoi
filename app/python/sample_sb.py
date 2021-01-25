@@ -9,30 +9,21 @@ if __name__ == "__main__":
     clear_log()
 
     filename_origin = sys.argv[1]
-    n_cols = int(sys.argv[2])      # 属性值维度的分层数量
-
-    # kde_data = get_kde(filename_origin + ".json", n_cols)
+    n_cols = int(sys.argv[2])
+    
     with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
         kde_data = json.load(fin)
         population = kde_data["population"]
         matrix = kde_data["matrix"]
 
-    disks = []
+    bns = BNS(matrix)
 
-    for i in range(n_cols):
-        _min = 1 / n_cols * i
-        _max = 1 / n_cols * (i + 1)
-        M = [d for d in matrix if d[3] >= _min and d[3] < _max]
-        bns = BNS(M, R=1.5e-4)
+    seeds, disks = bns.apply_sample(n_cols)
 
-        cur_seeds, cur_disks = bns.apply_sample()
-        # print(i, len(matrix), len(cur_disks))
-        disks += cur_disks
+    clear_log()
     
     point_link = {}
     data_processed = []
-    
-    clear_log()
 
     with open("./datasets/" + filename_origin + ".json", mode='r') as f1:
         data_origin = json.load(f1)
