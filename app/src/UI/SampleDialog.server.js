@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-24 15:44:35
+ * @Last Modified time: 2021-01-26 16:55:50
  */
 
 import React from 'react';
@@ -170,14 +170,14 @@ class SampleDialog extends React.Component {
                       </section>
                     </section>
 
-                    <section key="params"
+                    <section key="args"
                       style={{
                         display:        "flex",
                         flexDirection:  "column",
                         alignItems:     "stretch",
                         padding:        "0.5rem 0"
                       }} >
-                        <label>Params</label>
+                        <label>Arguments</label>
                         <section
                           style={{
                             display: "flex",
@@ -194,38 +194,88 @@ class SampleDialog extends React.Component {
                                     alignItems: "center",
                                     justifyContent: "space-around"
                                   }} >
-                                    <label>Sampling Rate</label>
+                                    <label
+                                      style={{
+                                        textAlign:  "center",
+                                        flex:       1
+                                      }} >
+                                        Sampling Rate
+                                    </label>
                                     <input type="number" min="0" max="1" defaultValue="0.08"
                                       name="rate"
                                       style={{
-                                        width:    "9.4rem",
-                                        textAlign:  "center",
-                                        border:   "1.4px solid",
-                                        borderRadius: "1rem"
+                                        width:        "9.4rem",
+                                        textAlign:    "center",
+                                        border:       "1.4px solid",
+                                        borderRadius: "1rem",
+                                        flex:         1
                                       }} />
                                 </label>
                               )
                             }
                             {
                               algos[this.state.algo].includes("BNS") && (
-                                <label key="steps"
-                                  style={{
-                                    padding:  "0.4rem 1rem",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-around"
-                                  }} >
-                                    <label>N_cols</label>
-                                    <input type="number" min="0" max="1"
-                                      defaultValue={ 6 }
-                                      name="steps"
-                                      style={{
-                                        width:    "9.4rem",
-                                        textAlign:  "center",
-                                        border:   "1.4px solid",
-                                        borderRadius: "1rem"
-                                      }} />
-                                </label>
+                                <>
+                                  <label key="Rm"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label key="label"
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1
+                                        }} >
+                                          R
+                                      </label>
+                                      <div
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          background:   "white",
+                                          flex:         1
+                                        }} >
+                                          <input type="number" min="0.5" max="50" step="0.05"
+                                            defaultValue={ 2 }
+                                            name="Rm"
+                                            style={{
+                                              textAlign:  "center",
+                                              border:     "none",
+                                              userSelect: "none"
+                                            }} />
+                                          <label key="after" >e-4</label>
+                                      </div>
+                                  </label>
+                                  <label key="steps"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1
+                                        }} >
+                                          N_cols
+                                      </label>
+                                      <input type="number" min="1" max="32" step="1"
+                                        defaultValue={ 6 }
+                                        name="steps"
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
+                                </>
                               )
                             }
                       </section>
@@ -283,11 +333,15 @@ class SampleDialog extends React.Component {
                               } else if (this.state.algo === 1) {
                                 // Active BNS
                                 const dataset = this.state.dataset.name;
+                                const Rm = parseInt(
+                                  document.getElementsByName("Rm")[0].value || "6"
+                                );
                                 const steps = parseInt(
                                   document.getElementsByName("steps")[0].value || "6"
                                 );
                                 runActiveBNS(
                                   dataset,
+                                  Rm,
                                   steps,
                                   info => {
                                     if (this.log.current) {
@@ -302,7 +356,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Active BNS (steps=" + steps + ")",
+                                      "Active BNS (R=" + Rm + "e-4,steps=" + steps + ")",
                                       data
                                     );
                                   },
@@ -318,11 +372,15 @@ class SampleDialog extends React.Component {
                               } else if (this.state.algo === 2) {
                                 // Stratified BNS
                                 const dataset = this.state.dataset.name;
+                                const Rm = parseInt(
+                                  document.getElementsByName("Rm")[0].value || "6"
+                                );
                                 const steps = parseInt(
                                   document.getElementsByName("steps")[0].value || "6"
                                 );
                                 runStratifiedBNS(
                                   dataset,
+                                  Rm,
                                   steps,
                                   info => {
                                     if (this.log.current) {
@@ -337,7 +395,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Stratified BNS (steps=" + steps + ")",
+                                      "Stratified BNS (R=" + Rm + "e-4,steps=" + steps + ")",
                                       data
                                     );
                                   },
@@ -353,11 +411,15 @@ class SampleDialog extends React.Component {
                               } else if (this.state.algo === 3) {
                                 // 3D BNS
                                 const dataset = this.state.dataset.name;
+                                const Rm = parseInt(
+                                  document.getElementsByName("Rm")[0].value || "6"
+                                );
                                 const steps = parseInt(
                                   document.getElementsByName("steps")[0].value || "6"
                                 );
                                 runBNS3D(
                                   dataset,
+                                  Rm,
                                   steps,
                                   info => {
                                     if (this.log.current) {
@@ -372,7 +434,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "3D BNS (steps=" + steps + ")",
+                                      "3D BNS (R=" + Rm + "e-4,steps=" + steps + ")",
                                       data
                                     );
                                   },
@@ -551,7 +613,7 @@ const readProcess = log => {
   };
 };
 
-const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
+const runStratifiedBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -578,7 +640,7 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/sb/${dataset}/${nStep}`);
+  const sampling = await axios.get(`/sample/sb/${dataset}/${nStep}/${Rm}`);
 
   RealTimeLog.close();
 
@@ -592,7 +654,7 @@ const runStratifiedBNS = async (dataset, nStep, output, onfulfilled, onrejected)
   }
 };
 
-const runBNS3D = async (dataset, nStep, output, onfulfilled, onrejected) => {
+const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -619,7 +681,7 @@ const runBNS3D = async (dataset, nStep, output, onfulfilled, onrejected) => {
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/b3/${dataset}/${nStep}`);
+  const sampling = await axios.get(`/sample/b3/${dataset}/${nStep}/${Rm}`);
 
   RealTimeLog.close();
 
@@ -633,7 +695,7 @@ const runBNS3D = async (dataset, nStep, output, onfulfilled, onrejected) => {
   }
 };
 
-const runActiveBNS = async (dataset, nStep, output, onfulfilled, onrejected) => {
+const runActiveBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -660,7 +722,7 @@ const runActiveBNS = async (dataset, nStep, output, onfulfilled, onrejected) => 
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}`);
+  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}/${Rm}`);
 
   RealTimeLog.close();
 

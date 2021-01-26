@@ -5,7 +5,7 @@ from real_time_log import log
 """ 二维蓝噪声采样 """
 class BNS:
 
-    def __init__(self, points, R=1e-4):
+    def __init__(self, points, R=2e-4):
         # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
         self.points = []
         self.point_index = {}
@@ -70,7 +70,6 @@ class BNS:
         children = [index]
 
         cur_level = int(seed["val"] * self.n_cols)
-        print(cur_level, end=" ")
         
         # 扫描剩余活跃点
         for i in self.indexes["active"]:

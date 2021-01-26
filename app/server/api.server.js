@@ -125,13 +125,15 @@ app.post("/snapshot", (req, res) => {
   );
 });
 
-app.get("/sample/sb/:dataset/:n_cols", (req, res) => {
+app.get("/sample/sb/:dataset/:n_cols/:Rm", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = req.params["dataset"];
     const n_cols = req.params["n_cols"];
+    const Rm = req.params["Rm"];
     process.exec(
-      `conda activate vis2021 && python ./python/sample_sb.py ${ path } ${ n_cols }`,
+      `conda activate vis2021 && python ./python/sample_sb.py ${ path } ${ n_cols } ${ Rm }`,
       (error, stdout, stderr) => {
+        fs.unlinkSync("./storage/log.txt");
         if (error || stderr) {
           res.json({
             status: false,
@@ -143,7 +145,7 @@ app.get("/sample/sb/:dataset/:n_cols", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/sb_" + path + "_" + n_cols + ".json"
+                "./storage/sb_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
               )
             )
           });
@@ -157,13 +159,15 @@ app.get("/sample/sb/:dataset/:n_cols", (req, res) => {
     );
 });
 
-app.get("/sample/b3/:dataset/:n_cols", (req, res) => {
+app.get("/sample/b3/:dataset/:n_cols/:Rm", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = req.params["dataset"];
     const n_cols = req.params["n_cols"];
+    const Rm = req.params["Rm"];
     process.exec(
-      `conda activate vis2021 && python ./python/sample_b3.py ${ path } ${ n_cols }`,
+      `conda activate vis2021 && python ./python/sample_b3.py ${ path } ${ n_cols } ${ Rm }`,
       (error, stdout, stderr) => {
+        fs.unlinkSync("./storage/log.txt");
         if (error || stderr) {
           res.json({
             status: false,
@@ -175,7 +179,7 @@ app.get("/sample/b3/:dataset/:n_cols", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/b3_" + path + "_" + n_cols + ".json"
+                "./storage/b3_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
               )
             )
           });
@@ -189,13 +193,15 @@ app.get("/sample/b3/:dataset/:n_cols", (req, res) => {
     );
 });
 
-app.get("/sample/ab/:dataset/:n_cols", (req, res) => {
+app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = req.params["dataset"];
     const n_cols = req.params["n_cols"];
+    const Rm = req.params["Rm"];
     process.exec(
-      `conda activate vis2021 && python ./python/sample_ab.py ${ path } ${ n_cols }`,
+      `conda activate vis2021 && python ./python/sample_ab.py ${ path } ${ n_cols } ${ Rm }`,
       (error, stdout, stderr) => {
+        fs.unlinkSync("./storage/log.txt");
         if (error || stderr) {
           res.json({
             status: false,
@@ -207,7 +213,7 @@ app.get("/sample/ab/:dataset/:n_cols", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/ab_" + path + "_" + n_cols + ".json"
+                "./storage/ab_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
               )
             )
           });

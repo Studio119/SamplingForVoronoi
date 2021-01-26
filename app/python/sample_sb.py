@@ -10,13 +10,14 @@ if __name__ == "__main__":
 
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])
+    R = float(sys.argv[3]) * 1e-4
     
     with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
         kde_data = json.load(fin)
         population = kde_data["population"]
         matrix = kde_data["matrix"]
 
-    bns = BNS(matrix)
+    bns = BNS(matrix, R=R)
 
     seeds, disks = bns.apply_sample(n_cols)
 
@@ -52,7 +53,10 @@ if __name__ == "__main__":
         
         data_processed.append(point)
 
-    with open("./storage/sb_" + filename_origin + "_" + str(n_cols) + ".json", mode='w') as f:
+    with open(
+        "./storage/sb_" + filename_origin + "$n_cols=" + sys.argv[2]
+        + "$R=" + sys.argv[3] + ".json", mode='w'
+    ) as f:
         json.dump(data_processed, f)
 
     print(0)    # 程序运行完成

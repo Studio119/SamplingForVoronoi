@@ -9,13 +9,14 @@ if __name__ == "__main__":
 
     filename_origin = sys.argv[1]
     n_cols = int(sys.argv[2])      # 属性值维度的最大容许差异为 1 / n_cols (归一化后)
+    R = float(sys.argv[3]) * 1e-4
     
     with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
         kde_data = json.load(fin)
         population = kde_data["population"]
         matrix = kde_data["matrix"]
 
-    bns3d = BNS3d(matrix)
+    bns3d = BNS3d(matrix, R=R)
 
     seeds, disks = bns3d.apply_sample(n_cols)
 
@@ -51,7 +52,10 @@ if __name__ == "__main__":
         
         data_processed.append(point)
 
-    with open("./storage/b3_" + filename_origin + "_" + str(n_cols) + ".json", mode='w') as f:
+    with open(
+        "./storage/b3_" + filename_origin + "$n_cols=" + sys.argv[2]
+        + "$R=" + sys.argv[3] + ".json", mode='w'
+    ) as f:
         json.dump(data_processed, f)
 
     print(0)    # 程序运行完成
