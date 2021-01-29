@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-26 16:55:50
+ * @Last Modified time: 2021-01-29 21:53:26
  */
 
 import React from 'react';
@@ -247,7 +247,13 @@ class SampleDialog extends React.Component {
                                               border:     "none",
                                               userSelect: "none"
                                             }} />
-                                          <label key="after" >e-4</label>
+                                          <label key="after"
+                                            style={{
+                                              pointerEvents:  "none",
+                                              userSelect:     "none"
+                                            }} >
+                                              e-4
+                                          </label>
                                       </div>
                                   </label>
                                   <label key="steps"
@@ -439,7 +445,7 @@ class SampleDialog extends React.Component {
                                     );
                                   },
                                   reason => {
-                                    console.log("rejected", reason);
+                                    this.log.current.setState({ info: reason });
                                     this.setState({
                                       show:     true,
                                       running:  true,
@@ -494,6 +500,15 @@ class SampleDialog extends React.Component {
 
 };
 
+const isProcessLog = log => {
+  log = log.trim();
+  const fitting = /\d+(\.\d+)?%/.exec(log);
+  if (!fitting) {
+    return false;
+  }
+  return fitting[0].length === log.length;
+};
+
 class RealTimeLog extends React.Component {
 
   constructor(props) {
@@ -504,13 +519,19 @@ class RealTimeLog extends React.Component {
   }
 
   render() {
+    const isPLog = isProcessLog(this.state.info ?? "");
     return this.state.info ? (
       <section 
         style={{
           margin:     "6vh 0 1rem",
           padding:    "0.8rem 1.2rem",
           border:     "1px solid rgb(188,188,188)",
-          whiteSpace: "pre"
+          whiteSpace: "pre",
+          background: isPLog ? (
+            "linear-gradient(to right, rgb(56,195,103) 2%,"
+            + " rgb(56,195,103) " + this.state.info + ", #0000 " + this.state.info
+            + ")"
+          ) : undefined
         }} >
           { this.state.info }
       </section>

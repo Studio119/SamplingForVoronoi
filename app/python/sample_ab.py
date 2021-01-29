@@ -2,21 +2,26 @@ import sys
 import json
 from kde import get_kde
 from active_bns import ABNS
+from real_time_log import clear_log
 
 
 if __name__ == "__main__":
-    filename_origin = sys.argv[1]
-    n_cols = int(sys.argv[2])      # 属性值维度的分层数量
-    R = float(sys.argv[3])
+    clear_log()
 
+    filename_origin = sys.argv[1]
+    n_cols = int(sys.argv[2])      # 属性值维度的最大容许差异为 1 / n_cols (归一化后)
+    R = float(sys.argv[3]) * 1e-4
+    
     with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
         kde_data = json.load(fin)
         population = kde_data["population"]
         matrix = kde_data["matrix"]
 
-    a_bns = ABNS(matrix)
+    abns = ABNS(matrix, R=R)
 
-    seeds, disks = a_bns.apply_sample(n_cols)
+    seeds, disks = abns.apply_sample(n_cols)
+
+    clear_log()
     
     point_link = {}
     data_processed = []

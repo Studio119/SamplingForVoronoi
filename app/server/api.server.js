@@ -201,7 +201,9 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
     process.exec(
       `conda activate vis2021 && python ./python/sample_ab.py ${ path } ${ n_cols } ${ Rm }`,
       (error, stdout, stderr) => {
-        fs.unlinkSync("./storage/log.txt");
+        if (fs.existsSync("./storage/log.txt")) {
+          fs.unlinkSync("./storage/log.txt");
+        }
         if (error || stderr) {
           res.json({
             status: false,

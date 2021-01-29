@@ -91,10 +91,10 @@ class BNS3d:
                 + (target["y"] - seed["y"]) ** 2
             )
 
-            if sq_dist <= 16:
-                # 稍后处理
-                self.indexes["ignored"].append(i)
-                continue
+            # if sq_dist <= 16:
+            #     # 稍后处理
+            #     self.indexes["ignored"].append(i)
+            #     continue
 
             dist3 = abs(target["val"] - seed["val"])
 
@@ -129,10 +129,10 @@ class BNS3d:
                 + (target["y"] - seed["y"]) ** 2
             )
 
-            if sq_dist <= 16:
-                # 稍后处理
-                self.indexes["ignored"].append(i)
-                continue
+            # if sq_dist <= 16:
+            #     # 稍后处理
+            #     self.indexes["ignored"].append(i)
+            #     continue
 
             dist3 = abs(target["val"] - seed["val"])
 
