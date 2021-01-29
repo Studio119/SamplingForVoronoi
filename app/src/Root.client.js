@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-24 14:46:20
+ * @Last Modified time: 2021-01-29 22:29:56
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -126,11 +126,11 @@ const AppRoot = () => {
     });
   };
 
-  Root.close = name => {
+  Root.close = src => {
     setState({
       ...state,
       time:   (new Date()).getTime(),
-      datasets: state.datasets.filter(dataset => dataset.name !== name)
+      datasets: state.datasets.filter(dataset => dataset.name !== src.name)
     });
   };
 
@@ -146,6 +146,21 @@ const AppRoot = () => {
         } : dataset;
       })
     });
+  };
+
+  Root.exportSample = (name, src) => {
+    const sample = state.datasets.filter(dataset => {
+      return dataset.name === name;
+    })[0].samples.filter(s => s.name === src)[0].data;
+
+    const a = document.createElement("a");
+    a.download = "sample(" + name + "," + src + ").json";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    const dataBlob = new Blob([JSON.stringify(sample)]);
+    a.href = URL.createObjectURL(dataBlob);
+    a.click();
+    a.remove();
   };
 
   Root.closeChart = (datasetName, name) => {

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 20:08:02 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-20 15:07:54
+ * @Last Modified time: 2021-01-29 22:23:50
  */
 
 import { useState } from 'react';
@@ -66,7 +66,7 @@ const ContextMenu = () => {
 };
 
 export const ContextMenuItem = props => {
-  return (
+  return props.action ? (
     <label
       onClick={
         () => {
@@ -74,6 +74,18 @@ export const ContextMenuItem = props => {
           closeContextMenu();
         }
       } >
+        { props.text }
+    </label>
+  ) : (
+    <label
+      style={{
+        cursor:         "default",
+        pointerEvents:  "none",
+        margin:         "0 0.4rem 4px",
+        borderBottom:   "2px solid #8888",
+        padding:        "0.1rem 0.2rem 4px",
+        fontWeight:     600
+      }} >
         { props.text }
     </label>
   );

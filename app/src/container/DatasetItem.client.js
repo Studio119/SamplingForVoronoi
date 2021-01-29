@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-23 21:48:44
+ * @Last Modified time: 2021-01-29 22:28:03
  */
 
 import { useState, useEffect } from 'react';
@@ -90,14 +90,16 @@ const DatasetItem = props => {
       e => {
         callContextMenu(
           e, [{
+            text:   "Dataset [" + props.name + "]"
+          }, {
             action: Root.fileDialogOpen,
-            text:   "Import"
+            text:   "Import..."
           }, {
             action: () => Root.sample(props),
-            text:   "Sample [" + props.name + "]"
+            text:   "Perform sampling"
           }, {
             action: () => Root.close(props),
-            text:   "Close [" + props.name + "]"
+            text:   "Close dataset"
           }]
         );
       }
@@ -346,30 +348,39 @@ const DatasetItem = props => {
                         if (sample.name === "total") {
                           callContextMenu(
                             e, [{
+                              text:   "Sample [" + props.name + "." + sample.name + "]"
+                            }, {
                               action: () => Root.sample(props),
-                              text:   "Sample [" + props.name + "]"
+                              text:   "Perform sampling"
                             }, {
                               action: () => {
                                 Root.paint(props.name, sample.name);
                               },
-                              text: "New chart [" + props.name + "." + sample.name + "]"
+                              text: "Create chart"
                             }]
                           );
                         } else {
                           callContextMenu(
                             e, [{
+                              text:   "Sample [" + props.name + "." + sample.name + "]"
+                            }, {
                               action: () => Root.sample(props),
-                              text:   "Sample [" + props.name + "]"
+                              text:   "Perform sampling"
                             }, {
                               action: () => {
                                 Root.paint(props.name, sample.name);
                               },
-                              text: "New chart [" + props.name + "." + sample.name + "]"
+                              text: "Create chart"
+                            }, {
+                              action: () => {
+                                Root.exportSample(props.name, sample.name);
+                              },
+                              text: "Export"
                             }, {
                               action: () => {
                                 Root.closeSample(props.name, sample.name);
                               },
-                              text: "Remove sample [" + props.name + "." + sample.name + "]"
+                              text: "Remove"
                             }]
                           );
                         }
@@ -422,10 +433,12 @@ const DatasetItem = props => {
                     e => {
                       callContextMenu(
                         e, [{
+                          text: "Chart [" + props.name + "." + chart.name + "]"
+                        }, {
                           action: () => {
                             Root.closeChart(props.name, chart.name);
                           },
-                          text: "Close chart [" + props.name + "." + chart.name + "]"
+                          text: "Close"
                         }]
                       );
                     }
