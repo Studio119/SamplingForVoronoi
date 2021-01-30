@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-23 15:43:58
+ * @Last Modified time: 2021-01-30 23:52:32
  */
 
 import React, { Component, createRef } from "react";
@@ -175,12 +175,14 @@ class Map extends Component {
       "scatters": null,
       "polygons": null,
       "disks":    null,
+      "links":    null,
       "interpolation":    null
     };
     this.end = {
       "scatters": true,
       "polygons": true,
       "disks":    true,
+      "links":    null,
       "interpolation":    true
     };
 
@@ -369,6 +371,9 @@ class Map extends Component {
         } else if (target === "interpolation") {
           this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
           this.paintInterpolation();
+        } else if (target === "links") {
+          this.ctx["links"].clearRect(0, 0, this.width, this.height);
+          this.paintLinks();
         }
         this.end[target] = true;
         if (this.timers.length) {
@@ -462,6 +467,15 @@ class Map extends Component {
         this.end["interpolation"] = true;
       } else {
         this.end["interpolation"] = false;
+      }
+      // links
+      if (this.state.layers.filter(d => d.label === "links")[0].active) {
+        document.getElementById("layer-links").style.visibility = "visible";
+        this.ctx["links"].clearRect(0, 0, this.width, this.height);
+        this.paintLinks();
+        this.end["links"] = true;
+      } else {
+        this.end["links"] = false;
       }
 
       this.updated = true;
@@ -939,6 +953,54 @@ class Map extends Component {
         );
       }
     }
+  }
+
+  connectCluster(cluster) {
+    let links = []
+
+    for (let i = 0; i < cluster.length - 1; i++) {
+      for (let j = i + 1; j < cluster.length; j++) {
+        const dist = Math.sqrt(
+          Math.pow(cluster[i].x - cluster[j].x, 2)
+          + Math.pow(cluster[i].y - cluster[j].y, 2)
+        );
+        if (dist < 4) {
+          links.push([[cluster[i].x, cluster[i].y], [cluster[j].x, cluster[j].y]]);
+        }
+      }
+    }
+
+    return links;
+  }
+
+  paintLinks() {
+    if (!this.state.name) {
+      return;
+    }
+    const ctx = this.ctx["links"];
+    if (!ctx) return;
+
+    this.updated = true;
+
+    axios.get(`/clustering/${dataset}`).then(res => {
+      if (res.data.status) {
+        const groups = res.data.data.map(grp => {
+          return grp.map(d => {
+            const p = this.state.data[d];
+            return {
+              ...p,
+              ...this.map.current.project([p.lng, p.lat])
+            };
+          });
+        });
+
+        groups.forEach(grp => {
+          const links = this.connectCluster(grp);
+
+          // ctx.
+        });
+      }
+    });
   }
 
 };

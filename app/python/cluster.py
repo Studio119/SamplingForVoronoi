@@ -1,5 +1,6 @@
 import sys
 import json
+from real_time_log import log
 
 
 class Cluster:
@@ -26,8 +27,7 @@ class Cluster:
         "id": int(p[0]),
         "x":  p[1],
         "y":  p[2],
-        "v":  (p[3] - val_min) / (val_max - val_min),
-        "links": []
+        "v":  (p[3] - val_min) / (val_max - val_min)
       })
 
     return
@@ -95,68 +95,32 @@ class Cluster:
             })
     return sorted(neighbors, key=lambda d: d["dist"])
 
-  def _walk(self, k=10000):
-    groups = {}
-    where_is_node = {}
-    for i in range(len(self.nodes)):
-      groups[i] = [i]
-      where_is_node[i] = i
+  def _walk(self):
+    groups = []
+    remained = [i for i in range(len(self.nodes))]
+    check_then = []
 
-    # 构建边
-    all_links = []
-    links = {}
-    for i, node in enumerate(self.nodes):
-      links[i] = []
-    for i, node in enumerate(self.nodes):
-      neighbors = self._search_neighbors(node)
-      for j, link in enumerate(neighbors):
-        if i == j:
+    while len(remained) + len(check_then) > 0:
+      if len(check_then) > 0:
+        seed = check_then.pop(0)
+        neighbors = [node["idx"] for node in self._search_neighbors(self.nodes[seed])]
+      else:
+        seed = remained.pop(0)
+        groups.append([seed])
+        neighbors = [node["idx"] for node in self._search_neighbors(self.nodes[seed])]
+      for node in neighbors:
+        if node not in remained:
           continue
-        links[i].append({
-          "next": j,
-          "dist": link["dist"]
-        })
-        if i < j:
-          continue
-        all_links.append({
-          "ends": (i, j),
-          "dist": link["dist"]
-        })
-      links[i].sort(key=lambda d: d["dist"])
-    all_links.sort(key=lambda d: d["dist"])
-
-    n_links = len(all_links)
-    while len(all_links):
-      link = all_links.pop(0)
-      grp_i = where_is_node[link["ends"][0]]
-      grp_j = where_is_node[link["ends"][1]]
-      if grp_i == grp_j:
-        continue
-      farthest = 0
-      for node_a in groups[grp_i]:
-        if farthest > self.r_pos:
-          break
-        for node_b in groups[grp_j]:
-          if farthest > self.r_pos:
-            break
-          dist = (
-            (self.nodes[node_a]["x"] - self.nodes[node_b]["x"]) ** 2
-            + (self.nodes[node_a]["y"] - self.nodes[node_b]["y"]) ** 2
-          ) ** 0.5
-          farthest = max(farthest, dist)
-      if farthest <= self.r_pos:
-        # 合并两个类簇
-        for node in groups[grp_j]:
-          where_is_node[node] = grp_i
-        groups[grp_i] += groups[grp_j]
-        del groups[grp_j]
-      print(
-        "{:.2%}".format(min(1, k / len(groups))),
-        "{:.2%}".format(1 - len(all_links) / n_links),
-        len(groups)
+        groups[-1].append(node)
+        check_then.append(node)
+      print("{} unchecked, {} ready, {} groups".format(
+        len(remained), len(check_then), len(groups)
+      ))
+      log(
+        len(self.nodes) - len(self.indexes["seed"]) + len(self.indexes["disactivated"]),
+        len(self.nodes)
       )
-      if len(groups) <= k:
-        break
+      remained = [d for d in remained if d not in neighbors]
 
     return groups
 
@@ -174,7 +138,7 @@ class Cluster:
     # 记录散列索引
     self._cache()
     
-    groups = self._walk(10000)
+    groups = self._walk()
 
     return groups
 
@@ -191,6 +155,14 @@ if __name__ == "__main__":
   cluster = Cluster(r_pos, r_val)
   groups = cluster.transform(data)
   print(len(groups))
+  sizes = {}
+  for grp in groups:
+    size = len(grp)
+    if size in sizes:
+      sizes[size] += 1
+    else:
+      sizes[size] = 1
+  print(sizes)
     
   with open("./storage/cluster_" + filename_origin + ".json", mode='w') as fout:
     json.dump(groups, fout)

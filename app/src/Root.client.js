@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-29 22:29:56
+ * @Last Modified time: 2021-01-30 23:05:27
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -39,7 +39,7 @@ const createChart = (src, rename=undefined) => {
     }, {
       label:  "polygons",
       active: false,
-      opacity: 0.8
+      opacity: 1
     }, {
       label:  "disks",
       active: false,
@@ -48,6 +48,10 @@ const createChart = (src, rename=undefined) => {
       label:  "interpolation",
       active: false,
       opacity: 1
+    }, {
+      label:  "links",
+      active: false,
+      opacity: 0.8
     }]
   };
 };
