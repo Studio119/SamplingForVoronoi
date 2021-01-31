@@ -242,62 +242,62 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
     );
 });
 
-app.get("/clustering/:dataset", (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-    const path = "./storage/cluster_" + req.params["dataset"] + ".json"
-    if (fs.existsSync(path)) {
-      res.json({
-        status: true,
-        message: "Completed",
-        data: JSON.parse(
-          fs.readFileSync(path)
-        )
-      });
-    } else {
-      res.json({
-        status: false,
-        message: "Not exist",
-        data: null
-      });
-    }
-});
+// app.get("/clustering/:dataset", (req, res) => {
+//     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+//     const path = "./storage/cluster_" + req.params["dataset"] + ".json"
+//     if (fs.existsSync(path)) {
+//       res.json({
+//         status: true,
+//         message: "Completed",
+//         data: JSON.parse(
+//           fs.readFileSync(path)
+//         )
+//       });
+//     } else {
+//       res.json({
+//         status: false,
+//         message: "Not exist",
+//         data: null
+//       });
+//     }
+// });
 
-app.get("/cluster/:dataset", (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-    const path = req.params["dataset"];
-    process.exec(
-      `conda activate vis2021 && python cluster.py ${ path } 4 0.05`,
-      (error, stdout, stderr) => {
-        if (fs.existsSync("./storage/log.txt")) {
-          fs.unlinkSync("./storage/log.txt");
-        }
-        if (error || stderr) {
-          res.json({
-            status: false,
-            message: stdout || stderr || error
-          });
-        } else if (!stdout.includes('Error')) {
-          res.json({
-            status: true,
-            message: "Completed",
-            data: JSON.parse(
-              fs.readFileSync(
-                "./storage/cluster_" + path + ".json"
-              )
-            )
-          });
-        } else {
-          res.json({
-            status: false,
-            message: stdout
-          });
-        }
-        if (fs.existsSync("./storage/log.txt")) {
-          fs.unlinkSync("./storage/log.txt");
-        }
-      }
-    );
-});
+// app.get("/cluster/:dataset", (req, res) => {
+//     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+//     const path = req.params["dataset"];
+//     process.exec(
+//       `conda activate vis2021 && python cluster.py ${ path } 4 0.05`,
+//       (error, stdout, stderr) => {
+//         if (fs.existsSync("./storage/log.txt")) {
+//           fs.unlinkSync("./storage/log.txt");
+//         }
+//         if (error || stderr) {
+//           res.json({
+//             status: false,
+//             message: stdout || stderr || error
+//           });
+//         } else if (!stdout.includes('Error')) {
+//           res.json({
+//             status: true,
+//             message: "Completed",
+//             data: JSON.parse(
+//               fs.readFileSync(
+//                 "./storage/cluster_" + path + ".json"
+//               )
+//             )
+//           });
+//         } else {
+//           res.json({
+//             status: false,
+//             message: stdout
+//           });
+//         }
+//         if (fs.existsSync("./storage/log.txt")) {
+//           fs.unlinkSync("./storage/log.txt");
+//         }
+//       }
+//     );
+// });
 
 async function renderReactTree(res, props) {
   await waitForWebpack();

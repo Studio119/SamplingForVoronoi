@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-30 23:52:32
+ * @Last Modified time: 2021-01-31 17:56:22
  */
 
 import React, { Component, createRef } from "react";
@@ -10,6 +10,7 @@ import MapBox from "../react-mapbox/MapBox";
 import * as d3 from "d3";
 import { Root } from "../App.server";
 import { HilbertEncodeXY } from "../help/hilbertEncoder";
+import axios from "axios";
 
 
 const encodeLayers = layers => {
@@ -175,14 +176,14 @@ class Map extends Component {
       "scatters": null,
       "polygons": null,
       "disks":    null,
-      "links":    null,
+      // "links":    null,
       "interpolation":    null
     };
     this.end = {
       "scatters": true,
       "polygons": true,
       "disks":    true,
-      "links":    null,
+      // "links":    null,
       "interpolation":    true
     };
 
@@ -371,10 +372,11 @@ class Map extends Component {
         } else if (target === "interpolation") {
           this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
           this.paintInterpolation();
-        } else if (target === "links") {
-          this.ctx["links"].clearRect(0, 0, this.width, this.height);
-          this.paintLinks();
         }
+        // else if (target === "links") {
+        //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
+        //   this.paintLinks();
+        // }
         this.end[target] = true;
         if (this.timers.length) {
           this.progress.start(this.timers.length);
@@ -436,7 +438,8 @@ class Map extends Component {
         this.end["polygons"] = false;
       }
       // BNS disks
-      if (this.state.layers.filter(d => d.label === "disks")[0].active) {
+      const layerDisks = this.state.layers.filter(d => d.label === "disks")[0];
+      if (layerDisks && layerDisks.active) {
         document.getElementById("layer-disks").style.visibility = "visible";
         this.ctx["disks"].clearRect(0, 0, this.width, this.height);
         let renderingQueue = [];
@@ -459,8 +462,9 @@ class Map extends Component {
       } else {
         this.end["disks"] = false;
       }
+      const layerInterpolation = this.state.layers.filter(d => d.label === "interpolation")[0];
       // interpolation
-      if (this.state.layers.filter(d => d.label === "interpolation")[0].active) {
+      if (layerInterpolation && layerInterpolation.active) {
         document.getElementById("layer-interpolation").style.visibility = "visible";
         this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
         this.paintInterpolation();
@@ -468,15 +472,15 @@ class Map extends Component {
       } else {
         this.end["interpolation"] = false;
       }
-      // links
-      if (this.state.layers.filter(d => d.label === "links")[0].active) {
-        document.getElementById("layer-links").style.visibility = "visible";
-        this.ctx["links"].clearRect(0, 0, this.width, this.height);
-        this.paintLinks();
-        this.end["links"] = true;
-      } else {
-        this.end["links"] = false;
-      }
+      // // links
+      // if (this.state.layers.filter(d => d.label === "links")[0].active) {
+      //   document.getElementById("layer-links").style.visibility = "visible";
+      //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
+      //   this.paintLinks();
+      //   this.end["links"] = true;
+      // } else {
+      //   this.end["links"] = false;
+      // }
 
       this.updated = true;
       if (this.timers.length) {
@@ -982,7 +986,7 @@ class Map extends Component {
 
     this.updated = true;
 
-    axios.get(`/clustering/${dataset}`).then(res => {
+    axios.get(`/clustering/${this.state.name.split(".")[0]}`).then(res => {
       if (res.data.status) {
         const groups = res.data.data.map(grp => {
           return grp.map(d => {
@@ -993,11 +997,37 @@ class Map extends Component {
             };
           });
         });
-
+        
         groups.forEach(grp => {
-          const links = this.connectCluster(grp);
+          this.timers.push(
+            setTimeout(() => {
+              const links = this.connectCluster(grp);
+    
+              ctx.strokeStyle = d3.interpolateHsl(
+                this.state.colorize[0], this.state.colorize[1]
+              )(Math.pow(grp[0].value / this.max, this.state.colorize[2]));
+    
+              ctx.beginPath();
+    
+              links.forEach(link => {
+                ctx.moveTo(link[0][0], link[0][1]);
+                ctx.lineTo(link[1][0], link[1][1]);
+                ctx.stroke();
+              });
 
-          // ctx.
+              grp.forEach(node => {
+                ctx.strokeStyle = d3.interpolateHsl(
+                  this.state.colorize[0], this.state.colorize[1]
+                )(Math.pow(node.value / this.max, this.state.colorize[2]));
+                ctx.fillRect(node.x - 1.5, node.y - 1.5, 3, 3);
+                ctx.strokeRect(node.x - 1.5, node.y - 1.5, 3, 3);
+              });
+    
+              ctx.closePath();
+              
+              this.progress.next();
+            }, this.timers.length)
+          );
         });
       }
     });

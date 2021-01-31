@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-22 22:28:39
+ * @Last Modified time: 2021-01-31 19:08:04
  */
 
 import { createRef, Component } from 'react';
@@ -116,40 +116,52 @@ class WorkSpace extends Component {
           overflowX:    "hidden",
           userSelect:   "none"
         }} >
-          <section key="header"
+          <section key="header" className="bar"
             style={{
-              background:   "rgb(236,229,244)",
-              display:      "flex",
-              alignItems:       "stretch",
-              justifyContent:   "flex-start"
-            }}>
-              {
-                charts.map((chart, i) => {
-                  return (
-                    <label key={ i } tabIndex={ 1 }
-                      style={{
-                        padding:  "0.2rem 1rem",
-                        fontSize: "90%",
-                        fontWeight: "600",
-                        borderLeft:   "1px solid rgb(98,99,196)",
-                        borderRight:  "1px solid rgb(98,99,196)",
-                        background: i === this.state.idx ? "rgb(246,242,250)" : "rgb(196,204,232)",
-                        cursor:   "pointer"
-                      }}
-                      onClick={
-                        () => {
-                          if (i !== this.state.idx) {
-                            this.setState({
-                              idx: i
-                            });
-                          }
-                        }
-                      } >
-                        { chart.dataset + "." + chart.name }
-                    </label>
-                  );
-                })
+              background:   "rgb(236,229,244)"
+            }}
+            onMouseMove={
+              e => {
+                const bar = document.getElementsByClassName("WorkSpace")[0].children[0];
+                if (bar.scrollWidth > bar.offsetWidth) {
+                  const x = (e.clientX - bar.offsetLeft);
+                  if (x < 150 || x / bar.offsetWidth < 0.2) {
+                    bar.scrollTo(bar.scrollLeft - 2, 0);
+                  } else if (x + 150 > bar.offsetWidth || x / bar.offsetWidth > 0.8) {
+                    bar.scrollTo(bar.scrollLeft + 2, 0);
+                  }
+                }
               }
+            } >
+              <section>
+                {
+                  charts.map((chart, i) => {
+                    return (
+                      <label key={ i } tabIndex={ 1 }
+                        style={{
+                          padding:  "0.2rem 1rem",
+                          fontSize: "90%",
+                          fontWeight: "600",
+                          borderLeft:   "1px solid rgb(98,99,196)",
+                          borderRight:  "1px solid rgb(98,99,196)",
+                          background: i === this.state.idx ? "rgb(246,242,250)" : "rgb(196,204,232)",
+                          cursor:   "pointer"
+                        }}
+                        onClick={
+                          () => {
+                            if (i !== this.state.idx) {
+                              this.setState({
+                                idx: i
+                              });
+                            }
+                          }
+                        } >
+                          { chart.dataset + "." + chart.name }
+                      </label>
+                    );
+                  })
+                }
+              </section>
           </section>
           <section key="datasets"
             style={{
@@ -158,7 +170,7 @@ class WorkSpace extends Component {
               flexDirection:    "column",
               alignItems:       "stretch",
               justifyContent:   "flex-start",
-              padding:      "6px 0"
+              padding:      "2px 0"
             }} >
               <Map ref={ this.map } />
           </section>

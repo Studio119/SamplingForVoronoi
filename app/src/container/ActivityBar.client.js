@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 15:28:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-20 14:11:53
+ * @Last Modified time: 2021-01-31 19:17:03
  */
 
 import Button from '../UI/Button.client';
@@ -32,7 +32,7 @@ const ActivityBar = props => {
             padding:          "0 0 8px",
             minHeight:        "40vh",
             maxHeight:        "calc(100vh - 24px)",
-            overflow:         "hidden auto",
+            overflow:         "hidden scroll",
             background:       "rgba(255,255,255,0.7)"
           }}
           onContextMenu={

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-29 21:53:26
+ * @Last Modified time: 2021-01-31 19:18:59
  */
 
 import React from 'react';
@@ -150,7 +150,8 @@ class SampleDialog extends React.Component {
                                           border:   "1.4px solid",
                                           borderRadius: "1.2rem",
                                           cursor:   "pointer",
-                                          background: "white"
+                                          background: "white",
+                                          userSelect: "none"
                                         }}
                                         onClick={
                                           () => {
@@ -197,12 +198,13 @@ class SampleDialog extends React.Component {
                                     <label
                                       style={{
                                         textAlign:  "center",
-                                        flex:       1
+                                        flex:       1,
+                                        userSelect: "none"
                                       }} >
                                         Sampling Rate
                                     </label>
                                     <input type="number" min="0" max="1" defaultValue="0.08"
-                                      name="rate"
+                                      name="rate" step="0.001"
                                       style={{
                                         width:        "9.4rem",
                                         textAlign:    "center",
@@ -226,7 +228,8 @@ class SampleDialog extends React.Component {
                                       <label key="label"
                                         style={{
                                           textAlign:  "center",
-                                          flex:       1
+                                          flex:       1,
+                                          userSelect: "none"
                                         }} >
                                           R
                                       </label>
@@ -237,15 +240,15 @@ class SampleDialog extends React.Component {
                                           border:       "1.4px solid",
                                           borderRadius: "1rem",
                                           background:   "white",
-                                          flex:         1
+                                          flex:         1,
+                                          userSelect: "none"
                                         }} >
                                           <input type="number" min="0.5" max="50" step="0.05"
                                             defaultValue={ 2 }
                                             name="Rm"
                                             style={{
                                               textAlign:  "center",
-                                              border:     "none",
-                                              userSelect: "none"
+                                              border:     "none"
                                             }} />
                                           <label key="after"
                                             style={{
@@ -771,7 +774,7 @@ const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected
         const item = data[index];
         list.push(item);
         data = data.slice(0, index).concat(data.slice(index + 1, data.length));
-        console.log((list.length / target * 100).toFixed(2) + "%");
+        // console.log((list.length / target * 100).toFixed(2) + "%");
         output((list.length / target * 100).toFixed(2) + "%");
         if (list.length === target) {
           resolve(list);

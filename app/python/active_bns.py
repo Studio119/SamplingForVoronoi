@@ -31,7 +31,7 @@ class ABNS:
     }
 
   def apply_sample(self, n_cols):
-    self.cluster = Cluster(8, 1.0 / n_cols).fit([[
+    self.cluster = Cluster(8, 0.5 / n_cols).fit([[
       p["id"], p["x"], p["y"], p["val"]
     ] for p in self.points])
     # 迭代

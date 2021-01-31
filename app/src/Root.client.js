@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-30 23:05:27
+ * @Last Modified time: 2021-01-31 17:50:33
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -29,30 +29,34 @@ const loadJSON = content => {
 };
 
 const createChart = (src, rename=undefined) => {
-  return {
-    name: rename || src,
-    src:  src,
-    layers: [{
-      label:  "scatters",
-      active: true,
-      opacity: 1
-    }, {
-      label:  "polygons",
-      active: false,
-      opacity: 1
-    }, {
+  let layers = [{
+    label:  "scatters",
+    active: true,
+    opacity: 1
+  }, {
+    label:  "polygons",
+    active: false,
+    opacity: 1
+  }];
+
+  if (src.toLowerCase().includes("bns")) {
+    layers.push({
       label:  "disks",
       active: false,
       opacity: 0.7
-    }, {
-      label:  "interpolation",
-      active: false,
-      opacity: 1
-    }, {
-      label:  "links",
-      active: false,
-      opacity: 0.8
-    }]
+    });
+  }
+
+  layers.push({
+    label:  "interpolation",
+    active: false,
+    opacity: 1
+  });
+
+  return {
+    name: rename || src,
+    src:  src,
+    layers
   };
 };
 

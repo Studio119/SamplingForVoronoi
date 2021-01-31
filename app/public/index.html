@@ -340,6 +340,43 @@
         background: rgb(219, 219, 219);
       }
 
+      .ActivityBar section::-webkit-scrollbar {
+        width: 6px;
+        background: none;
+      }
+      .ActivityBar section::-webkit-scrollbar-thumb {
+        background: rgba(69,129,184,0.4);
+        transition: background-color 0.4s;
+      }
+      .ActivityBar section:hover::-webkit-scrollbar-thumb {
+        background: rgb(36,79,138);
+      }
+
+      section.bar {
+        overflow: scroll hidden;
+      }
+
+      section.bar section {
+        display: flex;
+        align-items: stretch;
+        margin: 4px 0 0;
+        width: max-content;
+        min-height: 28.8px;
+      }
+
+      section.bar::-webkit-scrollbar {
+        height: 6px;
+        background: none;
+      }
+
+      section.bar::-webkit-scrollbar-thumb {
+        background: rgba(36,79,138,0.4);
+        transition: background-color 0.4s;
+      }
+      section.bar:hover::-webkit-scrollbar-thumb {
+        background: rgb(36,79,138);
+      }
+
     </style>
     <style type="text/css" >
       .mapboxgl-map {
