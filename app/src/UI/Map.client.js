@@ -753,6 +753,7 @@ class Map extends Component {
                 if (i) {
                   ctx.lineTo(p[0], p[1]);
                 } else {
+                  // FIXME ignore border
                   ctx.moveTo(p[0], p[1]);
                 }
               });

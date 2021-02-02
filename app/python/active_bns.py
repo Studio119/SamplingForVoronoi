@@ -6,13 +6,14 @@ from cluster import Cluster
 """ 聚类引导的蓝噪声采样 """
 class ABNS:
 
-  def __init__(self, points, R=2e-4):
+  def __init__(self, points, R=2e-4, extending=4):
     # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
     self.points = []
     self.point_index = {}
     self.disks = []
     self.n_cols = 1
     self.cluster = None
+    self.extending = extending
     for p in points:
       self.point_index[p[0]] = len(self.points)
       self.points.append({
@@ -31,7 +32,7 @@ class ABNS:
     }
 
   def apply_sample(self, n_cols):
-    self.cluster = Cluster(8, 0.5 / n_cols).fit([[
+    self.cluster = Cluster(self.extending, 0.5 / n_cols).fit([[
       p["id"], p["x"], p["y"], p["val"]
     ] for p in self.points])
     # 迭代

@@ -14,6 +14,7 @@ export const Root = {
   exportSample:   () => {},
   closeChart:     () => {},
   sample:         () => {},
+  settings:       () => {},
   paint:          () => {},
   pushSample:     () => {},
   refresh:        () => {},

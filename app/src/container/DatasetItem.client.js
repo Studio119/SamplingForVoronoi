@@ -147,15 +147,15 @@ const DatasetItem = props => {
                 <td colSpan="4" >
                   <svg width="150px" height="6px" >
                     {
-                      new Array(20).fill(0).map((_, i) => {
+                      new Array(40).fill(0).map((_, i) => {
                         return (
                           <rect key={ i }
-                            x={ i * 150 / 20 }  width={ 150 / 20 + 0.2 }
+                            x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
                             y={ 0 }             height={ 6 }
                             style={{
                               fill: d3.interpolateHsl(
                                 props.colorize[0], props.colorize[1]
-                              )(Math.pow((i + 0.5) / 20, props.colorize[2]))
+                              )(Math.pow((i + 0.5) / 40, props.colorize[2]))
                             }} />
                         );
                       })
@@ -280,15 +280,15 @@ const DatasetItem = props => {
                     marginBottom: "-0.2rem"
                   }} >
                     {
-                      new Array(20).fill(0).map((_, i) => {
+                      new Array(40).fill(0).map((_, i) => {
                         return (
                           <rect key={ i }
-                            x={ i * 150 / 20 }  width={ 150 / 20 + 0.2 }
+                            x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
                             y={ 0 }             height={ 26 }
                             style={{
                               fill: d3.interpolateHsl(
                                 props.colorize[0], props.colorize[1]
-                              )(Math.pow((i + 0.5) / 20, props.colorize[2]))
+                              )(Math.pow((i + 0.5) / 40, props.colorize[2]))
                             }} />
                         );
                       })
@@ -389,9 +389,23 @@ const DatasetItem = props => {
                     style={{
                       cursor: "pointer"
                     }} >
-                      <th>{ sample.name }</th>
-                      <td>
-                        { "(" + sample.data.length + ")" }
+                      <td title={ sample.name }
+                        style={{
+                          display:    "inline-block",
+                          width:      "120px",
+                          overflow:   "hidden",
+                          letterSpacing:  "-0.02em",
+                          whiteSpace: "nowrap",
+                          textOverflow: "ellipsis"
+                        }} >
+                          { sample.name }
+                      </td>
+                      <td
+                        style={{
+                          fontSize:   "90%",
+                          letterSpacing:  "-0.01em"
+                        }} >
+                          { "(" + sample.data.length + ")" }
                       </td>
                   </tr>
                 );
@@ -471,7 +485,7 @@ const ChartRef = props => {
       onContextMenu={
         props.onContextMenu
       } >
-        <label
+        <label title={ props.chart.name }
           style={{
             display:    'flex',
             alignItems: 'center',
@@ -484,7 +498,17 @@ const ChartRef = props => {
             }
           }  >
             <ExpandSign expanded={ showing } />
-            { props.chart.name }
+            <label
+              style={{
+                width:      "152px",
+                letterSpacing:  "-0.02em",
+                whiteSpace: "nowrap",
+                overflow:   "hidden",
+                textOverflow: "ellipsis",
+                cursor:     'pointer'
+              }} >
+                { props.chart.name }
+            </label>
         </label>
         <table style={{
           display: showing ? undefined : "none",

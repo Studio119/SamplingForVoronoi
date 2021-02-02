@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-31 17:50:33
+ * @Last Modified time: 2021-02-02 17:48:41
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import WorkSpace from './container/WorkSpace.client';
 import SampleDialog from './UI/SampleDialog.server';
 import ContextMenu from './container/ContextMenu.client';
+import Settings from './UI/Settings.server';
 
 
 const loadJSON = content => {
@@ -26,6 +27,15 @@ const loadJSON = content => {
     }
   });
   return data;
+};
+
+const getSuggestedExp = data => {
+  let [min, max, sum] = [Infinity, -Infinity, 0];
+  data.forEach(d => {
+    [min, max, sum] = [Math.min(min, d.value), Math.max(max, d.value), sum + d.value];
+  });
+  const rMean = (sum / data.length - min) / (max - min);
+  return parseFloat((Math.log(0.5) / Math.log(rMean)).toFixed(1));
 };
 
 const createChart = (src, rename=undefined) => {
@@ -74,6 +84,7 @@ const AppRoot = () => {
   });
 
   const sampleDialog = createRef();
+  const settings = createRef();
 
   const fileDialogRef = createRef();
 
@@ -83,7 +94,7 @@ const AppRoot = () => {
       ref={ fileDialogRef }
       onChange={
         e => {
-          const name = e.currentTarget.value;
+          const name = e.currentTarget.value.split("\\").reverse()[0].replace(/\.json/, "");
           if (name) {
             for (let i = 0; i < state.datasets.length; i++) {
               if (name === state.datasets[i].name) {
@@ -98,13 +109,15 @@ const AppRoot = () => {
             e.currentTarget.value = null;
             fr.onload = function(_) {
               const content = loadJSON(this.result);
+              const exp = getSuggestedExp(content);
               setState({
                 ...state,
                 time:   (new Date()).getTime(),
                 datasets: state.datasets.concat({
                   name: name.split("\\").reverse()[0].replace(/\.json/, ""),
                   data: content,
-                  colorize: ["rgb(38,178,27)", "rgb(255,0,0)", 0.7],
+                  exp:  exp,
+                  colorize: ["rgb(38,178,27)", "rgb(255,0,0)", exp],
                   samples:  [{
                     name: "total",
                     data: content
@@ -191,6 +204,12 @@ const AppRoot = () => {
     });
   };
 
+  Root.settings = () => {
+    settings.current.setState({
+      show: true
+    });
+  };
+
   Root.pushSample = (datasetName, name, data) => {
     setState({
       ...state,
@@ -268,6 +287,7 @@ const AppRoot = () => {
         <WorkSpace key="only" ref={ workSpace } />
         { fileDialog }
         <SampleDialog ref={ sampleDialog } />
+        <Settings ref={ settings } />
         <ContextMenu />
     </div>
   );

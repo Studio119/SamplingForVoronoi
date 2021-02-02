@@ -20,19 +20,20 @@ const ActivityBar = props => {
         padding:      "8px 10px",
         overflow:     "hidden",
         background:   "rgb(232,235,248)",
-        userSelect:   "none"
+        userSelect:   "none",
+        display:      "flex",
+        flexDirection:"column",
+        alignItems:   "stretch",
+        justifyContent: "space-between",
       }} >
         <section key="datasets"
           style={{
-            flex:             1,
             display:          "flex",
             flexDirection:    "column",
             alignItems:       "stretch",
             justifyContent:   "flex-start",
-            padding:          "0 0 8px",
             minHeight:        "40vh",
-            maxHeight:        "calc(100vh - 24px)",
-            overflow:         "hidden scroll",
+            maxHeight:        "calc(89vh - 28px)",
             background:       "rgba(255,255,255,0.7)"
           }}
           onContextMenu={
@@ -48,28 +49,70 @@ const ActivityBar = props => {
             <label key="title"
               style={{
                 padding:      "3px 1.2rem",
-                marginBottom: "4px",
                 background:   "rgb(186,227,255)"
               }} >
                 DATASETS
             </label>
-            {
-              props.datasets.length ? (
-                props.datasets.map(dataset => {
-                  return (
-                    <DatasetItem { ...dataset } key={ dataset.name } />
-                  );
-                })
-              ) : (
-                <Button
-                  listener={ Root.fileDialogOpen }
-                  style={{
-                    margin: "6px 0.8rem"
-                  }} >
-                    Import dataset
-                </Button>
-              )
-            }
+            <section key="datasets"
+              style={{
+                display:          "flex",
+                flexDirection:    "column",
+                alignItems:       "stretch",
+                justifyContent:   "flex-start",
+                padding:          "2px 0 4px",
+                overflow:         "hidden scroll"
+              }} >
+                {
+                  props.datasets.length ? (
+                    props.datasets.map(dataset => {
+                      return (
+                        <DatasetItem { ...dataset } key={ dataset.name } />
+                      );
+                    })
+                  ) : (
+                    <Button
+                      listener={ Root.fileDialogOpen }
+                      style={{
+                        margin: "6px 0.8rem"
+                      }} >
+                        Import dataset
+                    </Button>
+                  )
+                }
+            </section>
+        </section>
+        <section key="settings"
+          style={{
+            display:          "flex",
+            flexDirection:    "column",
+            alignItems:       "stretch",
+            justifyContent:   "flex-start",
+            marginTop:        "12px",
+            padding:          "0 0 8px",
+            height:           "11vh",
+            overflow:         "hidden"
+          }} >
+            <Button key="settings"
+              listener={ Root.settings }
+              style={{
+                margin: "6px 0.8rem"
+              }} >
+                SETTINGS
+            </Button>
+            <Button key="readme"
+              listener={ () => {
+                const a = document.createElement("a");
+                a.href = "https://github.com/Studio119/SamplingForVoronoi#readme";
+                a.target = "_blank";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              } }
+              style={{
+                margin: "6px 0.8rem"
+              }} >
+                README
+            </Button>
         </section>
     </section>
   );

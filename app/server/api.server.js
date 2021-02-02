@@ -203,13 +203,15 @@ app.get("/sample/b3/:dataset/:n_cols/:Rm", (req, res) => {
     );
 });
 
-app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
+app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = req.params["dataset"];
     const n_cols = req.params["n_cols"];
     const Rm = req.params["Rm"];
+    const extending = req.params["extending"];
     process.exec(
-      `conda activate vis2021 && python ./python/sample_ab.py ${ path } ${ n_cols } ${ Rm }`,
+      `conda activate vis2021 && python ./python/sample_ab.py ${
+        path } ${ n_cols } ${ Rm } ${ extending }`,
       (error, stdout, stderr) => {
         if (fs.existsSync("./storage/log.txt")) {
           fs.unlinkSync("./storage/log.txt");
@@ -225,7 +227,8 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/ab_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
+                "./storage/ab_" + path + "$n_cols=" + n_cols + "$R=" + Rm
+                  + "$extending=" + extending + ".json"
               )
             )
           });
@@ -298,6 +301,55 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm", (req, res) => {
 //       }
 //     );
 // });
+
+let files = [];
+
+app.get("/readStorage", (_req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+  const dir = fs.readdirSync("./storage");
+  files = dir.map(name => {
+    const file = fs.statSync("./storage/" + name);
+    return {
+      name,
+      size: file.size,
+      type: name.startsWith("snapshot_") ? 0
+            : name.startsWith("kde_") ? 1
+            : 2
+    };
+  });
+  res.json({
+    status: true,
+    message: "Completed",
+    data: files
+  });
+});
+
+app.get("/clearStorage/:t0/:t1/:t2", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+  const types = [
+    req.params["t0"] === "1",
+    req.params["t1"] === "1",
+    req.params["t2"] === "1"
+  ];
+  let stat = {
+    count:  0,
+    size:   0
+  };
+  files.forEach(file => {
+    if (types[file.type]) {
+      try {
+        fs.unlinkSync("./storage/" + file.name);
+        stat.count += 1;
+        stat.size += file.size;
+      } catch {}
+    }
+  });
+  res.json({
+    status: true,
+    message: "Completed",
+    data: stat
+  });
+});
 
 async function renderReactTree(res, props) {
   await waitForWebpack();

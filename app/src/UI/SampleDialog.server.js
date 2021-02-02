@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-31 19:18:59
+ * @Last Modified time: 2021-02-02 19:38:12
  */
 
 import React from 'react';
@@ -248,7 +248,8 @@ class SampleDialog extends React.Component {
                                             name="Rm"
                                             style={{
                                               textAlign:  "center",
-                                              border:     "none"
+                                              border:     "none",
+                                              background: "none"
                                             }} />
                                           <label key="after"
                                             style={{
@@ -285,6 +286,52 @@ class SampleDialog extends React.Component {
                                         }} />
                                   </label>
                                 </>
+                              )
+                            }
+                            {
+                              algos[this.state.algo] === "Active BNS" && (
+                                <label key="extending"
+                                  style={{
+                                    padding:  "0.4rem 1rem",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-around"
+                                  }} >
+                                    <label key="label"
+                                      style={{
+                                        textAlign:  "center",
+                                        flex:       1,
+                                        userSelect: "none"
+                                      }} >
+                                        extending
+                                    </label>
+                                    <div
+                                      style={{
+                                        width:        "9.4rem",
+                                        textAlign:    "center",
+                                        border:       "1.4px solid",
+                                        borderRadius: "1rem",
+                                        background:   "white",
+                                        flex:         1,
+                                        userSelect: "none"
+                                      }} >
+                                        <input type="number" min="1" max="16" step="0.1"
+                                          defaultValue={ 4 }
+                                          name="extending"
+                                          style={{
+                                            textAlign:  "center",
+                                            border:     "none",
+                                            background: "none"
+                                          }} />
+                                        <label key="after"
+                                          style={{
+                                            pointerEvents:  "none",
+                                            userSelect:     "none"
+                                          }} >
+                                            px
+                                        </label>
+                                    </div>
+                                </label>
                               )
                             }
                       </section>
@@ -342,16 +389,20 @@ class SampleDialog extends React.Component {
                               } else if (this.state.algo === 1) {
                                 // Active BNS
                                 const dataset = this.state.dataset.name;
-                                const Rm = parseInt(
-                                  document.getElementsByName("Rm")[0].value || "6"
+                                const Rm = parseFloat(
+                                  document.getElementsByName("Rm")[0].value || "2"
                                 );
                                 const steps = parseInt(
                                   document.getElementsByName("steps")[0].value || "6"
+                                );
+                                const extending = parseInt(
+                                  document.getElementsByName("extending")[0].value || "4"
                                 );
                                 runActiveBNS(
                                   dataset,
                                   Rm,
                                   steps,
+                                  extending,
                                   info => {
                                     if (this.log.current) {
                                       this.log.current.setState({ info });
@@ -512,7 +563,7 @@ const isProcessLog = log => {
   return fitting[0].length === log.length;
 };
 
-class RealTimeLog extends React.Component {
+export class RealTimeLog extends React.Component {
 
   constructor(props) {
     super(props);
@@ -534,7 +585,8 @@ class RealTimeLog extends React.Component {
             "linear-gradient(to right, rgb(56,195,103) 2%,"
             + " rgb(56,195,103) " + this.state.info + ", #0000 " + this.state.info
             + ")"
-          ) : undefined
+          ) : undefined,
+          ...this.props.style
         }} >
           { this.state.info }
       </section>
@@ -719,7 +771,7 @@ const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => 
   }
 };
 
-const runActiveBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
+const runActiveBNS = async (dataset, Rm, nStep, extending, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -746,7 +798,7 @@ const runActiveBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejected)
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}/${Rm}`);
+  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}/${Rm}/${extending}`);
 
   RealTimeLog.close();
 
