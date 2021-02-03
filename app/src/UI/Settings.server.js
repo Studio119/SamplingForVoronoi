@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-02-02 17:41:34 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-02 20:41:40
+ * @Last Modified time: 2021-02-02 20:58:50
  */
 
 import React from 'react';
@@ -322,7 +322,7 @@ class Settings extends React.Component {
                         listener={ this.close.bind(this) }
                         style={{
                           margin: "6px 0.8rem",
-                          padding:  "0.4rem",
+                          padding:  "0.2rem",
                           width:  "128px"
                         }} >
                           OK
