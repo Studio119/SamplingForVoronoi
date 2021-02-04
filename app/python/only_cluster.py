@@ -109,13 +109,13 @@ class OnlyCluster:
             _min = dist
         # 归类
         groups[_pos].append(idx)
-        dist_sum += _min ** 0.5
+        dist_sum += _min
         # 更新统计
         centers[_pos][3] += point["x"]
         centers[_pos][4] += point["y"]
         centers[_pos][5] += point["v"]
         pass
-      print("{}/{}, total dist = {}".format(_t, n_iter, dist_sum))
+      print("{}/{}, total dist^2 = {}".format(_t, n_iter, dist_sum))
       log(_t, n_iter)
 
     return groups
@@ -134,7 +134,7 @@ class OnlyCluster:
     return
     
 
-  def transform(self, points, k, n_iter=1000):
+  def transform(self, points, k, n_iter=100):
     # 归一化
     self._normalize(points)
 
@@ -166,5 +166,5 @@ if __name__ == "__main__":
       sizes[size] = 1
   print(sizes)
     
-  with open("./storage/oc_" + filename_origin + ".json", mode='w') as fout:
+  with open("./storage/oc_" + filename_origin + "$k=" + sys.argv[2] + "$r_val=" + sys.argv[3] + ".json", mode='w') as fout:
     json.dump(groups, fout)

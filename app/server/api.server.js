@@ -245,25 +245,25 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
     );
 });
 
-// app.get("/clustering/:dataset", (req, res) => {
-//     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-//     const path = "./storage/cluster_" + req.params["dataset"] + ".json"
-//     if (fs.existsSync(path)) {
-//       res.json({
-//         status: true,
-//         message: "Completed",
-//         data: JSON.parse(
-//           fs.readFileSync(path)
-//         )
-//       });
-//     } else {
-//       res.json({
-//         status: false,
-//         message: "Not exist",
-//         data: null
-//       });
-//     }
-// });
+app.get("/clustering/:dataset", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = "./storage/oc_" + req.params["dataset"] + ".json"
+    if (fs.existsSync(path)) {
+      res.json({
+        status: true,
+        message: "Completed",
+        data: JSON.parse(
+          fs.readFileSync(path)
+        )
+      });
+    } else {
+      res.json({
+        status: false,
+        message: "Not exist",
+        data: null
+      });
+    }
+});
 
 // app.get("/cluster/:dataset", (req, res) => {
 //     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");

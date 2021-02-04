@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-31 17:56:22
+ * @Last Modified time: 2021-02-04 22:31:36
  */
 
 import React, { Component, createRef } from "react";
@@ -176,14 +176,14 @@ class Map extends Component {
       "scatters": null,
       "polygons": null,
       "disks":    null,
-      // "links":    null,
+      "links":    null,
       "interpolation":    null
     };
     this.end = {
       "scatters": true,
       "polygons": true,
       "disks":    true,
-      // "links":    null,
+      "links":    null,
       "interpolation":    true
     };
 
@@ -373,10 +373,10 @@ class Map extends Component {
           this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
           this.paintInterpolation();
         }
-        // else if (target === "links") {
-        //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
-        //   this.paintLinks();
-        // }
+        else if (target === "links") {
+          this.ctx["links"].clearRect(0, 0, this.width, this.height);
+          this.paintLinks();
+        }
         this.end[target] = true;
         if (this.timers.length) {
           this.progress.start(this.timers.length);
@@ -472,15 +472,15 @@ class Map extends Component {
       } else {
         this.end["interpolation"] = false;
       }
-      // // links
-      // if (this.state.layers.filter(d => d.label === "links")[0].active) {
-      //   document.getElementById("layer-links").style.visibility = "visible";
-      //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
-      //   this.paintLinks();
-      //   this.end["links"] = true;
-      // } else {
-      //   this.end["links"] = false;
-      // }
+      // links
+      if (this.state.layers.filter(d => d.label === "links")[0].active) {
+        document.getElementById("layer-links").style.visibility = "visible";
+        this.ctx["links"].clearRect(0, 0, this.width, this.height);
+        this.paintLinks();
+        this.end["links"] = true;
+      } else {
+        this.end["links"] = false;
+      }
 
       this.updated = true;
       if (this.timers.length) {
@@ -961,7 +961,7 @@ class Map extends Component {
   }
 
   connectCluster(cluster) {
-    let links = []
+    let links = [];
 
     for (let i = 0; i < cluster.length - 1; i++) {
       for (let j = i + 1; j < cluster.length; j++) {
@@ -989,7 +989,7 @@ class Map extends Component {
 
     axios.get(`/clustering/${this.state.name.split(".")[0]}`).then(res => {
       if (res.data.status) {
-        const groups = res.data.data.map(grp => {
+        const groups = res.data.data.filter(grp => grp.length).map(grp => {
           return grp.map(d => {
             const p = this.state.data[d];
             return {
@@ -998,33 +998,53 @@ class Map extends Component {
             };
           });
         });
-        
+
+        console.log(groups.length);
+
         groups.forEach(grp => {
           this.timers.push(
-            setTimeout(() => {
-              const links = this.connectCluster(grp);
+            setTimeout(() => {              
+              // const links = this.connectCluster(grp);
     
               ctx.strokeStyle = d3.interpolateHsl(
                 this.state.colorize[0], this.state.colorize[1]
               )(Math.pow(grp[0].value / this.max, this.state.colorize[2]));
     
-              ctx.beginPath();
+              // ctx.beginPath();
     
-              links.forEach(link => {
-                ctx.moveTo(link[0][0], link[0][1]);
-                ctx.lineTo(link[1][0], link[1][1]);
-                ctx.stroke();
-              });
+              // links.forEach(link => {
+              //   ctx.moveTo(link[0][0], link[0][1]);
+              //   ctx.lineTo(link[1][0], link[1][1]);
+              //   ctx.stroke();
+              // });
 
-              grp.forEach(node => {
-                ctx.strokeStyle = d3.interpolateHsl(
-                  this.state.colorize[0], this.state.colorize[1]
-                )(Math.pow(node.value / this.max, this.state.colorize[2]));
-                ctx.fillRect(node.x - 1.5, node.y - 1.5, 3, 3);
-                ctx.strokeRect(node.x - 1.5, node.y - 1.5, 3, 3);
-              });
+              for (let i = 0; i < grp.length - 1; i++) {
+                for (let j = i + 1; j < grp.length; j++) {
+                  setTimeout(() => {
+                    ctx.strokeStyle = d3.interpolateHsl(
+                      this.state.colorize[0], this.state.colorize[1]
+                    )(Math.pow(grp[0].value / this.max, this.state.colorize[2]));
+                    ctx.beginPath();
+                    ctx.moveTo(grp[i].x, grp[i].y);
+                    ctx.lineTo(grp[j].x, grp[j].y);
+                    ctx.stroke();
+                    ctx.closePath();
+                  }, i * 2);
+                  // ctx.moveTo(grp[i].x, grp[i].y);
+                  // ctx.lineTo(grp[j].x, grp[j].y);
+                  // ctx.stroke();
+                }
+              }
+
+              // grp.forEach(node => {
+              //   ctx.fillStyle = d3.interpolateHsl(
+              //     this.state.colorize[0], this.state.colorize[1]
+              //   )(Math.pow(node.value / this.max, this.state.colorize[2]));
+              //   ctx.fillRect(node.x - 1.5, node.y - 1.5, 3, 3);
+              //   ctx.strokeRect(node.x - 1.5, node.y - 1.5, 3, 3);
+              // });
     
-              ctx.closePath();
+              // ctx.closePath();
               
               this.progress.next();
             }, this.timers.length)

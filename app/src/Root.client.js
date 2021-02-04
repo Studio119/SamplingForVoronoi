@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-02 17:48:41
+ * @Last Modified time: 2021-02-04 21:32:22
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -58,6 +58,10 @@ const createChart = (src, rename=undefined) => {
   }
 
   layers.push({
+    label:  "links",
+    active: false,
+    opacity: 1
+  }, {
     label:  "interpolation",
     active: false,
     opacity: 1
