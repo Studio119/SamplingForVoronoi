@@ -2,6 +2,7 @@ import sys
 import json
 from kde import get_kde
 from active_bns import ABNS
+# from scalable_bns import SBNS
 from real_time_log import clear_log
 
 
@@ -19,6 +20,7 @@ if __name__ == "__main__":
         matrix = kde_data["matrix"]
 
     abns = ABNS(matrix, R=R, extending=extending)
+    # abns = SBNS(matrix, R=R)
 
     seeds, disks = abns.apply_sample(n_cols)
 

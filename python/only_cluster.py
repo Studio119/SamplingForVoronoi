@@ -34,7 +34,7 @@ class OnlyCluster:
 
     return
 
-  def _walk(self, k, n_iter):
+  def _walk(self, k):
     centers = []
     groups = []
 
@@ -64,9 +64,20 @@ class OnlyCluster:
           _idx = level[0]
           _min = dif
           _i = i
-      # 取点
+      # 取点：选择同类别最远的
       level = self.cache_by_val[_idx]
-      idx = level[int(random() * len(level))]
+      idx, _max = -1, -1
+      for point in level:
+        dist = 0
+        for center in centers:
+          if abs(self.nodes[point]["v"] - center[2]) > self.r_val:
+            continue
+          dist += (
+            self.nodes[point]["x"] - center[0]
+          ) ** 2 + (self.nodes[point]["y"] - center[1]) ** 2
+        if idx == -1 or dist > _max:
+          idx = point
+          _max = dist
       seed = self.nodes[idx]
       centers.append([seed["x"], seed["y"], seed["v"], seed["x"], seed["y"], seed["v"]])
       groups.append([idx])
@@ -76,19 +87,11 @@ class OnlyCluster:
     array = [d for d, _ in enumerate(self.nodes) if d not in init_center_idx]
 
     # 开始聚类
-
-    for _t in range(n_iter):
-      # 更新中心
+    _t = 0
+    while True:
+      # 重新初始化
       if _t:
         for i, center in enumerate(centers):
-          size = len(groups[i])
-          if size:
-            next_x = center[3] / size
-            next_y = center[4] / size
-            next_v = center[5] / size
-            centers[i] = [next_x, next_y, next_v, next_x, next_y, next_v]
-          else:
-            centers[i] = [center[0], center[1], center[2], center[0], center[1], center[2]]
           groups[i] = []
         array = [d for d, _ in enumerate(self.nodes)]
       dist_sum = 0
@@ -115,10 +118,26 @@ class OnlyCluster:
         centers[_pos][4] += point["y"]
         centers[_pos][5] += point["v"]
         pass
-      print("{}/{}, total dist^2 = {}".format(_t, n_iter, dist_sum))
-      log(_t, n_iter)
+      # 更新中心
+      updated = False
+      for i, center in enumerate(centers):
+        size = len(groups[i])
+        if size:
+          next_x = center[3] / size
+          next_y = center[4] / size
+          next_v = center[5] / size
+          if next_x != centers[i][0] or next_y != centers[i][1] or next_v != centers[i][2]:
+            updated = True
+          centers[i] = [next_x, next_y, next_v, 0, 0, 0]
+        else:
+          centers[i] = [center[0], center[1], center[2], 0, 0, 0]
+      # log(_t, n_iter)
+      _t += 1
+      print("{}, total dist^2 = {}, n={}".format(_t, dist_sum, len([d for d in groups if len(d) > 0])))
+      if not updated:
+        break
 
-    return groups
+    return groups, centers
 
   def _cache(self):
     self.cache_by_val = []
@@ -134,15 +153,15 @@ class OnlyCluster:
     return
     
 
-  def transform(self, points, k, n_iter=100):
+  def transform(self, points, k):
     # 归一化
     self._normalize(points)
 
     self._cache()
     
-    groups = self._walk(k, n_iter)
+    groups, centers = self._walk(k)
 
-    return groups
+    return groups, centers
 
 
 
@@ -155,7 +174,7 @@ if __name__ == "__main__":
     data = json.load(fin)["data"]
 
   cluster = OnlyCluster(r_val)
-  groups = cluster.transform(data, k)
+  groups, centroids = cluster.transform(data, k)
   # print(len(groups))
   # sizes = {}
   # for grp in groups:
@@ -167,19 +186,6 @@ if __name__ == "__main__":
   # print(sizes)
 
   # print(groups)
-
-  centroids = []
-
-  for grp in groups:
-    if len(grp) == 0:
-      centroids.append(None)
-      continue
-    x = 0
-    y = 0
-    for i in grp:
-      x += data[i][0]
-      y += data[i][1]
-    centroids.append([x / len(grp), y / len(grp)])
 
   result = []
 
