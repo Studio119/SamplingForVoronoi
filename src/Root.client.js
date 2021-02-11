@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-04 21:32:22
+ * @Last Modified time: 2021-02-11 13:34:43
  */
 
 import { useState, createRef, useEffect } from 'react';
@@ -35,7 +35,7 @@ const getSuggestedExp = data => {
     [min, max, sum] = [Math.min(min, d.value), Math.max(max, d.value), sum + d.value];
   });
   const rMean = (sum / data.length - min) / (max - min);
-  return parseFloat((Math.log(0.5) / Math.log(rMean)).toFixed(1));
+  return parseFloat(((1 + Math.log(0.5) / Math.log(rMean)) / 2).toFixed(2));
 };
 
 const createChart = (src, rename=undefined) => {
@@ -121,7 +121,19 @@ const AppRoot = () => {
                   name: name.split("\\").reverse()[0].replace(/\.json/, ""),
                   data: content,
                   exp:  exp,
-                  colorize: ["rgb(38,178,27)", "rgb(255,0,0)", exp],
+                  colorize: {
+                    colors: [
+                      "rgb(237,233,76)",
+                      "rgb(224,168,52)",
+                      "rgb(38,178,27)",
+                      "rgb(94,166,255)",
+                      "rgb(255,43,204)",
+                      "rgb(9,71,148)",
+                      "rgb(148,27,169)",
+                      "rgb(255,0,0)"
+                    ],
+                    exp
+                  },
                   samples:  [{
                     name: "total",
                     data: content

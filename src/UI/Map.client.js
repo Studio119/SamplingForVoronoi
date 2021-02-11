@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-04 22:31:36
+ * @Last Modified time: 2021-02-11 13:21:54
  */
 
 import React, { Component, createRef } from "react";
@@ -12,6 +12,13 @@ import { Root } from "../App.server";
 import { HilbertEncodeXY } from "../help/hilbertEncoder";
 import axios from "axios";
 
+
+const getColor = (colormap, val, max) => {
+  const valTransformed = (val / max) ** colormap.exp;
+  const len = colormap.colors.length;
+  const idx = Math.min((valTransformed * len) | 0, len - 1);
+  return colormap.colors[idx];
+};
 
 const encodeLayers = layers => {
   return layers.map(layer => {
@@ -148,7 +155,19 @@ class Map extends Component {
       name:       null,
       data:       [],
       layers:     [],
-      colorize:   ["rgb(100,156,247)", "rgb(255,13,10)", 0.5],
+      colorize:   {
+        colors: [
+          "rgb(237,233,76)",
+          "rgb(223,132,79)",
+          "rgb(38,178,27)",
+          "rgb(141,193,255)",
+          "rgb(255,43,204)",
+          "rgb(9,71,148)",
+          "rgb(148,27,169)",
+          "rgb(255,0,0)"
+        ],
+        exp: 1
+      },
       interpolationConfig: {
         pixelStep:  5,
         differ:     false,
@@ -593,9 +612,7 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            ctx.fillStyle = d3.interpolateHsl(
-              this.state.colorize[0], this.state.colorize[1]
-            )(Math.pow(d.val / this.max, this.state.colorize[2]));
+            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
             ctx.strokeStyle = d3.interpolateHsl(
               ctx.fillStyle, "rgb(30,30,30)"
             )(0.8);
@@ -655,9 +672,7 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            const color = d3.interpolateHsl(
-              this.state.colorize[0], this.state.colorize[1]
-            )(Math.pow(d.averVal / this.max, this.state.colorize[2]));
+            const color = getColor(this.state.colorize, d.averVal, this.max);
             ctx.strokeStyle = color;
             const { x, y } = this.map.current.project(d);
             const at_n = this.map.current.project([d.lng, d.bounds[1][1]]).y;
@@ -681,9 +696,7 @@ class Map extends Component {
             d.children.forEach(i => {
               const p = total[i];
               const { x: px, y: py } = this.map.current.project(p);
-              ctx.strokeStyle = d3.interpolateHsl(
-                this.state.colorize[0], this.state.colorize[1]
-              )(Math.pow(p.value / this.max, this.state.colorize[2]));
+              ctx.strokeStyle = getColor(this.state.colorize, p.value, this.max);
               ctx.beginPath();
               ctx.moveTo(px, py);
               ctx.lineTo(x, y);
@@ -695,9 +708,7 @@ class Map extends Component {
             d.children.forEach(i => {
               const p = total[i];
               const { x: px, y: py } = this.map.current.project(p);
-              ctx.strokeStyle = d3.interpolateHsl(
-                this.state.colorize[0], this.state.colorize[1]
-              )(Math.pow(p.value / this.max, this.state.colorize[2]));
+              ctx.strokeStyle = getColor(this.state.colorize, p.value, this.max);
               ctx.strokeRect(px - 1, py - 1, 2, 2);
               ctx.clearRect(px - 0.5, py - 0.5, 1, 1);
             });
@@ -743,9 +754,7 @@ class Map extends Component {
         this.timers.push(
           setTimeout(() => {
             try {
-              const color = d3.interpolateHsl(
-                this.state.colorize[0], this.state.colorize[1]
-              )(Math.pow(this.state.data[i].value / this.max, this.state.colorize[2]));
+              const color = getColor(this.state.colorize, this.state.data[i].value, this.max);
               ctx.fillStyle = color;
               // ctx.strokeStyle = "rgb(105,105,105)";
               ctx.beginPath();
@@ -943,9 +952,7 @@ class Map extends Component {
         this.timers.push(
           setTimeout(() => {
             const val = this.getIDW(x, y, data, code, origin);
-            const color = d3.interpolateHsl(
-              this.state.colorize[0], this.state.colorize[1]
-            )(Math.pow(val / this.max, this.state.colorize[2]));
+            const color = getColor(this.state.colorize, val, this.max);
             ctx.fillStyle = color;
             ctx.fillRect(
               _x, _y,
@@ -1006,9 +1013,7 @@ class Map extends Component {
             setTimeout(() => {              
               // const links = this.connectCluster(grp);
     
-              ctx.strokeStyle = d3.interpolateHsl(
-                this.state.colorize[0], this.state.colorize[1]
-              )(Math.pow(grp[0].value / this.max, this.state.colorize[2]));
+              ctx.strokeStyle = getColor(this.state.colorize, grp[0].value, this.max);
     
               // ctx.beginPath();
     
@@ -1021,9 +1026,7 @@ class Map extends Component {
               for (let i = 0; i < grp.length - 1; i++) {
                 for (let j = i + 1; j < grp.length; j++) {
                   setTimeout(() => {
-                    ctx.strokeStyle = d3.interpolateHsl(
-                      this.state.colorize[0], this.state.colorize[1]
-                    )(Math.pow(grp[0].value / this.max, this.state.colorize[2]));
+                    ctx.strokeStyle = getColor(this.state.colorize, grp[0].value, this.max);
                     ctx.beginPath();
                     ctx.moveTo(grp[i].x, grp[i].y);
                     ctx.lineTo(grp[j].x, grp[j].y);

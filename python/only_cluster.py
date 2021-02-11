@@ -156,15 +156,58 @@ if __name__ == "__main__":
 
   cluster = OnlyCluster(r_val)
   groups = cluster.transform(data, k)
-  print(len(groups))
-  sizes = {}
+  # print(len(groups))
+  # sizes = {}
+  # for grp in groups:
+  #   size = len(grp)
+  #   if size in sizes:
+  #     sizes[size] += 1
+  #   else:
+  #     sizes[size] = 1
+  # print(sizes)
+
+  # print(groups)
+
+  centroids = []
+
   for grp in groups:
-    size = len(grp)
-    if size in sizes:
-      sizes[size] += 1
-    else:
-      sizes[size] = 1
-  print(sizes)
+    if len(grp) == 0:
+      centroids.append(None)
+      continue
+    x = 0
+    y = 0
+    for i in grp:
+      x += data[i][0]
+      y += data[i][1]
+    centroids.append([x / len(grp), y / len(grp)])
+
+  result = []
+
+  with open("./datasets/" + filename_origin + ".json", mode='r') as f:
+    source = json.loads(f.read())
+
+  for grp, center in zip(groups, centroids):
+    if len(grp) == 0:
+      continue
+    _idx, _min = -1, -1
+    mean = 0
+    for i in grp:
+      dist = (data[i][0] - center[0]) ** 2 + (data[i][1] - center[1]) ** 2
+      if _idx == -1 or dist < _min:
+        _min = dist
+        _idx = i
+      mean += source[i]["value"]
+      pass
+    seed = source[_idx]
+    result.append({
+      "id":       seed["id"],
+      "lng":      seed["lng"],
+      "lat":      seed["lat"],
+      "value":    seed["value"],
+      "label":    len(result),
+      "children": grp,
+      "averVal":  mean / len(grp)
+    })
     
-  with open("./storage/oc_" + filename_origin + "$k=" + sys.argv[2] + "$r_val=" + sys.argv[3] + ".json", mode='w') as fout:
-    json.dump(groups, fout)
+  with open("./storage/oc_" + filename_origin + "$k=" + sys.argv[2] + ".json", mode='w') as fout:
+    json.dump(result, fout)

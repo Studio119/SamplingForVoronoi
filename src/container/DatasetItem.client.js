@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-29 22:28:03
+ * @Last Modified time: 2021-02-11 14:37:39
  */
 
 import { useState, useEffect } from 'react';
@@ -26,6 +26,13 @@ const code2rgb = code => {
   },${
     parseInt(code.slice(5, 7), 16)
   })`;
+};
+
+const getColor = (colormap, val, max) => {
+  const valTransformed = (val / max) ** colormap.exp;
+  const len = colormap.colors.length;
+  const idx = Math.min((valTransformed * len) | 0, len - 1);
+  return colormap.colors[idx];
 };
 
 
@@ -76,7 +83,7 @@ const DatasetItem = props => {
   let curve = "M0,20";
   for (let i = 1; i <= 20; i++) {
     const x = i / 20;
-    const y = Math.pow(x, props.colorize[2]);
+    const y = Math.pow(x, props.colorize.exp);
     curve += " L" + i + "," + ((1 - y) * 20).toFixed(1);
   }
 
@@ -153,9 +160,7 @@ const DatasetItem = props => {
                             x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
                             y={ 0 }             height={ 6 }
                             style={{
-                              fill: d3.interpolateHsl(
-                                props.colorize[0], props.colorize[1]
-                              )(Math.pow((i + 0.5) / 40, props.colorize[2]))
+                              fill: getColor(props.colorize, i + 0.5, 40)
                             }} />
                         );
                       })
@@ -163,52 +168,115 @@ const DatasetItem = props => {
                   </svg>
                 </td>
               </tr>
-              <tr>
-                <td
-                  style={{
-                    width: "30px"
-                  }}>
-                    min
-                </td>
-                <ColorTd
-                  value={ props.colorize[0] }
-                  settor={
-                    val => {
-                      props.colorize[0] = val;
-                      Root.colorizeChanged = true;
-                      Root.refresh();
-                    }
-                  } />
-                <td
-                  style={{
-                    width: "16px",
-                    background: props.colorize[0],
-                    border: "1px solid rgb(103,179,230)"
-                  }} />
-              </tr>
-              <tr>
-                <td
-                  style={{
-                    width: "30px"
-                  }}>
-                    max
-                </td>
-                <ColorTd
-                  value={ props.colorize[1] }
-                  settor={
-                    val => {
-                      props.colorize[1] = val;
-                      Root.colorizeChanged = true;
-                      Root.refresh();
-                    }
-                  } />
-                <td
-                  style={{
-                    width: "16px",
-                    background: props.colorize[1],
-                    border: "1px solid rgb(103,179,230)"
-                  }} />
-              </tr>
+              {
+                props.colorize.colors.map((c, i) => {
+                  return (
+                    <tr key={ i } className="color"
+                      onContextMenu={
+                        e => {
+                          if (props.colorize.colors.length === 1) {
+                            callContextMenu(
+                              e, [{
+                                text:   "Color map index [" + (i + 1) + "]"
+                              }, {
+                                action: () => {
+                                  props.colorize.colors = (
+                                    props.colorize.colors.slice(0, i).concat(
+                                      ["rgb(127,127,127)"]
+                                    ).concat(
+                                      props.colorize.colors.slice(i, props.colorize.colors.length)
+                                    )
+                                  );
+                                  Root.colorizeChanged = true;
+                                  Root.refresh();
+                                },
+                                text: "Insert before"
+                              }, {
+                                action: () => {
+                                  props.colorize.colors = (
+                                    props.colorize.colors.slice(0, i + 1).concat(
+                                      ["rgb(127,127,127)"]
+                                    ).concat(
+                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                    )
+                                  );
+                                  Root.colorizeChanged = true;
+                                  Root.refresh();
+                                },
+                                text: "Insert after"
+                              }]
+                            );
+                          } else {
+                            callContextMenu(
+                              e, [{
+                                text:   "Color map index [" + (i + 1) + "]"
+                              }, {
+                                action: () => {
+                                  props.colorize.colors = (
+                                    props.colorize.colors.slice(0, i).concat(
+                                      ["rgb(127,127,127)"]
+                                    ).concat(
+                                      props.colorize.colors.slice(i, props.colorize.colors.length)
+                                    )
+                                  );
+                                  Root.colorizeChanged = true;
+                                  Root.refresh();
+                                },
+                                text: "Insert before"
+                              }, {
+                                action: () => {
+                                  props.colorize.colors = (
+                                    props.colorize.colors.slice(0, i + 1).concat(
+                                      ["rgb(127,127,127)"]
+                                    ).concat(
+                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                    )
+                                  );
+                                  Root.colorizeChanged = true;
+                                  Root.refresh();
+                                },
+                                text: "Insert after"
+                              }, {
+                                action: () => {
+                                  props.colorize.colors = (
+                                    props.colorize.colors.slice(0, i).concat(
+                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                    )
+                                  );
+                                  Root.colorizeChanged = true;
+                                  Root.refresh();
+                                },
+                                text: "Remove color"
+                              }]
+                            );
+                          }
+                        }
+                      } >
+                        <td
+                          style={{
+                            width: "30px"
+                          }}>
+                            { i + 1 }
+                        </td>
+                        <ColorTd key={ c }
+                          value={ c }
+                          settor={
+                            val => {
+                              props.colorize.colors[i] = val;
+                              Root.colorizeChanged = true;
+                              Root.refresh();
+                            }
+                          } />
+                        <td
+                          style={{
+                            width: "16px",
+                            background: c,
+                            border: "1px solid rgb(103,179,230)"
+                          }} />
+                    </tr>
+                  );
+                })
+              }
               <tr>
                 <td
                   style={{
@@ -217,10 +285,10 @@ const DatasetItem = props => {
                     exp
                 </td>
                 <NumberTd
-                  value={ props.colorize[2] }
+                  value={ props.colorize.exp }
                   settor={
                     val => {
-                      props.colorize[2] = val;
+                      props.colorize.exp = val;
                       Root.colorizeChanged = true;
                       Root.refresh();
                     }
@@ -286,9 +354,7 @@ const DatasetItem = props => {
                             x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
                             y={ 0 }             height={ 26 }
                             style={{
-                              fill: d3.interpolateHsl(
-                                props.colorize[0], props.colorize[1]
-                              )(Math.pow((i + 0.5) / 40, props.colorize[2]))
+                              fill: getColor(props.colorize, i + 0.5, 40)
                             }} />
                         );
                       })
@@ -813,7 +879,8 @@ const ColorTd = props => {
                   + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
                 }
                 style={{
-                  fill:   'rgb(65,100,148)'
+                  fill:   'rgb(65,100,148)',
+                  pointerEvents: "none"
                 }} />
           </svg>
       </td>

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-01-31 19:08:04
+ * @Last Modified time: 2021-02-11 12:57:48
  */
 
 import { createRef, Component } from 'react';
@@ -185,7 +185,21 @@ class WorkSpace extends Component {
         const name = chart.dataset + "." + chart.name;
         this.map.current.update(name, chart.data, chart.layers, chart.colorize);
       } else {
-        this.map.current.update(null, [], [], ["#888888", "#888888", 1]);
+        this.map.current.update(
+          null,
+          [],
+          [], {
+            colors: [
+              "rgb(237,233,76)",
+              "rgb(38,178,27)",
+              "rgb(141,193,255)",
+              "rgb(255,43,204)",
+              "rgb(70,13,81)",
+              "rgb(255,0,0)",
+            ],
+            exp: 1
+          }
+        );
       }
     }
   }

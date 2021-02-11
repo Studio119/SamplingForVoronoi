@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-02 19:38:12
+ * @Last Modified time: 2021-02-11 15:37:43
  */
 
 import React from 'react';
@@ -13,7 +13,7 @@ import Map from './Map.client';
 import { Root } from '../App.server';
 
 
-const algos = ["Random Sampling", "Active BNS", "Stratified BNS", "3D BNS"];
+const algos = ["Random Sampling", "Active BNS", "Stratified BNS", "3D BNS", "clustering", "k-means"];
 
 class SampleDialog extends React.Component {
 
@@ -216,6 +216,91 @@ class SampleDialog extends React.Component {
                               )
                             }
                             {
+                              algos[this.state.algo] === "clustering" && (
+                                <>
+                                  <label key="n_clusters"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1,
+                                          userSelect: "none"
+                                        }} >
+                                          k
+                                      </label>
+                                      <input type="number" min="2" max="1200" defaultValue="40"
+                                        name="n_clusters" step="1"
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
+                                  <label key="r_val"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1,
+                                          userSelect: "none"
+                                        }} >
+                                          r_val
+                                      </label>
+                                      <input type="number" min="0.01" max="1" defaultValue="0.1"
+                                        name="r_val" step="0.01"
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
+                                </>
+                              )
+                            }
+                            {
+                              algos[this.state.algo] === "k-means" && (
+                                <label key="n_clusters"
+                                  style={{
+                                    padding:  "0.4rem 1rem",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-around"
+                                  }} >
+                                    <label
+                                      style={{
+                                        textAlign:  "center",
+                                        flex:       1,
+                                        userSelect: "none"
+                                      }} >
+                                        k
+                                    </label>
+                                    <input type="number" min="2" max="1200" defaultValue="40"
+                                      name="n_clusters" step="1"
+                                      style={{
+                                        width:        "9.4rem",
+                                        textAlign:    "center",
+                                        border:       "1.4px solid",
+                                        borderRadius: "1rem",
+                                        flex:         1
+                                      }} />
+                                </label>
+                              )
+                            }
+                            {
                               algos[this.state.algo].includes("BNS") && (
                                 <>
                                   <label key="Rm"
@@ -351,8 +436,8 @@ class SampleDialog extends React.Component {
                               if (this.log.current) {
                                 this.log.current.setState({ info: null });
                               }
-                              if (this.state.algo === 0) {
-                                // Random Sampling
+                              const algo = algos[this.state.algo];
+                              if (algo === "Random Sampling") {
                                 const dataset = this.state.dataset.name;
                                 const rate = parseFloat(
                                   document.getElementsByName("rate")[0].value || 0.08
@@ -386,8 +471,7 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
-                              } else if (this.state.algo === 1) {
-                                // Active BNS
+                              } else if (algo === "Active BNS") {
                                 const dataset = this.state.dataset.name;
                                 const Rm = parseFloat(
                                   document.getElementsByName("Rm")[0].value || "2"
@@ -416,7 +500,8 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Active BNS (R=" + Rm + "e-4,steps=" + steps + ")",
+                                      "Active BNS (R=" + Rm + "e-4,steps=" + steps
+                                        + ",extending=" + extending + ")",
                                       data
                                     );
                                   },
@@ -429,8 +514,7 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
-                              } else if (this.state.algo === 2) {
-                                // Stratified BNS
+                              } else if (algo === "Stratified BNS") {
                                 const dataset = this.state.dataset.name;
                                 const Rm = parseInt(
                                   document.getElementsByName("Rm")[0].value || "6"
@@ -468,8 +552,7 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
-                              } else if (this.state.algo === 3) {
-                                // 3D BNS
+                              } else if (algo === "3D BNS") {
                                 const dataset = this.state.dataset.name;
                                 const Rm = parseInt(
                                   document.getElementsByName("Rm")[0].value || "6"
@@ -495,6 +578,78 @@ class SampleDialog extends React.Component {
                                     Root.pushSample(
                                       dataset,
                                       "3D BNS (R=" + Rm + "e-4,steps=" + steps + ")",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    this.log.current.setState({ info: reason });
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                );
+                              } else if (algo === "clustering") {
+                                const dataset = this.state.dataset.name;
+                                const k = parseInt(
+                                  document.getElementsByName("n_clusters")[0].value || "40"
+                                );
+                                const rVal = parseFloat(
+                                  document.getElementsByName("r_val")[0].value || "0.1"
+                                );
+                                runCluster(
+                                  dataset,
+                                  k,
+                                  rVal,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "Clustering (k=" + k + ",rVal=" + rVal + ")",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    this.log.current.setState({ info: reason });
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                );
+                              } else if (algo === "k-means") {
+                                const dataset = this.state.dataset.name;
+                                const k = parseInt(
+                                  document.getElementsByName("n_clusters")[0].value || "40"
+                                );
+                                runKMeans(
+                                  dataset,
+                                  k,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "K-means (k=" + k + ")",
                                       data
                                     );
                                   },
@@ -838,5 +993,45 @@ const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected
   output("Completed");
   onfulfilled(list);
 };
+
+const runKMeans = async (dataset, k, output, onfulfilled, onrejected) => {
+  output("Starting running k-means");
+
+  const result = await axios.get(`/cluster/${dataset}/${k}`);
+
+  if (result.data.status) {
+    output(result.data.message);
+    const data = result.data.data.map(d => {
+      return {
+        ...d,
+        // value: d.label / k
+      };
+    });
+    onfulfilled(data);
+  } else {
+    onrejected(result.data.message);
+    return;
+  }
+};
+
+const runCluster = async (dataset, k, rVal, output, onfulfilled, onrejected) => {
+  output("Starting running clustering");
+
+  const RealTimeLog = readProcess(output);
+
+  const result = await axios.get(`/onlycluster/${dataset}/${k}/${rVal}`);
+
+  RealTimeLog.close();
+
+  if (result.data.status) {
+    output(result.data.message);
+    const data = result.data.data;
+    onfulfilled(data);
+  } else {
+    onrejected(result.data.message);
+    return;
+  }
+};
+
 
 export default SampleDialog;
