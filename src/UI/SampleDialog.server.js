@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 15:37:43
+ * @Last Modified time: 2021-02-11 21:41:13
  */
 
 import React from 'react';
@@ -554,7 +554,7 @@ class SampleDialog extends React.Component {
                                 );
                               } else if (algo === "3D BNS") {
                                 const dataset = this.state.dataset.name;
-                                const Rm = parseInt(
+                                const Rm = parseFloat(
                                   document.getElementsByName("Rm")[0].value || "6"
                                 );
                                 const steps = parseInt(

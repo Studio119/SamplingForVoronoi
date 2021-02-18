@@ -309,7 +309,7 @@ app.get("/onlycluster/:dataset/:k/:rVal", (req, res) => {
     const k = req.params["k"];
     const rVal = req.params["rVal"];
     process.exec(
-      `conda activate vis2021 && python ./python/only_cluster.py ${ path } ${ k } ${ rVal }`,
+      `conda activate vis2021 && python ./python/skmeans.py ${ path } ${ k } ${ rVal }`,
       (error, stdout, stderr) => {
         if (fs.existsSync("./storage/log.txt")) {
           fs.unlinkSync("./storage/log.txt");
@@ -325,7 +325,7 @@ app.get("/onlycluster/:dataset/:k/:rVal", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/oc_" + path + "$k=" + k + ".json"
+                "./storage/skm_" + path + "$k=" + k + ".json"
               )
             )
           });

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 14:37:39
+ * @Last Modified time: 2021-02-18 14:31:06
  */
 
 import { useState, useEffect } from 'react';
@@ -111,7 +111,7 @@ const DatasetItem = props => {
         );
       }
     } >
-      <label
+      <label tabIndex={ 1 }
         onClick={
           () => {
             setState({
@@ -127,7 +127,7 @@ const DatasetItem = props => {
       style={{
         height: state.expand ? undefined : 0
       }} >
-        <label
+        <label tabIndex={ 1 }
           style={{ color: "rgb(172,89,136)" }}
           onClick={
             () => {
@@ -315,7 +315,7 @@ const DatasetItem = props => {
       style={{
         height: state.expand ? undefined : 0
       }} >
-        <label
+        <label tabIndex={ 1 }
           style={{ color: "rgb(225,104,0)" }}
           onClick={
             () => {
@@ -383,7 +383,7 @@ const DatasetItem = props => {
       style={{
         height: state.expand ? undefined : 0
       }} >
-        <label
+        <label tabIndex={ 1 }
           style={{ color: "rgb(50,121,58)" }}
           onClick={
             () => {
@@ -484,7 +484,7 @@ const DatasetItem = props => {
       style={{
         height: state.expand ? undefined : 0
       }} >
-        <label
+        <label tabIndex={ 1 }
           style={{ color: "rgb(99,11,157)" }}
           onClick={
             () => {
@@ -551,7 +551,7 @@ const ChartRef = props => {
       onContextMenu={
         props.onContextMenu
       } >
-        <label title={ props.chart.name }
+        <label title={ props.chart.name } tabIndex={ 1 }
           style={{
             display:    'flex',
             alignItems: 'center',
@@ -592,7 +592,7 @@ const ChartRef = props => {
                     style={{
                       color: layer.active ? "rgb(0,0,0)" : "rgb(113,113,113)"
                     }} >
-                      <th
+                      <th tabIndex={ 1 }
                         style={{
                           textAlign: "center",
                           cursor: "pointer",
@@ -619,7 +619,7 @@ const ChartRef = props => {
                       {
                         layer.active && (
                           i !== 0 ? (
-                            <th
+                            <th tabIndex={ 1 }
                               style={{
                                 textAlign: "center",
                                 cursor: "pointer",
@@ -659,7 +659,7 @@ const ChartRef = props => {
                       {
                         layer.active && (
                           i !== props.chart.layers.length - 1 ? (
-                            <th
+                            <th tabIndex={ 1 }
                               style={{
                                 textAlign: "center",
                                 cursor: "pointer",
@@ -710,7 +710,7 @@ const OpacityBar = props => {
   const d = Math.min(98.5, Math.max(2, (props.value * 100).toFixed(0)));
 
   return (
-    <td
+    <td tabIndex={ 1 }
       style={{
         cursor: "pointer",
         padding: "0 4px",
@@ -759,7 +759,7 @@ const NumberTd = props => {
         style={{
           width: "16px"
         }} >
-          <svg viewBox="4 4 32 32"
+          <svg viewBox="4 4 32 32" tabIndex={ 1 }
             style={{
               cursor: "pointer"
             }}
@@ -805,7 +805,7 @@ const NumberTd = props => {
         style={{
           width: "16px"
         }} >
-          <svg viewBox="4 4 32 32"
+          <svg viewBox="4 4 32 32" tabIndex={ 1 }
             style={{
               cursor: "pointer"
             }}
@@ -858,7 +858,7 @@ const ColorTd = props => {
                 }
               }
             } />
-          <svg viewBox="4 4 32 32"
+          <svg viewBox="4 4 32 32" tabIndex={ 1 }
             style={{
               cursor: "pointer"
             }}
