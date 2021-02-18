@@ -216,6 +216,7 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
         if (fs.existsSync("./storage/log.txt")) {
           fs.unlinkSync("./storage/log.txt");
         }
+        console.log({error, stdout, stderr})
         if (error || stderr) {
           res.json({
             status: false,

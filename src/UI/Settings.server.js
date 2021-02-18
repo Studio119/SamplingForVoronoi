@@ -2,15 +2,15 @@
  * @Author: Kanata You 
  * @Date: 2021-02-02 17:41:34 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-02 20:58:50
+ * @Last Modified time: 2021-02-18 15:11:19
  */
 
 import React from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import Button from '../UI/Button.client';
-import Map from './Map.client';
-import { Root } from '../App.server';
+// import Map from './Map.client';
+// import { Root } from '../App.server';
 import { RealTimeLog } from './SampleDialog.server';
 
 
@@ -93,7 +93,7 @@ class Settings extends React.Component {
                       {
                         pages.map((page, i) => {
                           return (
-                            <label key={ page }
+                            <label key={ page } tabIndex={ 1 }
                               style={{
                                 cursor:     i === this.state.idx ? undefined : "pointer",
                                 padding:    i === this.state.idx
@@ -146,6 +146,9 @@ class Settings extends React.Component {
                                 {
                                   async () => {
                                     const data = await readStorage();
+                                    if (!data) {
+                                      return;
+                                    }
                                     this.storageSelected = {
                                       0: false,
                                       1: false,
@@ -188,32 +191,89 @@ class Settings extends React.Component {
                                                 <th>Count</th>
                                                 <th>Size</th>
                                               </tr>
-                                              <tr>
-                                                <td>
-                                                  <input type="checkbox" name="cb0"
-                                                    onChange={ updateStorage } />
-                                                </td>
-                                                <td>Snapshot</td>
-                                                <td>{ data[0][0] }</td>
-                                                <td>{ parseSize(data[0][1]) }</td>
+                                              <tr tabIndex={ 1 }
+                                                onClick={
+                                                  e => {
+                                                    let tr = e.target;
+                                                    while (tr.tagName !== "TR") {
+                                                      tr = tr.parentElement;
+                                                    }
+                                                    const checkbox = tr.children[0].children[0];
+                                                    checkbox.click();
+                                                  }
+                                                }
+                                                style={{
+                                                  cursor: "pointer"
+                                                }} >
+                                                  <td>
+                                                    <input type="checkbox" name="cb0"
+                                                      onChange={ updateStorage }
+                                                      style={{
+                                                        cursor: "pointer"
+                                                      }}
+                                                      onClick={
+                                                        e => e.stopPropagation()
+                                                      } />
+                                                  </td>
+                                                  <td>Snapshot</td>
+                                                  <td>{ data[0][0] }</td>
+                                                  <td>{ parseSize(data[0][1]) }</td>
                                               </tr>
-                                              <tr>
-                                                <td>
-                                                  <input type="checkbox" name="cb1"
-                                                    onChange={ updateStorage } />
-                                                </td>
-                                                <td>Kde</td>
-                                                <td>{ data[1][0] }</td>
-                                                <td>{ parseSize(data[1][1]) }</td>
+                                              <tr tabIndex={ 1 }
+                                                onClick={
+                                                  e => {
+                                                    let tr = e.target;
+                                                    while (tr.tagName !== "TR") {
+                                                      tr = tr.parentElement;
+                                                    }
+                                                    const checkbox = tr.children[0].children[0];
+                                                    checkbox.click();
+                                                  }
+                                                }
+                                                style={{
+                                                  cursor: "pointer"
+                                                }} >
+                                                  <td>
+                                                    <input type="checkbox" name="cb1"
+                                                      onChange={ updateStorage }
+                                                      style={{
+                                                        cursor: "pointer"
+                                                      }}
+                                                      onClick={
+                                                        e => e.stopPropagation()
+                                                      } />
+                                                  </td>
+                                                  <td>Kde</td>
+                                                  <td>{ data[1][0] }</td>
+                                                  <td>{ parseSize(data[1][1]) }</td>
                                               </tr>
-                                              <tr>
-                                                <td>
-                                                  <input type="checkbox" name="cb2"
-                                                    onChange={ updateStorage } />
-                                                </td>
-                                                <td>Sample</td>
-                                                <td>{ data[2][0] }</td>
-                                                <td>{ parseSize(data[2][1]) }</td>
+                                              <tr tabIndex={ 1 }
+                                                onClick={
+                                                  e => {
+                                                    let tr = e.target;
+                                                    while (tr.tagName !== "TR") {
+                                                      tr = tr.parentElement;
+                                                    }
+                                                    const checkbox = tr.children[0].children[0];
+                                                    checkbox.click();
+                                                  }
+                                                }
+                                                style={{
+                                                  cursor: "pointer"
+                                                }} >
+                                                  <td>
+                                                    <input type="checkbox" name="cb2"
+                                                      onChange={ updateStorage }
+                                                      style={{
+                                                        cursor: "pointer"
+                                                      }}
+                                                      onClick={
+                                                        e => e.stopPropagation()
+                                                      }  />
+                                                  </td>
+                                                  <td>Sample</td>
+                                                  <td>{ data[2][0] }</td>
+                                                  <td>{ parseSize(data[2][1]) }</td>
                                               </tr>
                                               <tr
                                                 style={{
@@ -346,17 +406,26 @@ class Settings extends React.Component {
 
 export const AsyncComponent = props => {
   const [state, setState] = React.useState(null);
-  const updateOnlyOnce = {
-    current:  s => {
-      setState(s);
-      updateOnlyOnce.current = null;
+  let active = React.useMemo(() => true, []);
+  const updateOnlyOnce = React.useRef(
+    s => {
+      if (active) {
+        setState(s);
+        updateOnlyOnce.current = null;
+      }
     }
-  };
+  );
 
-  (async () => {
-    const returnValue = await props.children();
-    updateOnlyOnce.current(returnValue);
-  })();
+  React.useEffect(() => {
+    props.children().then(res => {
+      if (active) {
+        updateOnlyOnce.current(res)
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return state || props.waiting;
 };
@@ -368,19 +437,23 @@ const parseSize = size => {
 };
 
 const readStorage = async () => {
-  const data = (await axios.get("/readStorage")).data.data;
-  const stat = {
-    0: [0, 0],
-    1: [0, 0],
-    2: [0, 0]
-  };
-  data.forEach(d => {
-    stat[d.type] = [
-      stat[d.type][0] + 1,
-      stat[d.type][1] + d.size
-    ];
-  });
-  return stat;
+  try {
+    const data = (await axios.get("/readStorage")).data.data;
+    const stat = {
+      0: [0, 0],
+      1: [0, 0],
+      2: [0, 0]
+    };
+    data.forEach(d => {
+      stat[d.type] = [
+        stat[d.type][0] + 1,
+        stat[d.type][1] + d.size
+      ];
+    });
+    return stat;
+  } catch {
+    return null;
+  }
 };
 
 const clearStorage = async (config, output, onfulfilled, onrejected) => {
