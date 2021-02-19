@@ -2,14 +2,14 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-18 14:31:06
+ * @Last Modified time: 2021-02-18 20:09:53
  */
 
 import { useState, useEffect } from 'react';
 import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
 import { callContextMenu } from './ContextMenu.client';
-import * as d3 from "d3";
+// import * as d3 from "d3";
 
 
 const rgb2code = rgb => {
@@ -57,9 +57,13 @@ const DatasetItem = props => {
     min = Math.min(min, d.value);
     max = Math.max(max, d.value);
     mean += d.value;
-    steps[Math.floor(d.value * steps.length)] += 1;
   });
-
+  
+  props.data.forEach(d => {
+    const val = (d.value - min) / (max - min);
+    steps[Math.min(Math.floor(val * steps.length), steps.length - 1)] += 1;
+  });
+  
   mean /= props.data.length;
 
   props.data.forEach(d => {

@@ -2,10 +2,10 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 13:34:43
+ * @Last Modified time: 2021-02-18 20:23:01
  */
 
-import { useState, createRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import App, { Root } from "./App.server";
 import { createPortal } from 'react-dom';
 import WorkSpace from './container/WorkSpace.client';
@@ -80,19 +80,19 @@ const AppRoot = () => {
     datasets: []
   });
 
-  const workSpace = createRef();
+  const workSpace = useRef();
   useEffect(() => {
     if (workSpace.current) {
       workSpace.current.setDatasets(state.datasets);
     }
   });
 
-  const sampleDialog = createRef();
-  const settings = createRef();
+  const sampleDialog = useRef();
+  const settings = useRef();
 
-  const fileDialogRef = createRef();
+  const fileDialogRef = useRef();
 
-  const fileDialog = createPortal(
+  const fileDialog = useMemo(() => createPortal(
     <input type="file"
       style={{ display: "none" }}
       ref={ fileDialogRef }
@@ -122,15 +122,37 @@ const AppRoot = () => {
                   data: content,
                   exp:  exp,
                   colorize: {
+                    // colors: [
+                    //   "rgb(200,100,225)",
+                    //   "rgb(120,170,255)",
+                    //   "rgb(242,0,0)",
+                    //   "rgb(48,144,0)",
+                    //   "rgb(142,0,142)",
+                    //   "rgb(190,160,100)",
+                    //   "rgb(250,198,210)",
+                    //   "rgb(180,255,0)",
+                    //   "rgb(111,196,82)",
+                    //   "rgb(255,180,0)",
+                    //   "rgb(130,40,0)",
+                    //   "rgb(255,100,85)",
+                    //   "rgb(0,90,230)",
+                    //   "rgb(175,175,175)",
+                    //   "rgb(60,110,130)",
+                    //   "rgb(255,242,0)"
+                    // ],
                     colors: [
-                      "rgb(237,233,76)",
-                      "rgb(224,168,52)",
-                      "rgb(38,178,27)",
-                      "rgb(94,166,255)",
-                      "rgb(255,43,204)",
-                      "rgb(9,71,148)",
-                      "rgb(148,27,169)",
-                      "rgb(255,0,0)"
+                      "rgb(255,255,128)",
+                      "rgb(205,250,100)",
+                      "rgb(152,240,70)",
+                      "rgb(97,232,39)",
+                      "rgb(59,217,35)",
+                      "rgb(63,196,83)",
+                      "rgb(55,173,122)",
+                      "rgb(38,152,158)",
+                      "rgb(33,122,163)",
+                      "rgb(33,83,148)",
+                      "rgb(27,49,135)",
+                      "rgb(12,16,120)"
                     ],
                     exp
                   },
@@ -148,7 +170,7 @@ const AppRoot = () => {
         }
       } />,
     document.body
-  );
+  ));
 
   Root.fileDialogOpen = () => {
     if (fileDialogRef.current) {
