@@ -246,6 +246,46 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
     );
 });
 
+app.get("/sample/ssb/:dataset/:Rm", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
+    const path = req.params["dataset"];
+    const Rm = req.params["Rm"];
+
+    process.exec(
+      `conda activate vis2021 && python ./python/sample_ssb.py ${
+        path } ${ Rm }`,
+      (error, stdout, stderr) => {
+        if (fs.existsSync("./storage/log.txt")) {
+          fs.unlinkSync("./storage/log.txt");
+        }
+        if (error || stderr) {
+          res.json({
+            status: false,
+            message: stdout || stderr || error
+          });
+        } else if (!stdout.includes('Error')) {
+          res.json({
+            status: true,
+            message: "Completed",
+            data: JSON.parse(
+              fs.readFileSync(
+                "./storage/ssb_" + path + "$R=" + Rm + ".json"
+              )
+            )
+          });
+        } else {
+          res.json({
+            status: false,
+            message: stdout
+          });
+        }
+        if (fs.existsSync("./storage/log.txt")) {
+          fs.unlinkSync("./storage/log.txt");
+        }
+      }
+    );
+});
+
 app.get("/clustering/:dataset", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = "./storage/oc_" + req.params["dataset"] + ".json"

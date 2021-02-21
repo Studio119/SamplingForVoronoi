@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 12:57:48
+ * @Last Modified time: 2021-02-21 15:59:05
  */
 
 import { createRef, Component } from 'react';
@@ -153,6 +153,7 @@ class WorkSpace extends Component {
                               this.setState({
                                 idx: i
                               });
+                              Root.paint();
                             }
                           }
                         } >

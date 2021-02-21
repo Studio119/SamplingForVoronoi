@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 21:41:13
+ * @Last Modified time: 2021-02-21 15:54:42
  */
 
 import React from 'react';
@@ -13,7 +13,15 @@ import Map from './Map.client';
 import { Root } from '../App.server';
 
 
-const algos = ["Random Sampling", "Active BNS", "Stratified BNS", "3D BNS", "clustering", "k-means"];
+const algos = [
+  "Random Sampling",
+  "Attribute BNS",
+  "Active BNS",
+  "Stratified BNS",
+  "3D BNS",
+  // "clustering",
+  // "k-means"
+];
 
 class SampleDialog extends React.Component {
 
@@ -471,6 +479,40 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
+                              } else if (algo === "Attribute BNS") {
+                                const dataset = this.state.dataset.name;
+                                const Rm = parseFloat(
+                                  document.getElementsByName("Rm")[0].value || "2"
+                                );
+                                runAttributeNBS(
+                                  dataset,
+                                  Rm,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      "Attribute BNS (R=" + Rm + "e-4)",
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                )
                               } else if (algo === "Active BNS") {
                                 const dataset = this.state.dataset.name;
                                 const Rm = parseFloat(
@@ -925,6 +967,48 @@ const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => 
     return;
   }
 };
+
+const runAttributeNBS = async (dataset, Rm, output, onfulfilled, onrejected) => {
+  await readyBNS(dataset, output);
+  
+  output("Taking snapshot");
+
+  const snapshot = await Map.takeSnapshot();
+
+  output("Starting calculating KDE");
+
+  const kde = await axios.post(
+    `/snapshot`, {
+      name: dataset,
+      data: snapshot
+    }
+  );
+
+  if (kde.data.status) {
+    output(kde.data.message);
+  } else {
+    onrejected(kde.data.message);
+    return;
+  }
+  
+  output("Starting sampling");
+
+  const RealTimeLog = readProcess(output);
+
+  const sampling = await axios.get(`/sample/ssb/${dataset}/${Rm}`);
+
+  RealTimeLog.close();
+
+  if (sampling.data.status) {
+    output(sampling.data.message);
+    const data = resolveBNS(sampling.data.data);
+    onfulfilled(data);
+  } else {
+    onrejected(sampling.data.message);
+    return;
+  }
+};
+
 
 const runActiveBNS = async (dataset, Rm, nStep, extending, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
