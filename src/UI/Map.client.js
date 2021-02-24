@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-24 16:23:02
+ * @Last Modified time: 2021-02-24 17:36:08
  */
 
 import React, { Component, createRef } from "react";
@@ -876,6 +876,13 @@ class Map extends Component {
 
     this.voronoiPolygons.forEach((polygon, i) => {
       if (polygon) {
+        polygon = polygon.filter(
+          p => (
+            Math.min(
+              p[0], this.width - p[0], p[1], this.height - p[1]
+            ) >= 10
+          )
+        );
         this.timers.push(
           setTimeout(() => {
             try {
