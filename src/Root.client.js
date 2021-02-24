@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-18 20:23:01
+ * @Last Modified time: 2021-02-24 15:30:19
  */
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -49,6 +49,13 @@ const createChart = (src, rename=undefined) => {
     opacity: 1
   }];
 
+  if (src.toLowerCase().includes("grouping")) {
+    layers.push({
+      label:  "groups",
+      active: false,
+      opacity:  1
+    });
+  }
   if (src.toLowerCase().includes("bns")) {
     layers.push({
       label:  "disks",
@@ -57,15 +64,15 @@ const createChart = (src, rename=undefined) => {
     });
   }
 
-  layers.push({
-    label:  "links",
-    active: false,
-    opacity: 1
-  }, {
-    label:  "interpolation",
-    active: false,
-    opacity: 1
-  });
+  // layers.push({
+  //   label:  "links",
+  //   active: false,
+  //   opacity: 1
+  // }, {
+  //   label:  "interpolation",
+  //   active: false,
+  //   opacity: 1
+  // });
 
   return {
     name: rename || src,

@@ -246,14 +246,15 @@ app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
     );
 });
 
-app.get("/sample/ssb/:dataset/:Rm", (req, res) => {
+app.get("/sample/ssb/:dataset/:Rm/:num", (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
     const path = req.params["dataset"];
     const Rm = req.params["Rm"];
+    const num = req.params["num"];
 
     process.exec(
       `conda activate vis2021 && python ./python/sample_ssb.py ${
-        path } ${ Rm }`,
+        path } ${ Rm } ${ num }`,
       (error, stdout, stderr) => {
         if (fs.existsSync("./storage/log.txt")) {
           fs.unlinkSync("./storage/log.txt");
@@ -269,7 +270,7 @@ app.get("/sample/ssb/:dataset/:Rm", (req, res) => {
             message: "Completed",
             data: JSON.parse(
               fs.readFileSync(
-                "./storage/ssb_" + path + "$R=" + Rm + ".json"
+                "./storage/ssb_" + path + "$R=" + Rm + "$num=" + num + ".json"
               )
             )
           });
@@ -395,7 +396,8 @@ app.get("/readStorage", (_req, res) => {
       size: file.size,
       type: name.startsWith("snapshot_") ? 0
             : name.startsWith("kde_") ? 1
-            : 2
+            : name.startsWith("group_") ? 2
+            : 3
     };
   });
   res.json({
@@ -405,12 +407,13 @@ app.get("/readStorage", (_req, res) => {
   });
 });
 
-app.get("/clearStorage/:t0/:t1/:t2", (req, res) => {
+app.get("/clearStorage/:t0/:t1/:t2/:t3", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
   const types = [
     req.params["t0"] === "1",
     req.params["t1"] === "1",
-    req.params["t2"] === "1"
+    req.params["t2"] === "1",
+    req.params["t3"] === "1"
   ];
   let stat = {
     count:  0,

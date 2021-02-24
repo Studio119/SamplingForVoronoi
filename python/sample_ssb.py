@@ -1,8 +1,9 @@
 import sys
 import json
 from kde import get_kde
+from group import make_grp
 from ssbns import SSBNS
-from real_time_log import clear_log
+from real_time_log import clear_log, log_text
 
 
 if __name__ == "__main__":
@@ -10,15 +11,31 @@ if __name__ == "__main__":
 
   filename_origin = sys.argv[1]
   R = float(sys.argv[2]) * 1e-4
+  num = int(sys.argv[3])
+
+  try:
+    """ 有就直接用 """
+    with open("./storage/group_" + filename_origin + ".json", mode='r') as f:
+      pass
+    pass
+  except:
+    """ 没有再重跑 """
+    make_grp(filename_origin, num)
+    pass
+
+  log_text("able to using spanning trees")
   
   with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
     kde_data = json.load(fin)
     population = kde_data["population"]
     matrix = kde_data["matrix"]
 
-  with open("./storage/ss_" + filename_origin + ".json", mode='r') as fin:
+  map_id_to_ss = {}
+
+  with open("./storage/group_" + filename_origin + ".json", mode='r') as fin:
     for i, p in enumerate(json.load(fin)):
       matrix[i].append(p["ss"])
+      map_id_to_ss[i] = p["ss"]
 
   ssbns = SSBNS(matrix, R=R)
 
@@ -33,6 +50,7 @@ if __name__ == "__main__":
     data_origin = json.load(f1)
     for data in data_origin:
       point_link[data["id"]] = data
+      point_link[data["id"]]["ss"] = map_id_to_ss[data["id"]]
 
   for disk in disks:
     value = 0
@@ -48,6 +66,7 @@ if __name__ == "__main__":
       "lat": p["lat"],
       "value": p["value"],
       # 以下是新的字段
+      "ss":     p["ss"],
       "diskId": disk["id"],
       "children": disk["children"],
       "radius": disk["r"],
@@ -57,7 +76,7 @@ if __name__ == "__main__":
     data_processed.append(point)
 
   with open(
-    "./storage/ssb_" + filename_origin + "$R=" + sys.argv[2] + ".json", mode='w'
+    "./storage/ssb_" + filename_origin + "$R=" + sys.argv[2] + "$num=" + sys.argv[3] + ".json", mode='w'
   ) as f:
     json.dump(data_processed, f)
 

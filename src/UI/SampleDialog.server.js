@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-21 15:54:42
+ * @Last Modified time: 2021-02-24 15:38:56
  */
 
 import React from 'react';
@@ -15,7 +15,7 @@ import { Root } from '../App.server';
 
 const algos = [
   "Random Sampling",
-  "Attribute BNS",
+  "Grouping BNS",
   "Active BNS",
   "Stratified BNS",
   "3D BNS",
@@ -353,31 +353,61 @@ class SampleDialog extends React.Component {
                                           </label>
                                       </div>
                                   </label>
-                                  <label key="steps"
-                                    style={{
-                                      padding:  "0.4rem 1rem",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-around"
-                                    }} >
-                                      <label
+                                  {
+                                    algos[this.state.algo] === "Grouping BNS" ? (
+                                      <label key="n_groups"
                                         style={{
-                                          textAlign:  "center",
-                                          flex:       1
+                                          padding:  "0.4rem 1rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "space-around"
                                         }} >
-                                          N_cols
+                                          <label
+                                            style={{
+                                              textAlign:  "center",
+                                              flex:       1
+                                            }} >
+                                              N_groups
+                                          </label>
+                                          <input type="number" min="1" max="1000" step="1"
+                                            defaultValue={ 100 }
+                                            name="n_groups"
+                                            style={{
+                                              width:        "9.4rem",
+                                              textAlign:    "center",
+                                              border:       "1.4px solid",
+                                              borderRadius: "1rem",
+                                              flex:         1
+                                            }} />
                                       </label>
-                                      <input type="number" min="1" max="32" step="1"
-                                        defaultValue={ 6 }
-                                        name="steps"
+                                    ) : (
+                                      <label key="steps"
                                         style={{
-                                          width:        "9.4rem",
-                                          textAlign:    "center",
-                                          border:       "1.4px solid",
-                                          borderRadius: "1rem",
-                                          flex:         1
-                                        }} />
-                                  </label>
+                                          padding:  "0.4rem 1rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "space-around"
+                                        }} >
+                                          <label
+                                            style={{
+                                              textAlign:  "center",
+                                              flex:       1
+                                            }} >
+                                              N_cols
+                                          </label>
+                                          <input type="number" min="1" max="32" step="1"
+                                            defaultValue={ 6 }
+                                            name="steps"
+                                            style={{
+                                              width:        "9.4rem",
+                                              textAlign:    "center",
+                                              border:       "1.4px solid",
+                                              borderRadius: "1rem",
+                                              flex:         1
+                                            }} />
+                                      </label>
+                                    )
+                                  }
                                 </>
                               )
                             }
@@ -479,14 +509,18 @@ class SampleDialog extends React.Component {
                                     });
                                   }
                                 );
-                              } else if (algo === "Attribute BNS") {
+                              } else if (algo === "Grouping BNS") {
                                 const dataset = this.state.dataset.name;
                                 const Rm = parseFloat(
                                   document.getElementsByName("Rm")[0].value || "2"
                                 );
+                                const num = parseInt(
+                                  document.getElementsByName("n_groups")[0].value || "100"
+                                );
                                 runAttributeNBS(
                                   dataset,
                                   Rm,
+                                  num,
                                   info => {
                                     if (this.log.current) {
                                       this.log.current.setState({ info });
@@ -500,7 +534,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Attribute BNS (R=" + Rm + "e-4)",
+                                      "Grouping BNS (R=" + Rm + "e-4)",
                                       data
                                     );
                                   },
@@ -793,6 +827,8 @@ export class RealTimeLog extends React.Component {
 };
 
 const resolveBNS = res => {
+  const hasGroupInfo = typeof res[0].ss === "number";
+
   return res.map(d => {
     const radius = d.radius * 1.248; // 单位偏差
 
@@ -834,7 +870,7 @@ const resolveBNS = res => {
     }
     const td = ly;
 
-    return {
+    const dd = {
       diskId:   d.diskId,
       children: d.children,
       averVal:  d.averVal,
@@ -844,6 +880,12 @@ const resolveBNS = res => {
       value:    d.value,
       bounds:   [ [ cx + dx, cy - td ], [ cx - dx, cy + tu ] ]
     };
+
+    if (hasGroupInfo) {
+      dd.ss = d.ss;
+    }
+
+    return dd;
   });
 };
 
@@ -968,7 +1010,7 @@ const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => 
   }
 };
 
-const runAttributeNBS = async (dataset, Rm, output, onfulfilled, onrejected) => {
+const runAttributeNBS = async (dataset, Rm, num, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -995,7 +1037,7 @@ const runAttributeNBS = async (dataset, Rm, output, onfulfilled, onrejected) => 
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/ssb/${dataset}/${Rm}`);
+  const sampling = await axios.get(`/sample/ssb/${dataset}/${Rm}/${num}`);
 
   RealTimeLog.close();
 

@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-11 13:21:54
+ * @Last Modified time: 2021-02-24 16:23:02
  */
 
 import React, { Component, createRef } from "react";
@@ -194,16 +194,18 @@ class Map extends Component {
     this.ctx = {
       "scatters": null,
       "polygons": null,
+      "groups":   null,
       "disks":    null,
-      "links":    null,
-      "interpolation":    null
+      // "links":    null,
+      // "interpolation":    null
     };
     this.end = {
       "scatters": true,
       "polygons": true,
+      "groups":   null,
       "disks":    true,
-      "links":    null,
-      "interpolation":    true
+      // "links":    null,
+      // "interpolation":    true
     };
 
     this.progress = {
@@ -366,6 +368,31 @@ class Map extends Component {
             });
           });
           this.bufferPaintScatters(renderingQueue);
+        } else if (target === "groups") {
+          this.ctx["groups"].clearRect(0, 0, this.width, this.height);
+          const groups = {};
+          let max = 0;
+          this.state.data.forEach(d => {
+            if (groups.hasOwnProperty(d.ss)) {
+              groups[d.ss][0] += d.value;
+              groups[d.ss][1] += 1;
+            } else {
+              groups[d.ss] = [d.value, 1];
+              if (d.ss > max) {
+                max = d.ss;
+              }
+            }
+          });
+          
+          let renderingQueue = [];
+          this.state.data.forEach(d => {
+            renderingQueue.push({
+              ...this.map.current.project(d),
+              val: groups[d.ss][0] / groups[d.ss][1],
+              ss: [d.ss, max]
+            });
+          });
+          this.bufferPaintGroups(renderingQueue);
         } else if (target === "polygons") {
           this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
           this.makeVoronoi();
@@ -392,10 +419,10 @@ class Map extends Component {
           this.ctx["interpolation"].clearRect(0, 0, this.width, this.height);
           this.paintInterpolation();
         }
-        else if (target === "links") {
-          this.ctx["links"].clearRect(0, 0, this.width, this.height);
-          this.paintLinks();
-        }
+        // else if (target === "links") {
+        //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
+        //   this.paintLinks();
+        // }
         this.end[target] = true;
         if (this.timers.length) {
           this.progress.start(this.timers.length);
@@ -446,6 +473,38 @@ class Map extends Component {
       } else {
         this.end["scatters"] = false;
       }
+      // groups
+      const layerGroups = this.state.layers.filter(d => d.label === "groups")[0];
+      if (layerGroups && layerGroups.active) {
+        document.getElementById("layer-groups").style.visibility = "visible";
+        this.ctx["groups"].clearRect(0, 0, this.width, this.height);
+        const groups = {};
+        let max = 0;
+        this.state.data.forEach(d => {
+          if (groups.hasOwnProperty(d.ss)) {
+            groups[d.ss][0] += d.value;
+            groups[d.ss][1] += 1;
+          } else {
+            groups[d.ss] = [d.value, 1];
+            if (d.ss > max) {
+              max = d.ss;
+            }
+          }
+        });
+        
+        let renderingQueue = [];
+        this.state.data.forEach(d => {
+          renderingQueue.push({
+            ...this.map.current.project(d),
+            val: groups[d.ss][0] / groups[d.ss][1],
+            ss: [d.ss, max]
+          });
+        });
+        this.bufferPaintGroups(renderingQueue);
+        this.end["groups"] = true;
+      } else {
+        this.end["groups"] = false;
+      }
       // voronoi polygons
       if (this.state.layers.filter(d => d.label === "polygons")[0].active) {
         document.getElementById("layer-polygons").style.visibility = "visible";
@@ -491,15 +550,15 @@ class Map extends Component {
       } else {
         this.end["interpolation"] = false;
       }
-      // links
-      if (this.state.layers.filter(d => d.label === "links")[0].active) {
-        document.getElementById("layer-links").style.visibility = "visible";
-        this.ctx["links"].clearRect(0, 0, this.width, this.height);
-        this.paintLinks();
-        this.end["links"] = true;
-      } else {
-        this.end["links"] = false;
-      }
+      // // links
+      // if (this.state.layers.filter(d => d.label === "links")[0].active) {
+      //   document.getElementById("layer-links").style.visibility = "visible";
+      //   this.ctx["links"].clearRect(0, 0, this.width, this.height);
+      //   this.paintLinks();
+      //   this.end["links"] = true;
+      // } else {
+      //   this.end["links"] = false;
+      // }
 
       this.updated = true;
       if (this.timers.length) {
@@ -622,6 +681,72 @@ class Map extends Component {
             ctx.fillRect(
               d.x - 1.5, d.y - 1.5, 3, 3
             );
+          });
+
+          this.progress.next();
+        }, 1 * this.timers.length)
+      );
+      piece = [];
+    };
+
+    list.forEach(d => {
+      if (
+        d.x < 0 - 1
+        || d.x >= this.width + 1
+        || d.y < 0 - 1
+        || d.y >= this.height + 1
+      ) return;
+      piece.push(d);
+      if (piece.length === step) {
+        paint();
+      }
+    });
+
+    if (piece.length) {
+      paint();
+    }
+  }
+
+  /**
+   * 绘制分类.
+   *
+   * @protected
+   * @param {Array<{x: number; y:number; val: number;}>} list
+   * @param {number} [step=800]
+   * @returns {void}
+   * @memberof Map
+   */
+  bufferPaintGroups(list, step=800) {
+    const ctx = this.ctx["groups"];
+    if (!ctx) return;
+
+    let piece = [];
+
+    const paint = () => {
+      const pieceCopy = piece.map(d => d);
+      this.timers.push(
+        setTimeout(() => {
+          this.updated = true;
+
+          pieceCopy.forEach(d => {
+            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
+            ctx.strokeStyle = d3.interpolateHsl(
+              ctx.fillStyle, "rgb(30,30,30)"
+            )(0.4);
+            
+            const start = Math.PI * 2 / (d.ss[0] % 6 + 1);
+            const len = 1/2 + 5/6 * d.ss[0] / d.ss[1] * 0;
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, 4.8, start, start + Math.PI * len);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+            
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
           });
 
           this.progress.next();

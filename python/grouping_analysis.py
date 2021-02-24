@@ -1,7 +1,10 @@
+import math
+from real_time_log import log_text
 
 
-""" 通过最近邻关系将点连接为无向连通图 """
-def connect_nodes(points, k=10, hash_len=20):
+
+""" 将点连接为最小生成树 """
+def connect_nodes(points, num, k=12, hash_len=40):
   points, extend = normalize_values(points)
   map_id_to_node = {}
   
@@ -73,16 +76,86 @@ def connect_nodes(points, k=10, hash_len=20):
       string = "{}_{}".format(a, b)
       if string not in linked:
         links.append((a, b))
-        linked[string] = True
-    print(source[0], knn)
+        linked[string] = abs(map_id_to_node[a]["v"] - map_id_to_node[b]["v"])
     
-  return {
-    "nodes":  map_id_to_node,
-    "links":  links,
-    "hash_p": hash_points,
-    "hash_f": hash_find
-  }
+  trees = prun(map_id_to_node, kruskal(map_id_to_node, links, linked), num)
 
+  map_id_to_tree = {}
+
+  for t, tree in enumerate(trees):
+    for node in tree["nodes"]:
+      map_id_to_tree[node] = t
+
+  return map_id_to_tree
+
+
+""" Kruskal 算法 - 最小生成树 """
+def kruskal(nodes, links, weight):
+  result = []
+  map_id_to_tree = {}
+  for p in nodes:
+    map_id_to_tree[p] = p
+  wl = sorted([(w, weight[w]) for w in weight], key=lambda d : d[1])
+  for i in range(len(nodes) - 1):
+    # print(i, len(nodes) - 1)
+    log_text("building spanning trees... {:.2%}".format(i / (len(nodes) - 1)))
+    while True:
+      if len(wl) == 0:
+        break
+      # 取出权重最小的边
+      link = wl.pop(0)
+      # 判断两端点是否位于同一树
+      a, b = [int(e) for e in link[0].split("_")]
+      if map_id_to_tree[a] != map_id_to_tree[b]:
+        result.append({
+          "source": a,
+          "target": b,
+          "weight": link[1]
+        })
+        origin = map_id_to_tree[b]
+        for p in map_id_to_tree:
+          if map_id_to_tree[p] == origin:
+            map_id_to_tree[p] = map_id_to_tree[a]
+        break
+    if len(wl) == 0:
+      break
+  trees = []
+  map_tree_id = {}
+  for i in map_id_to_tree:
+    pos = map_id_to_tree[i]
+    if pos not in map_tree_id:
+      map_tree_id[pos] = len(trees)
+      trees.append([])
+  for link in result:
+    trees[map_tree_id[map_id_to_tree[link["source"]]]].append(link)
+  
+  return trees
+
+
+""" 切割树 """
+def prun(nodes, trees, num):
+  trees_with_cost = []
+  for tree in trees:
+    nodes = set()
+    for link in tree:
+      a, b = link["source"], link["target"]
+      nodes.add(a)
+      nodes.add(b)
+    trees_with_cost.append({
+      "nodes":  list(nodes),
+      "links":  tree,
+      "cost":   None
+    })
+  while len(trees_with_cost) < num:
+    # 选择类内差距最大的将其拆分
+    _max, _val = 0, 0
+    for tree in trees_with_cost:
+      if tree["cost"] == None:
+        # 计算代价
+        cost = 0
+    break
+    pass
+  return trees_with_cost
 
 
 """ 归一化属性值 """

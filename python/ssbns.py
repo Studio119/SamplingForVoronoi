@@ -6,11 +6,12 @@ import math
 """ 分组蓝噪声采样 """
 class SSBNS:
 
-  def __init__(self, points, R=2e-4):
+  def __init__(self, points, R=2e-4, min_r=3):
     # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
     self.points = []
     self.point_index = {}
     self.disks = []
+    self.min_r = min_r
     for p in points:
       self.point_index[p[0]] = len(self.points)
       self.points.append({
@@ -85,9 +86,9 @@ class SSBNS:
       H -= p * math.log2(p)
     # print(contained, H)
 
-    r = max(r, 4)
+    r = max(r, self.min_r)
     # r /= (1 + H)
-    r = (r - 4) / (1 + H) + 4
+    r = (r - self.min_r) / (1 + H) + self.min_r
 
     next_ready = []
     next_active = []

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-02-02 17:41:34 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-18 15:11:19
+ * @Last Modified time: 2021-02-24 16:29:44
  */
 
 import React from 'react';
@@ -161,7 +161,7 @@ class Settings extends React.Component {
                                         2:  document.getElementsByName("cb2")[0].checked
                                       };
                                       const tr = e.target.parentNode.parentNode.parentNode
-                                                  .querySelectorAll("tr")[4];
+                                                  .querySelectorAll("tr")[5];
                                       let count = 0;
                                       let size = 0;
                                       for (let i = 0; i < 3; i++) {
@@ -271,9 +271,37 @@ class Settings extends React.Component {
                                                         e => e.stopPropagation()
                                                       }  />
                                                   </td>
-                                                  <td>Sample</td>
+                                                  <td>Grouping</td>
                                                   <td>{ data[2][0] }</td>
                                                   <td>{ parseSize(data[2][1]) }</td>
+                                              </tr>
+                                              <tr tabIndex={ 1 }
+                                                onClick={
+                                                  e => {
+                                                    let tr = e.target;
+                                                    while (tr.tagName !== "TR") {
+                                                      tr = tr.parentElement;
+                                                    }
+                                                    const checkbox = tr.children[0].children[0];
+                                                    checkbox.click();
+                                                  }
+                                                }
+                                                style={{
+                                                  cursor: "pointer"
+                                                }} >
+                                                  <td>
+                                                    <input type="checkbox" name="cb3"
+                                                      onChange={ updateStorage }
+                                                      style={{
+                                                        cursor: "pointer"
+                                                      }}
+                                                      onClick={
+                                                        e => e.stopPropagation()
+                                                      }  />
+                                                  </td>
+                                                  <td>Sample</td>
+                                                  <td>{ data[3][0] }</td>
+                                                  <td>{ parseSize(data[3][1]) }</td>
                                               </tr>
                                               <tr
                                                 style={{
@@ -320,6 +348,8 @@ class Settings extends React.Component {
                                                         document.getElementsByName("cb1")[0]
                                                           .checked ? 1 : 0,
                                                         document.getElementsByName("cb2")[0]
+                                                          .checked ? 1 : 0,
+                                                        document.getElementsByName("cb3")[0]
                                                           .checked ? 1 : 0
                                                       ];
                                                       clearStorage(
@@ -442,7 +472,8 @@ const readStorage = async () => {
     const stat = {
       0: [0, 0],
       1: [0, 0],
-      2: [0, 0]
+      2: [0, 0],
+      3: [0, 0]
     };
     data.forEach(d => {
       stat[d.type] = [
@@ -459,7 +490,7 @@ const readStorage = async () => {
 const clearStorage = async (config, output, onfulfilled, onrejected) => {
   output("Running...");
   try {
-    const res = await axios.get(`/clearStorage/${config[0]}/${config[1]}/${config[2]}`);
+    const res = await axios.get(`/clearStorage/${config[0]}/${config[1]}/${config[2]}/${config[3]}`);
     
     output("Completed");
     onfulfilled(res);
