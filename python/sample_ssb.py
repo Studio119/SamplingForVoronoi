@@ -13,15 +13,7 @@ if __name__ == "__main__":
   R = float(sys.argv[2]) * 1e-4
   num = int(sys.argv[3])
 
-  try:
-    """ 有就直接用 """
-    with open("./storage/group_" + filename_origin + ".json", mode='r') as f:
-      pass
-    pass
-  except:
-    """ 没有再重跑 """
-    make_grp(filename_origin, num)
-    pass
+  make_grp(filename_origin, num)
 
   log_text("able to using spanning trees")
   

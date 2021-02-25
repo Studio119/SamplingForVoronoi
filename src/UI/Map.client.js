@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-24 17:36:08
+ * @Last Modified time: 2021-02-25 21:18:05
  */
 
 import React, { Component, createRef } from "react";
@@ -876,30 +876,22 @@ class Map extends Component {
 
     this.voronoiPolygons.forEach((polygon, i) => {
       if (polygon) {
-        polygon = polygon.filter(
-          p => (
-            Math.min(
-              p[0], this.width - p[0], p[1], this.height - p[1]
-            ) >= 10
-          )
-        );
         this.timers.push(
           setTimeout(() => {
             try {
               const color = getColor(this.state.colorize, this.state.data[i].value, this.max);
               ctx.fillStyle = color;
-              // ctx.strokeStyle = "rgb(105,105,105)";
+              ctx.strokeStyle = "rgb(110,110,110)";
               ctx.beginPath();
               polygon.forEach((p, i) => {
                 if (i) {
                   ctx.lineTo(p[0], p[1]);
                 } else {
-                  // FIXME ignore border
                   ctx.moveTo(p[0], p[1]);
                 }
               });
               ctx.fill();
-              // ctx.stroke();
+              ctx.stroke();
               ctx.closePath();
             } catch {}
 

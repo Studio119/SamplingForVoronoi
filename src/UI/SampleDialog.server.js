@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-24 15:38:56
+ * @Last Modified time: 2021-02-24 20:21:51
  */
 
 import React from 'react';
@@ -534,7 +534,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Grouping BNS (R=" + Rm + "e-4)",
+                                      "Grouping BNS (R=" + Rm + "e-4,num=" + num + ")",
                                       data
                                     );
                                   },
