@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-21 15:59:05
+ * @Last Modified time: 2021-02-25 22:53:41
  */
 
 import { createRef, Component } from 'react';
@@ -57,6 +57,7 @@ class WorkSpace extends Component {
           name: chart.name,
           src: chart.src,
           data: data,
+          borders: dataset.borders,
           colorize: dataset.colorize,
           layers: chart.layers.map(layer => {
             return {
@@ -184,7 +185,12 @@ class WorkSpace extends Component {
       const chart = this.state.charts[this.state.idx];
       if (chart) {
         const name = chart.dataset + "." + chart.name;
-        this.map.current.update(name, chart.data, chart.layers, chart.colorize);
+        this.map.current.update(
+          name, chart.data, chart.layers, chart.colorize, chart.borders, borders => {
+            Root.getDataset(chart.dataset).borders = borders;
+            Root.refresh();
+          }
+        );
       } else {
         this.map.current.update(
           null,
@@ -199,7 +205,9 @@ class WorkSpace extends Component {
               "rgb(255,0,0)",
             ],
             exp: 1
-          }
+          },
+          [],
+          () => {}
         );
       }
     }

@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 21:18:05
+ * @Last Modified time: 2021-02-25 23:17:04
  */
 
 import React, { Component, createRef } from "react";
@@ -57,6 +57,42 @@ const diffLayers = (prev, next) => {
   return updateList;
 };
 
+const resolveCors = (x, y) => {
+  let lng = [-180, 180];
+  let lat = [-90, 90];
+
+  while (lat[1] - lat[0] > 0.002) {
+    const m = (lat[0] + lat[1]) / 2;
+    const ym = Map.project(0, m).y;
+    if (ym > y) {
+      lat[0] = m;
+    } else if (ym < y) {
+      lat[1] = m;
+    } else {
+      break;
+    }
+  }
+
+  const py = (lat[0] + lat[1]) / 2;
+
+  while (lng[1] - lng[0] > 0.002) {
+    const m = (lng[0] + lng[1]) / 2;
+    const xm = Map.project(m, py).x;
+    if (xm > x) {
+      lng[1] = m;
+    } else if (xm < x) {
+      lng[0] = m;
+    } else {
+      break;
+    }
+  }
+
+  const px = (lng[0] + lng[1]) / 2;
+
+  return [px, py];
+};
+
+
 class Map extends Component {
 
   getVoronoiPolygons() {
@@ -69,7 +105,7 @@ class Map extends Component {
     };
   }
 
-  update(name, data, layers, colorize) {
+  update(name, data, layers, colorize, borders, setBorders) {
     if (name !== this.state.name) {
       // 选页卡切换
       // console.log("选页卡切换");
@@ -116,8 +152,8 @@ class Map extends Component {
         }
       }
     }
-    
-    this.setState({ name, data, layers, colorize });
+
+    this.setState({ name, data, layers, colorize, borders, setBorders });
   }
 
   setInterpolationConfig(config) {
@@ -151,10 +187,13 @@ class Map extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      picking:    false,
       container:  false,
       name:       null,
       data:       [],
       layers:     [],
+      borders:    [],
+      setBorders: () => {},
       colorize:   {
         colors: [
           "rgb(237,233,76)",
@@ -193,6 +232,7 @@ class Map extends Component {
 
     this.ctx = {
       "scatters": null,
+      "p_stroke": null,
       "polygons": null,
       "groups":   null,
       "disks":    null,
@@ -201,6 +241,7 @@ class Map extends Component {
     };
     this.end = {
       "scatters": true,
+      "p_stroke": true,
       "polygons": true,
       "groups":   null,
       "disks":    true,
@@ -245,6 +286,18 @@ class Map extends Component {
 
     this.timers = [];
     this.updated = true;
+
+    this.picked = [];
+    Root.pickBorders = () => {
+      if (this.state.picking) {
+        return;
+      }
+      this.picked = [];
+      this.setState({
+        picking:  true
+      });
+    };
+    this.ctx_bp = null;
   }
 
   render() {
@@ -314,6 +367,53 @@ class Map extends Component {
                     );
                   })
                 }
+                <div key="interaction"
+                  style={{
+                    display: this.state.picking ? "block" : "none",
+                    width: this.width,
+                    height: this.height,
+                    top: 0 - this.height * (this.state.layers.length + 1),
+                    position: "relative",
+                    pointerEvents: "none",
+                    zIndex: 200
+                  }} >
+                    <canvas className="MapCanvas" id="borderpicking"
+                      width={ this.width } height={ this.height }
+                      style={{
+                        background: "rgba(200,200,200,0.5)",
+                        pointerEvents:  "all"
+                      }}
+                      onClick={
+                        e => {
+                          const x = e.nativeEvent.offsetX;
+                          const y = e.nativeEvent.offsetY;
+                          const [lng, lat] = resolveCors(x, y);
+                          this.picked.push([lng, lat]);
+                          this.ctx_bp.fillStyle = "rgb(36,79,138)";
+                          this.ctx_bp.strokeStyle = "rgb(30,30,30)";
+                          this.ctx_bp.lineWidth = 2;
+                          const pos = Map.project(lng, lat);
+                          this.ctx_bp.strokeRect(pos.x - 2.5, pos.y - 2.5, 5, 5);
+                          this.ctx_bp.fillRect(pos.x - 2.5, pos.y - 2.5, 5, 5);
+                          if (this.picked.length > 1) {
+                            const last = this.picked[this.picked.length - 2];
+                            const prev = Map.project(last[0], last[1]);
+                            this.ctx_bp.beginPath();
+                            this.ctx_bp.moveTo(prev.x, prev.y);
+                            this.ctx_bp.lineTo(pos.x, pos.y);
+                            this.ctx_bp.stroke();
+                            this.ctx_bp.closePath();
+                          }
+                        }
+                      }
+                      onContextMenu={
+                        () => {
+                          this.state.setBorders(this.picked.map(d => d));
+                          this.state.picking = false;
+                          this.picked = [];
+                        }
+                      } />
+                </div>
               </>
             ) : null
           }
@@ -331,6 +431,8 @@ class Map extends Component {
 
   componentWillUnmount() {
     this.clearTimers();
+    this.picked = [];
+    this.state.picking = false;
   }
 
   componentDidUpdate() {
@@ -339,6 +441,8 @@ class Map extends Component {
       this.state.layers.forEach((layer, i) => {
         this.ctx[layer.label] = canvas[i].getContext("2d");
       });
+      this.ctx_bp = document.getElementById("borderpicking").getContext("2d");
+      this.ctx_bp.clearRect(0, 0, this.width, this.height);
     }
   }
 
@@ -395,6 +499,7 @@ class Map extends Component {
           this.bufferPaintGroups(renderingQueue);
         } else if (target === "polygons") {
           this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
+          this.ctx["p_strokes"].clearRect(0, 0, this.width, this.height);
           this.makeVoronoi();
           this.paintVoronoi();
         } else if (target === "disks") {
@@ -509,6 +614,7 @@ class Map extends Component {
       if (this.state.layers.filter(d => d.label === "polygons")[0].active) {
         document.getElementById("layer-polygons").style.visibility = "visible";
         this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
+        this.ctx["p_strokes"].clearRect(0, 0, this.width, this.height);
         this.makeVoronoi();
         this.paintVoronoi();
         this.end["polygons"] = true;
@@ -870,7 +976,8 @@ class Map extends Component {
    */
   paintVoronoi() {
     const ctx = this.ctx["polygons"];
-    if (!ctx) return;
+    const ctx_s = this.ctx["p_strokes"];
+    if (!ctx || !ctx_s) return;
 
     this.updated = true;
 
@@ -881,18 +988,22 @@ class Map extends Component {
             try {
               const color = getColor(this.state.colorize, this.state.data[i].value, this.max);
               ctx.fillStyle = color;
-              ctx.strokeStyle = "rgb(110,110,110)";
+              ctx_s.strokeStyle = "rgb(110,110,110)";
               ctx.beginPath();
+              ctx_s.beginPath();
               polygon.forEach((p, i) => {
                 if (i) {
                   ctx.lineTo(p[0], p[1]);
+                  ctx_s.lineTo(p[0], p[1]);
                 } else {
-                  ctx.moveTo(p[0], p[1]);
+                  ctx.moveTo(p[0], p[1]);                
+                  ctx_s.moveTo(p[0], p[1]);
                 }
               });
               ctx.fill();
-              ctx.stroke();
+              ctx_s.stroke();
               ctx.closePath();
+              ctx_s.closePath();
             } catch {}
 
             this.progress.next();
@@ -918,7 +1029,10 @@ class Map extends Component {
           
           return [0, 0];
         }
-      })
+      }).concat(this.state.borders.map(b => {
+        const a = this.map.current.project(b);
+        return [a.x, a.y];
+      }))
     );
     const voronoi = delaunay.voronoi(
       [ -0.5, -0.5, this.width + 1, this.height + 1]
@@ -1129,8 +1243,6 @@ class Map extends Component {
             };
           });
         });
-
-        console.log(groups.length);
 
         groups.forEach(grp => {
           this.timers.push(

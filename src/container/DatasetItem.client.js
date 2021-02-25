@@ -2,13 +2,14 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-18 20:09:53
+ * @Last Modified time: 2021-02-25 22:55:58
  */
 
 import { useState, useEffect } from 'react';
 import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
 import { callContextMenu } from './ContextMenu.client';
+import Button from '../UI/Button.client';
 // import * as d3 from "d3";
 
 
@@ -43,6 +44,7 @@ const DatasetItem = props => {
     expand:     true,
     showPrefr:  true,
     showStat:   true,
+    showBorders:true,
     showSample: true,
     showCharts: true
   });
@@ -382,6 +384,61 @@ const DatasetItem = props => {
             </tr>
           </tbody>
         </table>
+      </section>
+      <section key="borders"
+      style={{
+        height: state.expand ? undefined : 0
+      }} >
+        <label tabIndex={ 1 }
+          style={{ color: "rgb(110,110,110)" }}
+          onClick={
+            () => {
+              setState({
+                ...state,
+                showBorders: !state.showBorders
+              });
+            }
+          }  >
+            <ExpandSign expanded={ state.showBorders } />
+            Borders
+        </label>
+        <div style={{
+          display: state.showBorders? undefined : "none",
+          textAlign: "left",
+          marginLeft: "1rem",
+          paddingLeft: "0.84rem",
+          borderLeft: "1px solid rgb(52,103,176)",
+          lineHeight: 1.1
+        }} >
+          {
+            props.borders.length ? (
+              <Button
+                style={{
+                  padding: "0.2em 1.6em"
+                }}
+                listener={
+                  () => {
+                    Root.getDataset(props.name).borders = [];
+                    Root.refresh();
+                  }
+                } >
+                  clear
+              </Button>
+            ) : (
+              <Button
+                style={{
+                  padding: "0.2em 1.6em"
+                }}
+                listener={
+                  () => {
+                    Root.pickBorders();
+                  }
+                } >
+                  pick
+              </Button>
+            )
+          }
+        </div>
       </section>
       <section key="samples"
       style={{

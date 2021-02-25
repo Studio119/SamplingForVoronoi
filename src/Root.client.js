@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 21:21:00
+ * @Last Modified time: 2021-02-25 22:09:11
  */
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -42,6 +42,10 @@ const createChart = (src, rename=undefined) => {
   let layers = [{
     label:  "scatters",
     active: true,
+    opacity: 1
+  }, {
+    label:  "p_strokes",
+    active: false,
     opacity: 1
   }, {
     label:  "polygons",
@@ -170,7 +174,7 @@ const AppRoot = () => {
                   charts:   [
                     createChart("total")
                   ],
-                  border: []
+                  borders: []
                 })
               });
             };
