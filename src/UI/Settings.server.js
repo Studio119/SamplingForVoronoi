@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-02-02 17:41:34 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-24 16:29:44
+ * @Last Modified time: 2021-03-05 19:15:07
  */
 
 import React from 'react';
@@ -12,6 +12,7 @@ import Button from '../UI/Button.client';
 // import Map from './Map.client';
 // import { Root } from '../App.server';
 import { RealTimeLog } from './SampleDialog.server';
+import { Root } from '../App.server';
 
 
 const pages = ["Storage", "Voronoi diagram"];
@@ -23,7 +24,8 @@ class Settings extends React.Component {
     this.state = {
       show: false,
       running: false,
-      idx:  0
+      idx:  0,
+      storeBorders: Root.storeBorders
     };
 
     this.storageSelected = {
@@ -33,6 +35,11 @@ class Settings extends React.Component {
     };
 
     this.log = React.createRef();
+  }
+
+  static getDerivedStateFromProps() {
+    const storeBorders = Root.storeBorders;
+    return { storeBorders };
   }
 
   close() {
@@ -394,7 +401,71 @@ class Settings extends React.Component {
                             </AsyncComponent>
                           </>
                         ) : pages[this.state.idx] === "Voronoi diagram" ? (
-                          <></>
+                          <>
+                            <header key="stat"
+                              style={{
+                                fontWeight: "bold"
+                              }} >
+                                Voronoi borders
+                            </header>
+                            <table key="stat-val"
+                              style={{
+                                fontSize:   "92%",
+                                textAlign:  "center",
+                                lineHeight: 1.4,
+                                margin:     "0.4em 0.2rem"
+                              }} >
+                                <tbody>
+                                  <tr tabIndex={ 1 }
+                                    onClick={
+                                      e => {
+                                        let tr = e.target;
+                                        while (tr.tagName !== "TR") {
+                                          tr = tr.parentElement;
+                                        }
+                                        const checkbox = tr.children[0].children[0];
+                                        checkbox.click();
+                                      }
+                                    }
+                                    style={{
+                                      verticalAlign:  "baseline",
+                                      cursor:         "pointer"
+                                    }} >
+                                      <td>
+                                        <input type="checkbox" name="storageBorders"
+                                          defaultChecked={ this.state.storeBorders }
+                                          style={{
+                                            cursor: "pointer"
+                                          }}
+                                          onClick={
+                                            e => e.stopPropagation()
+                                          }
+                                          onChange={
+                                            e => {
+                                              Root.storeBorders = e.target.checked;
+                                              this.setState({
+                                                storeBorders: Root.storeBorders
+                                              });
+                                            }
+                                          } />
+                                      </td>
+                                      <td style={{ width: "6.2em" }} >
+                                        Use Storage
+                                      </td>
+                                      <td
+                                        style={{
+                                          textAlign:  "left",
+                                          color:      "rgb(170,170,170)",
+                                          fontSize:   "90%"
+                                        }} >
+                                        allow this page to access localStorage
+                                        to store the borders of Voronoi Chart
+                                        of each dataset
+                                      </td>
+                                  </tr>
+                                </tbody>
+                            </table>
+                          </>
                         ) : null
                       }
                   </section>

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:23 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 21:49:28
+ * @Last Modified time: 2021-03-05 18:47:46
  */
 
 import ActivityBar from './container/ActivityBar.client';
@@ -23,7 +23,8 @@ export const Root = {
   getDataset:     () => {},
   openChart:      () => {},
   pickBorders:    () => {},
-  colorizeChanged:false
+  colorizeChanged:false,
+  storeBorders:   true
 };
 
 export default function App(props) {

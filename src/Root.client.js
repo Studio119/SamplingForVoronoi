@@ -2,10 +2,10 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 22:09:11
+ * @Last Modified time: 2021-03-05 20:16:48
  */
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import App, { Root } from "./App.server";
 import { createPortal } from 'react-dom';
 import WorkSpace from './container/WorkSpace.client';
@@ -122,6 +122,10 @@ const AppRoot = () => {
             const fr = new FileReader();
             fr.readAsText(fn);
             e.currentTarget.value = null;
+            const _name = name.split("\\").reverse()[0].replace(/\.json/, "");
+            const borders = window.localStorage.getItem("borders") ? (
+              JSON.parse(window.localStorage.getItem("borders"))[_name] || []
+            ) : [];
             fr.onload = function(_) {
               const content = loadJSON(this.result);
               const exp = getSuggestedExp(content);
@@ -129,7 +133,7 @@ const AppRoot = () => {
                 ...state,
                 time:   (new Date()).getTime(),
                 datasets: state.datasets.concat({
-                  name: name.split("\\").reverse()[0].replace(/\.json/, ""),
+                  name: _name,
                   data: content,
                   exp:  exp,
                   colorize: {
@@ -174,7 +178,9 @@ const AppRoot = () => {
                   charts:   [
                     createChart("total")
                   ],
-                  borders: []
+                  borders: Root.storeBorders ? (
+                    borders
+                  ) : []
                 })
               });
             };

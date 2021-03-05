@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 23:17:04
+ * @Last Modified time: 2021-03-05 18:56:06
  */
 
 import React, { Component, createRef } from "react";
@@ -385,6 +385,9 @@ class Map extends Component {
                       }}
                       onClick={
                         e => {
+                          if (!this.state.picking) {
+                            return;
+                          }
                           const x = e.nativeEvent.offsetX;
                           const y = e.nativeEvent.offsetY;
                           const [lng, lat] = resolveCors(x, y);
@@ -406,11 +409,45 @@ class Map extends Component {
                           }
                         }
                       }
+                      onMouseMove={
+                        e => {
+                          if (!this.state.picking || this.picked.length === 0) {
+                            return;
+                          }
+                          const x = e.nativeEvent.offsetX;
+                          const y = e.nativeEvent.offsetY;
+                          const before = Map.project(...this.picked[this.picked.length - 1]);
+                          const dist = ((before.x - x) ** 2 + (before.y - y) ** 2) ** 0.5;
+                          if (dist < 8) {
+                            return;
+                          }
+                          const [lng, lat] = resolveCors(x, y);
+                          this.picked.push([lng, lat]);
+                          this.ctx_bp.fillStyle = "rgb(36,79,138)";
+                          this.ctx_bp.strokeStyle = "rgb(30,30,30)";
+                          this.ctx_bp.lineWidth = 1.2;
+                          const pos = Map.project(lng, lat);
+                          this.ctx_bp.strokeRect(pos.x - 2, pos.y - 2, 4, 4);
+                          this.ctx_bp.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+                          if (this.picked.length > 1) {
+                            const last = this.picked[this.picked.length - 2];
+                            const prev = Map.project(last[0], last[1]);
+                            this.ctx_bp.beginPath();
+                            this.ctx_bp.moveTo(prev.x, prev.y);
+                            this.ctx_bp.lineTo(pos.x, pos.y);
+                            this.ctx_bp.stroke();
+                            this.ctx_bp.closePath();
+                          }
+                        }
+                      }
                       onContextMenu={
                         () => {
                           this.state.setBorders(this.picked.map(d => d));
                           this.state.picking = false;
                           this.picked = [];
+                          setTimeout(() => {
+                            this.repaint();
+                          }, 100);
                         }
                       } />
                 </div>

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 22:40:59 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 22:53:41
+ * @Last Modified time: 2021-03-05 19:58:18
  */
 
 import { createRef, Component } from 'react';
@@ -188,6 +188,11 @@ class WorkSpace extends Component {
         this.map.current.update(
           name, chart.data, chart.layers, chart.colorize, chart.borders, borders => {
             Root.getDataset(chart.dataset).borders = borders;
+            if (Root.storeBorders) {
+              const store = JSON.parse(window.localStorage.getItem("borders") || "{}");
+              store[chart.dataset] = borders;
+              window.localStorage.setItem("borders", JSON.stringify(store));
+            }
             Root.refresh();
           }
         );
