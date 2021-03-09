@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-08 23:54:19
+ * @Last Modified time: 2021-03-09 23:03:16
  */
 
 import React, { Component, createRef } from "react";
@@ -1081,37 +1081,20 @@ class Map extends Component {
   }
 
   valueVoronoi() {
-    const values = this.voronoiPolygons.map(_ => []);
-    const population = Root.getPopulation(this.state.name.split(".")[0]);
-    population.slice(0, 200).forEach(d => {
+    const population = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
       const { x, y } = Map.project(d.lng, d.lat);
-      for (let i = 0; i < this.voronoiPolygons.length; i++) {
-        const xs = this.voronoiPolygons[i].map(d => d[0]);
-        const ys = this.voronoiPolygons[i].map(d => d[1]);
-        if (x < Math.min(...xs) || x > Math.max(...xs) || y < Math.min(...ys) || y > Math.max(...ys)) {
-          continue;
-        }
-        let c = false;
-        for (
-          let j = -1, k = this.voronoiPolygons[i].length - 1;
-          ++j < this.voronoiPolygons[i].length; k = j
-        ) {
-          (
-            (this.voronoiPolygons[i][j][1] <= y && y < this.voronoiPolygons[i][j][1])
-            || (this.voronoiPolygons[i][j][1] <= y && y < this.voronoiPolygons[i][j][1])
-          ) && (
-            x < (
-              this.voronoiPolygons[i][k][0] - this.voronoiPolygons[i][j][0]
-            ) * (y - this.voronoiPolygons[i][j][1]) / (
-              this.voronoiPolygons[i][k][1] - this.voronoiPolygons[i][j][1]
-            ) + this.voronoiPolygons[i][j][0]
-          ) && (c = !c);
-        }
-        if (c) {
-          console.log(this.voronoiPolygons[i], [x, y], c);
-        }
-      }
+      return { x, y, value: d.value };
     });
+    const worker = new Worker("/worker.js");
+    worker.postMessage({
+      data:             this.state.data.map(d => d.value),
+      voronoiPolygons:  this.voronoiPolygons,
+      population
+    });
+    worker.onmessage = e => {
+      console.log(e.data);
+      worker.terminate();
+    };
   }
 
   getIDW(x, y, data, code, origin) {

@@ -20,10 +20,13 @@ webpack(
   {
     mode: isProduction ? 'production' : 'development',
     devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
-    entry: [path.resolve(__dirname, '../src/index.client.js')],
+    entry: {
+      main:   path.resolve(__dirname, '../src/index.client.js'),
+      worker: path.resolve(__dirname, '../src/workers/valuePolygon.js')
+    },
     output: {
       path: path.resolve(__dirname, '../build'),
-      filename: 'main.js',
+      filename: '[name].js'
     },
     module: {
       rules: [
