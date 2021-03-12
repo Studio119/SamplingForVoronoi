@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-09 23:26:39
+ * @Last Modified time: 2021-03-10 13:11:39
  */
 
 self.addEventListener('message', e => {
@@ -43,6 +43,7 @@ const valueVoronoi = (data, voronoiPolygons, population) => {
   });
 
   const stds = [];
+  let temp = 0;
 
   const contrast = values.map((value, i) => {
     const before = data[i];
@@ -53,10 +54,13 @@ const valueVoronoi = (data, voronoiPolygons, population) => {
     });
     k = Math.sqrt(k / value.length);
     stds.push(k);
+    temp += after;
     return [before, after];
   });
 
   const std = stds.reduce((sum, d) => sum + d) / stds.length;
+  temp /= stds.length;
+  const cv = std / temp;
 
   const linear = contrast.map(c => Math.abs(c[1] - c[0])).reduce((sum, c) => {
     return sum + c;
@@ -67,6 +71,6 @@ const valueVoronoi = (data, voronoiPolygons, population) => {
   }) / contrast.length;
 
   return {
-    linear, square, std
+    linear, square, std, cv
   };
 }

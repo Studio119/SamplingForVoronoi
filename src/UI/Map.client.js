@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-09 23:03:16
+ * @Last Modified time: 2021-03-10 13:13:45
  */
 
 import React, { Component, createRef } from "react";
@@ -1023,7 +1023,11 @@ class Map extends Component {
         this.timers.push(
           setTimeout(() => {
             try {
-              const color = getColor(this.state.colorize, this.state.data[i].value, this.max);
+              const color = getColor(
+                this.state.colorize,
+                this.state.data[i].averVal || this.state.data[i].value,
+                this.max
+              );
               ctx.fillStyle = color;
               ctx_s.strokeStyle = "rgb(110,110,110)";
               ctx.beginPath();
@@ -1083,11 +1087,11 @@ class Map extends Component {
   valueVoronoi() {
     const population = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
       const { x, y } = Map.project(d.lng, d.lat);
-      return { x, y, value: d.value };
+      return { x, y, value: d.value * 100 };
     });
     const worker = new Worker("/worker.js");
     worker.postMessage({
-      data:             this.state.data.map(d => d.value),
+      data:             this.state.data.map(d => (d.averVal || d.value) * 100),
       voronoiPolygons:  this.voronoiPolygons,
       population
     });
