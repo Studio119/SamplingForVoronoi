@@ -4,6 +4,7 @@ from kde import get_kde
 from group import make_grp
 from ssbns import SSBNS
 from real_time_log import clear_log, log_text
+import os.path
 
 
 if __name__ == "__main__":
@@ -13,7 +14,10 @@ if __name__ == "__main__":
   R = float(sys.argv[2]) * 1e-4
   num = int(sys.argv[3])
 
-  make_grp(filename_origin, num)
+  group_file = "./storage/group_" + filename_origin + ".json"
+
+  if not os.path.exists(group_file):
+    make_grp(filename_origin, num)
 
   log_text("able to using spanning trees")
   
@@ -24,7 +28,7 @@ if __name__ == "__main__":
 
   map_id_to_ss = {}
 
-  with open("./storage/group_" + filename_origin + ".json", mode='r') as fin:
+  with open(group_file, mode='r') as fin:
     for i, p in enumerate(json.load(fin)):
       matrix[i].append(p["ss"])
       map_id_to_ss[i] = p["ss"]

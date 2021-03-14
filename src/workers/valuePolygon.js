@@ -2,44 +2,32 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-10 13:11:39
+ * @Last Modified time: 2021-03-14 20:14:22
  */
 
 self.addEventListener('message', e => {
   const data = e.data;
-  const res = valueVoronoi(data.data, data.voronoiPolygons, data.population);
+  const res = valueVoronoi(data.data, data.voronoiPolygons, data.polygonsCenters, data.population);
   self.postMessage(res);
 });
 
-const valueVoronoi = (data, voronoiPolygons, population) => {
+const valueVoronoi = (data, voronoiPolygons, polygonsCenters, population) => {
   const values = voronoiPolygons.map(_ => []);
   population.forEach(d => {
     const { x, y, value } = d;
-    for (let i = 0; i < voronoiPolygons.length; i++) {
-      const xs = voronoiPolygons[i].map(d => d[0]);
-      const ys = voronoiPolygons[i].map(d => d[1]);
-      if (x < Math.min(...xs) || x > Math.max(...xs) || y < Math.min(...ys) || y > Math.max(...ys)) {
-        continue;
-      }
-      const polygon = voronoiPolygons[i];
-      let inside = false;
-      for (let j = 0, k = polygon.length - 1; j < polygon.length; k = j++) {
-        const [x1, y1] = polygon[j];
-        const [x2, y2] = polygon[k];
-        const intersect = (
-          ((y1 > y) ^ (y2 > y)) && (
-            (x < (x2 - x1) * (y - y1) / (y2 - y1) + x1)
-          )
-        );
-        if (intersect) {
-          inside = !inside;
-        }
-      }
-      if (inside) {
-        values[i].push(value);
-        return;
-      }
-    }
+    const possible = voronoiPolygons.map((p, i) => ({ list: p, id: i })).map(p => {
+      const dist_2 = (
+        polygonsCenters[p.id].x - x
+      ) ** 2 + (
+        polygonsCenters[p.id].y - y
+      ) ** 2;
+      return {
+        id: p.id,
+        w:  dist_2
+      };
+    });
+    const fromId = possible.sort((a, b) => a.w - b.w)[0].id;
+    values[fromId].push(value);
   });
 
   const stds = [];
@@ -70,7 +58,31 @@ const valueVoronoi = (data, voronoiPolygons, population) => {
     return sum + c;
   }) / contrast.length;
 
+  const cbs = voronoiPolygons.map(p => {
+    const bs = [];
+    let sum = 0;
+    for (let i = 0; i < p.length; i++) {
+      const b = (
+        (p[i][0] - p[(i + 1) % p.length][0]) ** 2 +
+        (p[i][1] - p[(i + 1) % p.length][1]) ** 2
+      ) ** 0.5;
+      sum += b;
+      bs.push(b);
+    }
+    const aver = sum / p.length;
+    let std = 0;
+    bs.forEach(b => {
+      std += (b - aver) ** 2;
+    });
+    std = (std / bs.length) ** 0.5;
+    const bsCv = std / aver;
+
+    return bsCv;
+  });
+
+  const stroke = cbs.reduce((prev, cur) => prev + cur) / cbs.length;
+
   return {
-    linear, square, std, cv
+    linear, square, std, cv, stroke
   };
 }

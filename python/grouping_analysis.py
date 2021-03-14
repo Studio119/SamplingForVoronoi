@@ -194,8 +194,8 @@ def prun(nodes, trees, num):
         len(trees_with_cost), num,
         len(tree_to_prun["nodes"]), len(next_cut[0]["nodes"]), len(next_cut[1]["nodes"])
       ))
-      print("punning... {:.2%}".format(step / n_op))
-    log_text("punning... {:.2%}".format(step / n_op))
+      print("prunning... {:.2%}".format(step / n_op))
+    log_text("prunning... {:.2%}".format(step / n_op))
     step += 1
     pass
   return trees_with_cost

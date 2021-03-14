@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-10 13:13:45
+ * @Last Modified time: 2021-03-14 17:54:41
  */
 
 import React, { Component, createRef } from "react";
@@ -872,7 +872,25 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
+            const gs = [
+              "rgb(200,100,225)",
+              "rgb(120,170,255)",
+              "rgb(242,0,0)",
+              "rgb(48,144,0)",
+              "rgb(142,0,142)",
+              "rgb(190,160,100)",
+              "rgb(250,198,210)",
+              "rgb(180,255,0)",
+              "rgb(111,196,82)",
+              "rgb(255,180,0)",
+              "rgb(130,40,0)",
+              "rgb(255,100,85)",
+              "rgb(0,90,230)",
+              "rgb(175,175,175)",
+              "rgb(60,110,130)",
+              "rgb(255,242,0)"
+            ];
+            ctx.fillStyle = gs[d.ss[0] % gs.length];
             ctx.strokeStyle = d3.interpolateHsl(
               ctx.fillStyle, "rgb(30,30,30)"
             )(0.4);
@@ -885,6 +903,7 @@ class Map extends Component {
             ctx.fill();
             ctx.closePath();
             
+            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
             ctx.beginPath();
             ctx.arc(d.x, d.y, 2, 0, Math.PI * 2);
             ctx.stroke();
@@ -1092,7 +1111,8 @@ class Map extends Component {
     const worker = new Worker("/worker.js");
     worker.postMessage({
       data:             this.state.data.map(d => (d.averVal || d.value) * 100),
-      voronoiPolygons:  this.voronoiPolygons,
+      voronoiPolygons:  this.voronoiPolygons.map(p => p.slice(1)),
+      polygonsCenters:  this.state.data.map(d => this.map.current.project([d.lng, d.lat])),
       population
     });
     worker.onmessage = e => {
