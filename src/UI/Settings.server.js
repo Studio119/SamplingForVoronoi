@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-02-02 17:41:34 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-05 19:15:07
+ * @Last Modified time: 2021-03-16 14:22:49
  */
 
 import React from 'react';
@@ -159,19 +159,21 @@ class Settings extends React.Component {
                                     this.storageSelected = {
                                       0: false,
                                       1: false,
-                                      2: false
+                                      2: false,
+                                      3: false
                                     };
                                     const updateStorage = e => {
                                       this.storageSelected = {
                                         0:  document.getElementsByName("cb0")[0].checked,
                                         1:  document.getElementsByName("cb1")[0].checked,
-                                        2:  document.getElementsByName("cb2")[0].checked
+                                        2:  document.getElementsByName("cb2")[0].checked,
+                                        3:  document.getElementsByName("cb3")[0].checked
                                       };
                                       const tr = e.target.parentNode.parentNode.parentNode
                                                   .querySelectorAll("tr")[5];
                                       let count = 0;
                                       let size = 0;
-                                      for (let i = 0; i < 3; i++) {
+                                      for (let i = 0; i < 4; i++) {
                                         if (this.storageSelected[i]) {
                                           count += data[i][0];
                                           size += data[i][1];

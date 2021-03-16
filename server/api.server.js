@@ -44,7 +44,7 @@ app.use(express.json());
 
 app.listen(PORT, () => {
   console.log('React app listening at 4000...');
-}).setTimeout(60 * 1e3 * 10);
+}).setTimeout(60 * 1e3 * 20);
 
 function handleErrors(fn) {
   return async function(req, res, next) {

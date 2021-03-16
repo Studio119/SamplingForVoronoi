@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-14 17:54:41
+ * @Last Modified time: 2021-03-16 19:49:19
  */
 
 import React, { Component, createRef } from "react";
@@ -11,6 +11,7 @@ import * as d3 from "d3";
 import { Root } from "../App.server";
 import { HilbertEncodeXY } from "../help/hilbertEncoder";
 import axios from "axios";
+import Button from "./Button.client";
 
 
 const getColor = (colormap, val, max) => {
@@ -106,9 +107,14 @@ class Map extends Component {
   }
 
   update(name, data, layers, colorize, borders, setBorders) {
+    let evaluation = this.state.evaluation;
+    let running = this.state.running;
+    this.voronoiPolygons = [];
     if (name !== this.state.name) {
       // 选页卡切换
       // console.log("选页卡切换");
+      evaluation = null;
+      running = [];
       if (data.length) {
         // 更新位置，触发重绘
         let [xmin, xmax, ymin, ymax] = [Infinity, -Infinity, Infinity, -Infinity];
@@ -153,7 +159,7 @@ class Map extends Component {
       }
     }
 
-    this.setState({ name, data, layers, colorize, borders, setBorders });
+    this.setState({ name, data, layers, colorize, borders, setBorders, evaluation, running });
   }
 
   setInterpolationConfig(config) {
@@ -213,7 +219,9 @@ class Map extends Component {
         maxDist:    100,
         minNeigh:   8,
         manhattan:  false
-      }
+      },
+      evaluation: null,
+      running:    []
     };
 
     Map.cur = this;
@@ -253,6 +261,7 @@ class Map extends Component {
       count: 0,
       flag: 0,
       ref: createRef(),
+      timer: 0,
       start: (len) => {
         if (len && this.progress.ref.current) {
           this.progress.count = len;
@@ -268,7 +277,13 @@ class Map extends Component {
             this.progress.close();
             return;
           }
+          if (this.progress.timer) {
+            clearTimeout(this.progress.timer);
+          }
           this.progress.ref.current.style.visibility = "visible";
+          this.progress.timer = setTimeout(() => {
+            this.progress.ref.current.style.visibility = "hidden";
+          }, 1000);
           this.progress.ref.current.setAttribute("width", `${
                         this.progress.flag / this.progress.count * 100
                     }%`);
@@ -342,6 +357,7 @@ class Map extends Component {
                       id={ this.id }
                       onBoundsChanged = {
                         () => {
+                          this.voronoiPolygons = [];
                           this.repaint();
                         }
                       } />
@@ -454,6 +470,119 @@ class Map extends Component {
               </>
             ) : null
           }
+          <section key="running"
+            style={{
+              position: "fixed",
+              right:    "20px",
+              bottom:   "20px",
+              fontSize: "90%",
+              lineHeight: "1.4em",
+              zIndex:   999,
+              opacity:  0.94,
+              display:  "flex",
+              flexDirection:  "column",
+              alignItems: "flex-end"
+            }} >
+              {
+                this.state.running.map((log, i) => {
+                  return (
+                    <article key={ `log_${i}` }
+                      style={{
+                        marginTop:  "6px",
+                        padding:  "0.6rem 0.8rem",
+                        background: "white",
+                        border:   "1px solid #aaa",
+                        display:  "flex",
+                        alignItems: "baseline",
+                        boxShadow: "4px 3px 0 #888a"
+                      }} >
+                        <div className="loading"
+                          style={{
+                            width:  "1em",
+                            height: "1em",
+                            borderRadius: "0.5em",
+                            borderLeft: "2px solid rgba(130,181,203,0.64)",
+                            borderTop: "2px solid rgba(130,181,203,1)",
+                            borderRight: "2px solid rgba(130,181,203,0.22)",
+                            borderBottom: "2px solid rgba(130,181,203,0.44)"
+                          }} />
+                        <label style={{ margin: 0, padding: 0 }} >
+                          { log }
+                        </label>
+                    </article>
+                  );
+                })
+              }
+              <article key="evaluation"
+                style={{
+                  marginTop:  "6px",
+                  padding:  "0.6rem 0.8rem",
+                  background: "white",
+                  border:   "1px solid #aaa",
+                  display:  this.state.name && this.state.name.endsWith(".total") ? "none" : "flex",
+                  flexDirection:  "column",
+                  alignItems: "center",
+                  boxShadow: "4px 3px 0 #888a"
+                }} >
+                  {
+                    this.state.evaluation ? (
+                      this.state.evaluation instanceof Worker ? (
+                        <React.Fragment>
+                          <div className="loading"
+                            style={{
+                              width:  "2vmin",
+                              height: "2vmin",
+                              borderRadius: "1vmin",
+                              borderLeft: "2px solid rgba(140,198,229,0.64)",
+                              borderTop: "2px solid rgba(140,198,229,1)",
+                              borderRight: "2px solid rgba(140,198,229,0.22)",
+                              borderBottom: "2px solid rgba(140,198,229,0.44)"
+                            }} />
+                          <label>runnning evaluation...</label>
+                        </React.Fragment>
+                      ) : (
+                        <table>
+                          <tbody>
+                            <tr>
+                              <th>AAVSTD</th>
+                              <td>{ this.state.evaluation.std.toFixed(4) }</td>
+                            </tr>
+                            <tr>
+                              <th>AAVCV</th>
+                              <td>{ this.state.evaluation.cv.toFixed(4) }</td>
+                            </tr>
+                            <tr>
+                              <th>AELCV</th>
+                              <td>{ this.state.evaluation.stroke.toFixed(4) }</td>
+                            </tr>
+                            <tr>
+                              <th>ALAD</th>
+                              <td>{ this.state.evaluation.local.toFixed(4) }</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      )
+                    ) : (
+                      <React.Fragment>
+                        <header>Evaluation</header>
+                        <Button
+                          listener={
+                            () => {
+                              this.evaluateVoronoi();
+                            }
+                          }
+                          style={{
+                            display:  "block",
+                            padding:  "3px 10px",
+                            margin:   "0.24rem 0"
+                          }} >
+                            Run
+                        </Button>
+                      </React.Fragment>
+                    )
+                  }
+              </article>
+          </section>
       </section>
     );
   }
@@ -537,7 +666,6 @@ class Map extends Component {
         } else if (target === "polygons") {
           this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
           this.ctx["p_strokes"].clearRect(0, 0, this.width, this.height);
-          this.makeVoronoi();
           this.paintVoronoi();
         } else if (target === "disks") {
           this.ctx["disks"].clearRect(0, 0, this.width, this.height);
@@ -652,7 +780,6 @@ class Map extends Component {
         document.getElementById("layer-polygons").style.visibility = "visible";
         this.ctx["polygons"].clearRect(0, 0, this.width, this.height);
         this.ctx["p_strokes"].clearRect(0, 0, this.width, this.height);
-        this.makeVoronoi();
         this.paintVoronoi();
         this.end["polygons"] = true;
       } else {
@@ -1030,28 +1157,35 @@ class Map extends Component {
    * @returns {void}
    * @memberof Map
    */
-  paintVoronoi() {
+  async paintVoronoi() {
     const ctx = this.ctx["polygons"];
     const ctx_s = this.ctx["p_strokes"];
     if (!ctx || !ctx_s) return;
 
+    if (this.voronoiPolygons.length === 0) {
+      this.makeVoronoi().then(() => {
+        this.paintVoronoi();
+      });
+      return;
+    }
+
     this.updated = true;
 
-    this.voronoiPolygons.forEach((polygon, i) => {
-      if (polygon) {
+    this.voronoiPolygons.forEach(({ polygons, averVal }) => {
+      if (polygons) {
         this.timers.push(
           setTimeout(() => {
             try {
               const color = getColor(
                 this.state.colorize,
-                this.state.data[i].averVal || this.state.data[i].value,
+                averVal,
                 this.max
               );
               ctx.fillStyle = color;
               ctx_s.strokeStyle = "rgb(110,110,110)";
               ctx.beginPath();
               ctx_s.beginPath();
-              polygon.forEach((p, i) => {
+              polygons.forEach((p, i) => {
                 if (i) {
                   ctx.lineTo(p[0], p[1]);
                   ctx_s.lineTo(p[0], p[1]);
@@ -1073,16 +1207,23 @@ class Map extends Component {
     });
   }
 
-  makeVoronoi() {
+  async makeVoronoi() {
     if (!this.map.current) {
-        return [];
+      return [];
+    } else if (this.voronoiPolygons.length) {
+      return this.voronoiPolygons;
     }
+
+    const log = "Generating Voronoi Diagram";
+    this.setState({
+      running:  this.state.running.concat(log)
+    });
     
     const delaunay = d3.Delaunay.from(
       this.state.data.map(d => {
         try {
           const a = this.map.current.project([d.lng, d.lat]);
-            
+          
           return [a.x, a.y];
         } catch (error) {
           console.warn(d, error)
@@ -1098,27 +1239,64 @@ class Map extends Component {
       [ -0.5, -0.5, this.width + 1, this.height + 1]
     );
     
-    this.voronoiPolygons = this.state.data.map((_, i) => voronoi.cellPolygon(i));
+    const voronoiPolygons = this.state.data.map((_, i) => ({
+      polygons: voronoi.cellPolygon(i),
+      values:   [],
+      averVal:  NaN
+    }));
 
-    this.valueVoronoi();
-  }
-
-  valueVoronoi() {
     const population = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
       const { x, y } = Map.project(d.lng, d.lat);
-      return { x, y, value: d.value * 100 };
+      return { x, y, value: d.value };
     });
+
+    const polygonsCenters = this.state.data.map(d => this.map.current.project([d.lng, d.lat]));
+
+    await new Promise(res => {
+      const worker = new Worker("/worker.js");
+      this.state.valuation = worker;
+      worker.postMessage({
+        req:              "gen",
+        population,
+        voronoiPolygons,
+        polygonsCenters
+      });
+      worker.onmessage = e => {
+        worker.terminate();
+        // console.log(e.data);
+        this.voronoiPolygons = e.data;
+        res(e.data);
+      };
+    });
+
+    this.setState({
+      running: this.state.running.filter(e => e !== log)
+    });
+  }
+
+  async evaluateVoronoi() {
     const worker = new Worker("/worker.js");
-    worker.postMessage({
-      data:             this.state.data.map(d => (d.averVal || d.value) * 100),
-      voronoiPolygons:  this.voronoiPolygons.map(p => p.slice(1)),
-      polygonsCenters:  this.state.data.map(d => this.map.current.project([d.lng, d.lat])),
-      population
+    this.setState({
+      evaluation: worker
     });
-    worker.onmessage = e => {
-      console.log(e.data);
-      worker.terminate();
-    };
+    
+    if (this.voronoiPolygons.length === 0) {
+      await this.makeVoronoi();
+    }
+
+    setTimeout(() => {
+      worker.postMessage({
+        req:              "evl",
+        voronoiPolygons:  this.voronoiPolygons
+      });
+      worker.onmessage = e => {
+        // console.log(e.data);
+        worker.terminate();
+        this.setState({
+          evaluation: e.data
+        });
+      };
+    }, 100);
   }
 
   getIDW(x, y, data, code, origin) {

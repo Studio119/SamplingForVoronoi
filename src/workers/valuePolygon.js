@@ -2,17 +2,125 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-14 20:14:22
+ * @Last Modified time: 2021-03-16 19:17:09
  */
 
 self.addEventListener('message', e => {
   const data = e.data;
-  const res = valueVoronoi(data.data, data.voronoiPolygons, data.polygonsCenters, data.population);
-  self.postMessage(res);
+  if (data.req === "gen") {
+    const res = getValue(data.population, data.voronoiPolygons, data.polygonsCenters);
+    self.postMessage(res);
+  } else if (data.req === "evl") {
+    const res = evaluateVoronoi(data.voronoiPolygons);
+    self.postMessage(res);
+  } else {
+    self.postMessage({
+      err:  1,
+      req:  data
+    });
+  }
 });
 
-const valueVoronoi = (data, voronoiPolygons, polygonsCenters, population) => {
-  const values = voronoiPolygons.map(_ => []);
+const evaluateVoronoi = (voronoiPolygons) => {
+  const stds = [];
+  const cvs = [];
+
+  voronoiPolygons.forEach(vp => {
+    const after = vp.averVal;
+    let k = 0;
+    vp.values.forEach(v => {
+      k += Math.pow(v - after, 2);
+    });
+    const std = Math.sqrt(k / vp.values.length);
+    stds.push(std);
+    const cv = std / after;
+    cvs.push(cv);
+  });
+
+  const std = stds.reduce((sum, d) => sum + d) / stds.length;
+  const cv = cvs.reduce((sum, d) => sum + d) / cvs.length;
+
+  const areas = [];
+
+  const cbs = voronoiPolygons.map(({ polygons: p, center }) => {
+    const bs = [];
+    let sum = 0;
+    const triangles = [];
+    for (let i = 0; i < p.length - 1; i++) {
+      const b = (
+        (p[i][0] - p[(i + 1) % p.length][0]) ** 2 +
+        (p[i][1] - p[(i + 1) % p.length][1]) ** 2
+      ) ** 0.5;
+      sum += b;
+      bs.push(b);
+      const p1 = (
+        (p[i][0] - center[0]) ** 2 + (p[i][1] - center[1]) ** 2
+      ) ** 0.5;
+      const p2 = (
+        (p[(i + 1) % p.length][0] - center[0]) ** 2 + (p[(i + 1) % p.length][1] - center[1]) ** 2
+      ) ** 0.5;
+      triangles.push([(b + p1 + p2) / 2, b, p1, p2]);
+    }
+    const aver = sum / p.length;
+    let std = 0;
+    bs.forEach(b => {
+      std += (b - aver) ** 2;
+    });
+    std = (std / bs.length) ** 0.5;
+    const bsCv = std / aver;
+
+    /* 计算面积 */
+    let area = 0;
+    triangles.forEach(trg => {
+      const s = Math.sqrt(
+        trg[0] * (trg[0] - trg[1]) * (trg[0] - trg[2]) * (trg[0] - trg[3])
+      );
+      area += s;
+    });
+    areas.push(area);
+
+    return bsCv;
+  });
+
+  const stroke = cbs.reduce((prev, cur) => prev + cur) / cbs.length;
+
+  let local = 0;
+  let lc = 0;
+  voronoiPolygons.forEach((vp, i) => {
+    const neighbors = [];
+    voronoiPolygons.forEach((v2, j) => {
+      if (i === j) {
+        return;
+      }
+      const p1 = vp.polygons;
+      const p2 = v2.polygons;
+      for (let a = 0; a < p1.length; a++) {
+        for (let b = 0; b < p2.length; b++) {
+          if (p1[a][0] === p2[b][0] && p1[a][1] === p2[b][1]) {
+            neighbors.push(j);
+            return;
+          }
+        }
+      }
+    });
+    if (neighbors.length > 1) {
+      let temp = 0;
+      neighbors.forEach(a => {
+        temp += (areas[a] / areas[i] - 1) ** 2;
+      });
+      local += Math.sqrt(temp / neighbors.length);
+      lc += 1;
+    }
+  });
+  local /= lc;
+
+  return {
+    std, cv, stroke, local
+  };
+}
+
+
+const getValue = (population, voronoiPolygons, polygonsCenters) => {
   population.forEach(d => {
     const { x, y, value } = d;
     const possible = voronoiPolygons.map((p, i) => ({ list: p, id: i })).map(p => {
@@ -27,62 +135,14 @@ const valueVoronoi = (data, voronoiPolygons, polygonsCenters, population) => {
       };
     });
     const fromId = possible.sort((a, b) => a.w - b.w)[0].id;
-    values[fromId].push(value);
+    voronoiPolygons[fromId].values.push(value);
+    voronoiPolygons[fromId].center = [x, y];
   });
 
-  const stds = [];
-  let temp = 0;
-
-  const contrast = values.map((value, i) => {
-    const before = data[i];
-    const after = value.reduce((sum, d) => sum + d) / value.length;
-    let k = 0;
-    value.forEach(v => {
-      k += Math.pow(v - after, 2);
-    });
-    k = Math.sqrt(k / value.length);
-    stds.push(k);
-    temp += after;
-    return [before, after];
+  voronoiPolygons.forEach(vp => {
+    const averVal = vp.values.reduce((prev, cur) => prev + cur) / vp.values.length;
+    vp.averVal = averVal;
   });
 
-  const std = stds.reduce((sum, d) => sum + d) / stds.length;
-  temp /= stds.length;
-  const cv = std / temp;
-
-  const linear = contrast.map(c => Math.abs(c[1] - c[0])).reduce((sum, c) => {
-    return sum + c;
-  }) / contrast.length;
-
-  const square = contrast.map(c => Math.pow(c[1] - c[0], 2)).reduce((sum, c) => {
-    return sum + c;
-  }) / contrast.length;
-
-  const cbs = voronoiPolygons.map(p => {
-    const bs = [];
-    let sum = 0;
-    for (let i = 0; i < p.length; i++) {
-      const b = (
-        (p[i][0] - p[(i + 1) % p.length][0]) ** 2 +
-        (p[i][1] - p[(i + 1) % p.length][1]) ** 2
-      ) ** 0.5;
-      sum += b;
-      bs.push(b);
-    }
-    const aver = sum / p.length;
-    let std = 0;
-    bs.forEach(b => {
-      std += (b - aver) ** 2;
-    });
-    std = (std / bs.length) ** 0.5;
-    const bsCv = std / aver;
-
-    return bsCv;
-  });
-
-  const stroke = cbs.reduce((prev, cur) => prev + cur) / cbs.length;
-
-  return {
-    linear, square, std, cv, stroke
-  };
-}
+  return voronoiPolygons;
+};
