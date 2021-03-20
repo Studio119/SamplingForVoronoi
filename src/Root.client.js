@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-16 14:33:46
+ * @Last Modified time: 2021-03-20 22:39:07
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -35,7 +35,66 @@ const getSuggestedExp = data => {
     [min, max, sum] = [Math.min(min, d.value), Math.max(max, d.value), sum + d.value];
   });
   const rMean = (sum / data.length - min) / (max - min);
-  return parseFloat(((1 + Math.log(0.5) / Math.log(rMean)) / 2).toFixed(2));
+  return parseFloat(((1 + (Math.log(0.5) / Math.log(rMean)) ** 1.41) / 2).toFixed(2));
+};
+
+const getNaturalBreak = (data, k) => {
+  k = Math.max(1, Math.round(k));
+  let [min, max] = [Infinity, -Infinity];
+  const sorted = data.map(d => {
+    [min, max] = [Math.min(min, d.value), Math.max(max, d.value)];
+    return d.value;
+  }).sort((a, b) => a - b);
+  const labels = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    sorted[i] = (sorted[i] - min) / (max - min);
+    labels[i] = -1;
+  }
+
+  const centers = [];
+
+  for (let i = 0; i < k; i++) {
+    const pos = Math.floor(data.length / k * (i + 0.5));
+    centers.push([sorted[pos], []]);
+  }
+
+  let ifContinue = true;
+  while (ifContinue) {
+    ifContinue = false;
+
+    sorted.forEach((d, i) => {
+      let idx = 0;
+      let min = Math.abs(d - centers[0][0]);
+      for (let j = 1; j < centers.length; j++) {
+        const dist = Math.abs(d - centers[j][0]);
+        if (dist < min) {
+          idx = j;
+          min = dist;
+        }
+      }
+      centers[idx][1].push(d);
+      if (labels[i] !== idx) {
+        labels[i] = idx;
+        ifContinue = true;
+      }
+    });
+
+    if (ifContinue) {
+      for (let i = 0; i < centers.length; i++) {
+        centers[i] = [
+          centers[i][1].reduce((p, c) => p + c) / centers[i][1].length,
+          []
+        ];
+      }
+    } else {
+      for (let i = 0; i < centers.length; i++) {
+        centers[i] = centers[i][1].reduce((p, c) => Math.min(p, c));
+      }
+    }
+  }
+
+  console.log(centers);
 };
 
 const createChart = (src, rename=undefined) => {
@@ -53,14 +112,17 @@ const createChart = (src, rename=undefined) => {
     opacity: 1
   }];
 
-  if (src.toLowerCase().includes("grouping")) {
+  if (src.toLowerCase().includes("saa")) {
     layers.push({
       label:  "groups",
       active: false,
       opacity:  1
+    }, {
+      label:  "disks",
+      active: false,
+      opacity: 0.7
     });
-  }
-  if (src.toLowerCase().includes("bns")) {
+  } else if (src.toLowerCase().includes("bns")) {
     layers.push({
       label:  "disks",
       active: false,
@@ -171,17 +233,30 @@ const AppRoot = () => {
                     //   "rgb(27,49,135)",
                     //   "rgb(12,16,120)"
                     // ],
-                    /* ZJU VAE-Based */
+                    // /* ZJU VAE-Based (purple) */
+                    // colors: [
+                    //   "rgb(243,217,239)",
+                    //   "rgb(232,181,226)",
+                    //   "rgb(220,160,212)",
+                    //   "rgb(213,130,192)",
+                    //   "rgb(198,105,180)",
+                    //   "rgb(185,78,155)",
+                    //   "rgb(168,50,138)",
+                    //   "rgb(140,36,112)",
+                    //   "rgb(111,24,98)"
+                    // ],
+                    /* ZJU VAE-Based (blue) */
                     colors: [
-                      "rgb(243,217,239)",
-                      "rgb(232,181,226)",
-                      "rgb(220,160,212)",
-                      "rgb(213,130,192)",
-                      "rgb(198,105,180)",
-                      "rgb(185,78,155)",
-                      "rgb(168,50,138)",
-                      "rgb(140,36,112)",
-                      "rgb(111,24,98)"
+                      "rgb(212,229,244)",
+                      "rgb(196,219,239)",
+                      "rgb(182,211,236)",
+                      "rgb(168,202,232)",
+                      "rgb(156,194,230)",
+                      "rgb(127,174,218)",
+                      "rgb(74,138,195)",
+                      "rgb(27,104,174)",
+                      "rgb(18,85,148)",
+                      "rgb(12,67,118)"
                     ],
                     exp
                   },
@@ -285,11 +360,34 @@ const AppRoot = () => {
       ...state,
       time:   (new Date()).getTime(),
       datasets: state.datasets.map(dataset => {
-        return dataset.name === datasetName ? {
-          ...dataset,
-          samples: dataset.samples.concat({ name, data }),
-          charts: dataset.charts.concat(createChart(name))
-        } : dataset;
+        if (dataset.name === datasetName) {
+          const others = dataset.samples;
+          let count = 0;
+          others.forEach(s => {
+            if (s.name.includes(name)) {
+              if (count) {
+                const code = /(?<=\()\d+(?=\))/.exec(s.name);
+                if (code) {
+                  count = Math.max(count, ~~code + 1);
+                } else {
+                  count = 1;
+                }
+              } else {
+                count = 1;
+              }
+            }
+          });
+          if (count) {
+            name += ` (${count})`;
+          }
+          return {
+            ...dataset,
+            samples: dataset.samples.concat({ name, data }),
+            charts: dataset.charts.concat(createChart(name))
+          };
+        } else {
+          return dataset;
+        }
       })
     });
   };

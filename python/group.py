@@ -15,7 +15,7 @@ def make_grp(filename, num):
   for d in data:
     d["ss"] = map_id_to_tree[d["id"]]
 
-  with open("./storage/group_" + filename + ".json", mode='w', encoding='utf-8') as f:
+  with open("./storage/group_" + filename + "$" + str(num) + ".json", mode='w', encoding='utf-8') as f:
     json.dump(data, f)
 
   return

@@ -1,8 +1,7 @@
 import sys
 import json
 from kde import get_kde
-from active_bns import ABNS
-# from scalable_bns import SBNS
+from bns import BNS
 from real_time_log import clear_log
 
 
@@ -10,19 +9,17 @@ if __name__ == "__main__":
     clear_log()
 
     filename_origin = sys.argv[1]
-    n_cols = int(sys.argv[2])      # 属性值维度的最大容许差异为 1 / n_cols (归一化后)
-    R = float(sys.argv[3]) * 1e-4
-    extending = float(sys.argv[4])
+    R = float(sys.argv[2]) * 1e-4
+    min_r = float(sys.argv[3])
     
     with open("./storage/kde_" + filename_origin + ".json", mode='r') as fin:
         kde_data = json.load(fin)
         population = kde_data["population"]
         matrix = kde_data["matrix"]
 
-    abns = ABNS(matrix, R=R, extending=extending)
-    # abns = SBNS(matrix, R=R)
+    bns = BNS(matrix, R=R, min_r=min_r)
 
-    seeds, disks = abns.apply_sample(n_cols)
+    seeds, disks = bns.apply_sample()
 
     clear_log()
     
@@ -57,8 +54,8 @@ if __name__ == "__main__":
         data_processed.append(point)
 
     with open(
-        "./storage/ab_" + filename_origin + "$n_cols=" + sys.argv[2]
-        + "$R=" + sys.argv[3]+ "$extending=" + sys.argv[4] + ".json", mode='w'
+        "./storage/bns_" + filename_origin + "$R=" + sys.argv[2]
+          + "$min_r=" + sys.argv[3] + ".json", mode='w'
     ) as f:
         json.dump(data_processed, f)
 

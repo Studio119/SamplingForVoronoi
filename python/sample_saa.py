@@ -13,8 +13,9 @@ if __name__ == "__main__":
   filename_origin = sys.argv[1]
   R = float(sys.argv[2]) * 1e-4
   num = int(sys.argv[3])
+  min_r = float(sys.argv[4])
 
-  group_file = "./storage/group_" + filename_origin + ".json"
+  group_file = "./storage/group_" + filename_origin + "$" + str(num) + ".json"
 
   if not os.path.exists(group_file):
     make_grp(filename_origin, num)
@@ -33,7 +34,7 @@ if __name__ == "__main__":
       matrix[i].append(p["ss"])
       map_id_to_ss[i] = p["ss"]
 
-  ssbns = SSBNS(matrix, R=R)
+  ssbns = SSBNS(matrix, R=R, min_r=min_r)
 
   seeds, disks = ssbns.apply_sample()
 
@@ -72,7 +73,8 @@ if __name__ == "__main__":
     data_processed.append(point)
 
   with open(
-    "./storage/ssb_" + filename_origin + "$R=" + sys.argv[2] + "$num=" + sys.argv[3] + ".json", mode='w'
+    "./storage/saa_" + filename_origin + "$R=" + sys.argv[2] + "$num=" + sys.argv[3]
+      + "$min_r=" + sys.argv[4] + ".json", mode='w'
   ) as f:
     json.dump(data_processed, f)
 

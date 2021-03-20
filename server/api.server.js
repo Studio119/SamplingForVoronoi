@@ -125,13 +125,13 @@ app.post("/snapshot", (req, res) => {
   );
 });
 
-app.get("/sample/sb/:dataset/:n_cols/:Rm", (req, res) => {
+app.get("/sample/bns/:dataset/:Rm/:min_r", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
   const path = req.params["dataset"];
-  const n_cols = req.params["n_cols"];
   const Rm = req.params["Rm"];
+  const min_r = req.params["min_r"];
   process.exec(
-    `conda activate vis2021 && python ./python/sample_sb.py ${ path } ${ n_cols } ${ Rm }`,
+    `conda activate vis2021 && python ./python/sample_bns.py ${ path } ${ Rm } ${ min_r }`,
     (error, stdout, stderr) => {
       if (fs.existsSync("./storage/log.txt")) {
         fs.unlinkSync("./storage/log.txt");
@@ -147,7 +147,7 @@ app.get("/sample/sb/:dataset/:n_cols/:Rm", (req, res) => {
           message: "Completed",
           data: JSON.parse(
             fs.readFileSync(
-              "./storage/sb_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
+              "./storage/bns_" + path + "$R=" + Rm + "$min_r=" + min_r + ".json"
             )
           )
         });
@@ -164,97 +164,16 @@ app.get("/sample/sb/:dataset/:n_cols/:Rm", (req, res) => {
   );
 });
 
-app.get("/sample/b3/:dataset/:n_cols/:Rm", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-  const path = req.params["dataset"];
-  const n_cols = req.params["n_cols"];
-  const Rm = req.params["Rm"];
-  process.exec(
-    `conda activate vis2021 && python ./python/sample_b3.py ${ path } ${ n_cols } ${ Rm }`,
-    (error, stdout, stderr) => {
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-      if (error || stderr) {
-        res.json({
-          status: false,
-          message: stdout || stderr || error
-        });
-      } else if (!stdout.includes('Error')) {
-        res.json({
-          status: true,
-          message: "Completed",
-          data: JSON.parse(
-            fs.readFileSync(
-              "./storage/b3_" + path + "$n_cols=" + n_cols + "$R=" + Rm + ".json"
-            )
-          )
-        });
-      } else {
-        res.json({
-          status: false,
-          message: stdout
-        });
-      }
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-    }
-  );
-});
-
-app.get("/sample/ab/:dataset/:n_cols/:Rm/:extending", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-  const path = req.params["dataset"];
-  const n_cols = req.params["n_cols"];
-  const Rm = req.params["Rm"];
-  const extending = req.params["extending"];
-  process.exec(
-    `conda activate vis2021 && python ./python/sample_ab.py ${
-      path } ${ n_cols } ${ Rm } ${ extending }`,
-    (error, stdout, stderr) => {
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-      // console.log({error, stdout, stderr})
-      if (error || stderr) {
-        res.json({
-          status: false,
-          message: stdout || stderr || error
-        });
-      } else if (!stdout.includes('Error')) {
-        res.json({
-          status: true,
-          message: "Completed",
-          data: JSON.parse(
-            fs.readFileSync(
-              "./storage/ab_" + path + "$n_cols=" + n_cols + "$R=" + Rm
-                + "$extending=" + extending + ".json"
-            )
-          )
-        });
-      } else {
-        res.json({
-          status: false,
-          message: stdout
-        });
-      }
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-    }
-  );
-});
-
-app.get("/sample/ssb/:dataset/:Rm/:num", (req, res) => {
+app.get("/sample/saa/:dataset/:Rm/:num/:min_r", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
   const path = req.params["dataset"];
   const Rm = req.params["Rm"];
   const num = req.params["num"];
+  const min_r = req.params["min_r"];
 
   process.exec(
-    `conda activate vis2021 && python ./python/sample_ssb.py ${
-      path } ${ Rm } ${ num }`,
+    `conda activate vis2021 && python ./python/sample_saa.py ${
+      path } ${ Rm } ${ num } ${ min_r }`,
     (error, stdout, stderr) => {
       if (fs.existsSync("./storage/log.txt")) {
         fs.unlinkSync("./storage/log.txt");
@@ -270,7 +189,7 @@ app.get("/sample/ssb/:dataset/:Rm/:num", (req, res) => {
           message: "Completed",
           data: JSON.parse(
             fs.readFileSync(
-              "./storage/ssb_" + path + "$R=" + Rm + "$num=" + num + ".json"
+              "./storage/saa_" + path + "$R=" + Rm + "$num=" + num + "$min_r=" + min_r + ".json"
             )
           )
         });
@@ -287,102 +206,6 @@ app.get("/sample/ssb/:dataset/:Rm/:num", (req, res) => {
   );
 });
 
-app.get("/clustering/:dataset", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-  const path = "./storage/oc_" + req.params["dataset"] + ".json"
-  if (fs.existsSync(path)) {
-    res.json({
-      status: true,
-      message: "Completed",
-      data: JSON.parse(
-        fs.readFileSync(path)
-      )
-    });
-  } else {
-    res.json({
-      status: false,
-      message: "Not exist",
-      data: null
-    });
-  }
-});
-
-app.get("/cluster/:dataset/:k", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-  const path = req.params["dataset"];
-  const k = req.params["k"];
-  process.exec(
-    `conda activate vis2021 && python ./python/kmeans.py ${ path } ${ k }`,
-    (error, stdout, stderr) => {
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-      if (error || stderr) {
-        res.json({
-          status: false,
-          message: stdout || stderr || error
-        });
-      } else if (!stdout.includes('Error')) {
-        res.json({
-          status: true,
-          message: "Completed",
-          data: JSON.parse(
-            fs.readFileSync(
-              "./storage/km_" + path + "$k=" + k + ".json"
-            )
-          )
-        });
-      } else {
-        res.json({
-          status: false,
-          message: stdout
-        });
-      }
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-    }
-  );
-});
-
-app.get("/onlycluster/:dataset/:k/:rVal", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
-  const path = req.params["dataset"];
-  const k = req.params["k"];
-  const rVal = req.params["rVal"];
-  process.exec(
-    `conda activate vis2021 && python ./python/skmeans.py ${ path } ${ k } ${ rVal }`,
-    (error, stdout, stderr) => {
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-      if (error || stderr) {
-        res.json({
-          status: false,
-          message: stdout || stderr || error
-        });
-      } else if (!stdout.includes('Error')) {
-        res.json({
-          status: true,
-          message: "Completed",
-          data: JSON.parse(
-            fs.readFileSync(
-              "./storage/skm_" + path + "$k=" + k + ".json"
-            )
-          )
-        });
-      } else {
-        res.json({
-          status: false,
-          message: stdout
-        });
-      }
-      if (fs.existsSync("./storage/log.txt")) {
-        fs.unlinkSync("./storage/log.txt");
-      }
-    }
-  );
-});
 
 let files = [];
 

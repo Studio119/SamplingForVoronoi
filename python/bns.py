@@ -5,12 +5,12 @@ from real_time_log import log
 """ 二维蓝噪声采样 """
 class BNS:
 
-    def __init__(self, points, R=2e-4):
+    def __init__(self, points, R=2e-4, min_r=3):
         # points: np.array shape=(5, N) --5: id, screenX, screenY, value, kde
         self.points = []
         self.point_index = {}
         self.disks = []
-        self.n_cols = 1
+        self.min_r = min_r
         for p in points:
             self.point_index[p[0]] = len(self.points)
             self.points.append({
@@ -28,8 +28,7 @@ class BNS:
             "disactivated": []
         }
 
-    def apply_sample(self, n_cols):
-        self.n_cols = n_cols
+    def apply_sample(self):
         # 迭代
         while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
             # 取一个种子点
@@ -64,22 +63,16 @@ class BNS:
             ) ** 0.5
             r = min(r, dist)
 
+        r = max(r, self.min_r)
+
         next_ready = []
         next_active = []
 
         children = [index]
-
-        cur_level = int(seed["val"] * self.n_cols)
         
         # 扫描剩余活跃点
         for i in self.indexes["active"]:
             target = self.points[self.point_index[i]]
-
-            level = int(target["val"] * self.n_cols)
-
-            if level != cur_level:
-                next_active.append(i)
-                continue
 
             dist = (
                 (target["x"] - seed["x"]) ** 2
@@ -96,12 +89,6 @@ class BNS:
         # 扫描剩余就绪点
         for i in self.indexes["ready"]:
             target = self.points[self.point_index[i]]
-
-            level = int(target["val"] * self.n_cols)
-
-            if level != cur_level:
-                next_ready.append(i)
-                continue
 
             dist = (
                 (target["x"] - seed["x"]) ** 2

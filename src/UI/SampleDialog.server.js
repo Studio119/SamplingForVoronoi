@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-10 13:08:42
+ * @Last Modified time: 2021-03-20 20:50:39
  */
 
 import React from 'react';
@@ -14,13 +14,9 @@ import { Root } from '../App.server';
 
 
 const algos = [
+  "VDGSAA",
   "Random Sampling",
-  "Grouping BNS",
-  "Active BNS",
-  "Stratified BNS",
-  "3D BNS",
-  // "clustering",
-  // "k-means"
+  "Blue Noise Sampling"
 ];
 
 class SampleDialog extends React.Component {
@@ -153,7 +149,10 @@ class SampleDialog extends React.Component {
                                     }} >
                                       <label
                                         style={{
-                                          padding:  "0.4rem 0.4rem",
+                                          display:  "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          padding:  "0.4rem 0.6rem 0.5rem",
                                           width:    "9.4rem",
                                           border:   "1.4px solid",
                                           borderRadius: "1.2rem",
@@ -195,121 +194,7 @@ class SampleDialog extends React.Component {
                             padding: "4px 1rem"
                           }} >
                             {
-                              algos[this.state.algo] === "Random Sampling" && (
-                                <label key="rate"
-                                  style={{
-                                    padding:  "0.4rem 1rem",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-around"
-                                  }} >
-                                    <label
-                                      style={{
-                                        textAlign:  "center",
-                                        flex:       1,
-                                        userSelect: "none"
-                                      }} >
-                                        Sampling Rate
-                                    </label>
-                                    <input type="number" min="0" max="1" defaultValue="0.08"
-                                      name="rate" step="0.001"
-                                      style={{
-                                        width:        "9.4rem",
-                                        textAlign:    "center",
-                                        border:       "1.4px solid",
-                                        borderRadius: "1rem",
-                                        flex:         1
-                                      }} />
-                                </label>
-                              )
-                            }
-                            {
-                              algos[this.state.algo] === "clustering" && (
-                                <>
-                                  <label key="n_clusters"
-                                    style={{
-                                      padding:  "0.4rem 1rem",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-around"
-                                    }} >
-                                      <label
-                                        style={{
-                                          textAlign:  "center",
-                                          flex:       1,
-                                          userSelect: "none"
-                                        }} >
-                                          k
-                                      </label>
-                                      <input type="number" min="2" max="1200" defaultValue="40"
-                                        name="n_clusters" step="1"
-                                        style={{
-                                          width:        "9.4rem",
-                                          textAlign:    "center",
-                                          border:       "1.4px solid",
-                                          borderRadius: "1rem",
-                                          flex:         1
-                                        }} />
-                                  </label>
-                                  <label key="r_val"
-                                    style={{
-                                      padding:  "0.4rem 1rem",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-around"
-                                    }} >
-                                      <label
-                                        style={{
-                                          textAlign:  "center",
-                                          flex:       1,
-                                          userSelect: "none"
-                                        }} >
-                                          r_val
-                                      </label>
-                                      <input type="number" min="0.01" max="1" defaultValue="0.1"
-                                        name="r_val" step="0.01"
-                                        style={{
-                                          width:        "9.4rem",
-                                          textAlign:    "center",
-                                          border:       "1.4px solid",
-                                          borderRadius: "1rem",
-                                          flex:         1
-                                        }} />
-                                  </label>
-                                </>
-                              )
-                            }
-                            {
-                              algos[this.state.algo] === "k-means" && (
-                                <label key="n_clusters"
-                                  style={{
-                                    padding:  "0.4rem 1rem",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-around"
-                                  }} >
-                                    <label
-                                      style={{
-                                        textAlign:  "center",
-                                        flex:       1,
-                                        userSelect: "none"
-                                      }} >
-                                        k
-                                    </label>
-                                    <input type="number" min="2" max="1200" defaultValue="40"
-                                      name="n_clusters" step="1"
-                                      style={{
-                                        width:        "9.4rem",
-                                        textAlign:    "center",
-                                        border:       "1.4px solid",
-                                        borderRadius: "1rem",
-                                        flex:         1
-                                      }} />
-                                </label>
-                              )
-                            }
-                            {
-                              algos[this.state.algo].includes("BNS") && (
+                              algos[this.state.algo] === "VDGSAA" && (
                                 <>
                                   <label key="Rm"
                                     style={{
@@ -353,108 +238,159 @@ class SampleDialog extends React.Component {
                                           </label>
                                       </div>
                                   </label>
-                                  {
-                                    algos[this.state.algo] === "Grouping BNS" ? (
-                                      <label key="n_groups"
+                                  <label key="n_groups"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
                                         style={{
-                                          padding:  "0.4rem 1rem",
-                                          display: "flex",
-                                          alignItems: "center",
-                                          justifyContent: "space-around"
+                                          textAlign:  "center",
+                                          flex:       1
                                         }} >
-                                          <label
-                                            style={{
-                                              textAlign:  "center",
-                                              flex:       1
-                                            }} >
-                                              N_groups
-                                          </label>
-                                          <input type="number" min="1" max="1000" step="1"
-                                            defaultValue={ 100 }
-                                            name="n_groups"
-                                            style={{
-                                              width:        "9.4rem",
-                                              textAlign:    "center",
-                                              border:       "1.4px solid",
-                                              borderRadius: "1rem",
-                                              flex:         1
-                                            }} />
+                                          N_groups
                                       </label>
-                                    ) : (
-                                      <label key="steps"
+                                      <input type="number" min="1" max="1000" step="1"
+                                        defaultValue={ 200 }
+                                        name="n_groups"
                                         style={{
-                                          padding:  "0.4rem 1rem",
-                                          display: "flex",
-                                          alignItems: "center",
-                                          justifyContent: "space-around"
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
+                                  <label key="min_r"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1
                                         }} >
-                                          <label
-                                            style={{
-                                              textAlign:  "center",
-                                              flex:       1
-                                            }} >
-                                              N_cols
-                                          </label>
-                                          <input type="number" min="1" max="32" step="1"
-                                            defaultValue={ 6 }
-                                            name="steps"
-                                            style={{
-                                              width:        "9.4rem",
-                                              textAlign:    "center",
-                                              border:       "1.4px solid",
-                                              borderRadius: "1rem",
-                                              flex:         1
-                                            }} />
+                                          Min radius
                                       </label>
-                                    )
-                                  }
+                                      <input type="number" min="0" max="8" step="0.1"
+                                        defaultValue={ 3 }
+                                        name="min_r"
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
                                 </>
                               )
                             }
                             {
-                              algos[this.state.algo] === "Active BNS" && (
-                                <label key="extending"
+                              algos[this.state.algo] === "Random Sampling" && (
+                                <label key="rate"
                                   style={{
                                     padding:  "0.4rem 1rem",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-around"
                                   }} >
-                                    <label key="label"
+                                    <label
                                       style={{
                                         textAlign:  "center",
                                         flex:       1,
                                         userSelect: "none"
                                       }} >
-                                        extending
+                                        Sampling Rate
                                     </label>
-                                    <div
+                                    <input type="number" min="0" max="1" defaultValue="0.08"
+                                      name="rate" step="0.001"
                                       style={{
                                         width:        "9.4rem",
                                         textAlign:    "center",
                                         border:       "1.4px solid",
                                         borderRadius: "1rem",
-                                        background:   "white",
-                                        flex:         1,
-                                        userSelect: "none"
-                                      }} >
-                                        <input type="number" min="1" max="16" step="0.1"
-                                          defaultValue={ 4 }
-                                          name="extending"
-                                          style={{
-                                            textAlign:  "center",
-                                            border:     "none",
-                                            background: "none"
-                                          }} />
-                                        <label key="after"
-                                          style={{
-                                            pointerEvents:  "none",
-                                            userSelect:     "none"
-                                          }} >
-                                            px
-                                        </label>
-                                    </div>
+                                        flex:         1
+                                      }} />
                                 </label>
+                              )
+                            }
+                            {
+                              algos[this.state.algo] === "Blue Noise Sampling" && (
+                                <>
+                                  <label key="Rm"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label key="label"
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1,
+                                          userSelect: "none"
+                                        }} >
+                                          R
+                                      </label>
+                                      <div
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          background:   "white",
+                                          flex:         1,
+                                          userSelect: "none"
+                                        }} >
+                                          <input type="number" min="0.5" max="50" step="0.05"
+                                            defaultValue={ 2 }
+                                            name="Rm"
+                                            style={{
+                                              textAlign:  "center",
+                                              border:     "none",
+                                              background: "none"
+                                            }} />
+                                          <label key="after"
+                                            style={{
+                                              pointerEvents:  "none",
+                                              userSelect:     "none"
+                                            }} >
+                                              e-4
+                                          </label>
+                                      </div>
+                                  </label>
+                                  <label key="min_r"
+                                    style={{
+                                      padding:  "0.4rem 1rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-around"
+                                    }} >
+                                      <label
+                                        style={{
+                                          textAlign:  "center",
+                                          flex:       1
+                                        }} >
+                                          Min radius
+                                      </label>
+                                      <input type="number" min="0" max="8" step="0.1"
+                                        defaultValue={ 3 }
+                                        name="min_r"
+                                        style={{
+                                          width:        "9.4rem",
+                                          textAlign:    "center",
+                                          border:       "1.4px solid",
+                                          borderRadius: "1rem",
+                                          flex:         1
+                                        }} />
+                                  </label>
+                                </>
                               )
                             }
                       </section>
@@ -470,12 +406,91 @@ class SampleDialog extends React.Component {
                         <Button key="run"
                           listener={
                             () => {
-                              // TODO
                               if (this.log.current) {
                                 this.log.current.setState({ info: null });
                               }
                               const algo = algos[this.state.algo];
-                              if (algo === "Random Sampling") {
+                              if (algo === "VDGSAA") {
+                                const dataset = this.state.dataset.name;
+                                const Rm = parseFloat(
+                                  document.getElementsByName("Rm")[0].value || "2"
+                                );
+                                const num = parseInt(
+                                  document.getElementsByName("n_groups")[0].value || "200"
+                                );
+                                const minR = parseFloat(
+                                  document.getElementsByName("min_r")[0].value || "3"
+                                );
+                                runVDGSAA(
+                                  dataset,
+                                  Rm,
+                                  num,
+                                  minR,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      `VDGSAA {@${Rm}e-4,${num},${minR}}`,
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                )
+                              } else if (algo === "Blue Noise Sampling") {
+                                const dataset = this.state.dataset.name;
+                                const Rm = parseFloat(
+                                  document.getElementsByName("Rm")[0].value || "2"
+                                );
+                                const minR = parseFloat(
+                                  document.getElementsByName("min_r")[0].value || "3"
+                                );
+                                runBNS(
+                                  dataset,
+                                  Rm,
+                                  minR,
+                                  info => {
+                                    if (this.log.current) {
+                                      this.log.current.setState({ info });
+                                    }
+                                  },
+                                  data => {
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                    Root.pushSample(
+                                      dataset,
+                                      `BNS {@${Rm}e-4,${minR}}`,
+                                      data
+                                    );
+                                  },
+                                  reason => {
+                                    console.log("rejected", reason);
+                                    this.setState({
+                                      show:     true,
+                                      running:  true,
+                                      done:     true
+                                    });
+                                  }
+                                )
+                              } else if (algo === "Random Sampling") {
                                 const dataset = this.state.dataset.name;
                                 const rate = parseFloat(
                                   document.getElementsByName("rate")[0].value || 0.08
@@ -496,241 +511,12 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      "Random Sampling (rate=" + rate + ")",
+                                      `RS {@${rate}}`,
                                       data
                                     );
                                   },
                                   reason => {
                                     console.log("rejected", reason);
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                );
-                              } else if (algo === "Grouping BNS") {
-                                const dataset = this.state.dataset.name;
-                                const Rm = parseFloat(
-                                  document.getElementsByName("Rm")[0].value || "2"
-                                );
-                                const num = parseInt(
-                                  document.getElementsByName("n_groups")[0].value || "100"
-                                );
-                                runAttributeNBS(
-                                  dataset,
-                                  Rm,
-                                  num,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "Grouping BNS (R=" + Rm + "e-4,num=" + num + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    console.log("rejected", reason);
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                )
-                              } else if (algo === "Active BNS") {
-                                const dataset = this.state.dataset.name;
-                                const Rm = parseFloat(
-                                  document.getElementsByName("Rm")[0].value || "2"
-                                );
-                                const steps = parseInt(
-                                  document.getElementsByName("steps")[0].value || "6"
-                                );
-                                const extending = parseInt(
-                                  document.getElementsByName("extending")[0].value || "4"
-                                );
-                                runActiveBNS(
-                                  dataset,
-                                  Rm,
-                                  steps,
-                                  extending,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "Active BNS (R=" + Rm + "e-4,steps=" + steps
-                                        + ",extending=" + extending + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    console.log("rejected", reason);
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                );
-                              } else if (algo === "Stratified BNS") {
-                                const dataset = this.state.dataset.name;
-                                const Rm = parseInt(
-                                  document.getElementsByName("Rm")[0].value || "6"
-                                );
-                                const steps = parseInt(
-                                  document.getElementsByName("steps")[0].value || "6"
-                                );
-                                runStratifiedBNS(
-                                  dataset,
-                                  Rm,
-                                  steps,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "Stratified BNS (R=" + Rm + "e-4,steps=" + steps + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    console.log("rejected", reason);
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                );
-                              } else if (algo === "3D BNS") {
-                                const dataset = this.state.dataset.name;
-                                const Rm = parseFloat(
-                                  document.getElementsByName("Rm")[0].value || "6"
-                                );
-                                const steps = parseInt(
-                                  document.getElementsByName("steps")[0].value || "6"
-                                );
-                                runBNS3D(
-                                  dataset,
-                                  Rm,
-                                  steps,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "3D BNS (R=" + Rm + "e-4,steps=" + steps + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    this.log.current.setState({ info: reason });
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                );
-                              } else if (algo === "clustering") {
-                                const dataset = this.state.dataset.name;
-                                const k = parseInt(
-                                  document.getElementsByName("n_clusters")[0].value || "40"
-                                );
-                                const rVal = parseFloat(
-                                  document.getElementsByName("r_val")[0].value || "0.1"
-                                );
-                                runCluster(
-                                  dataset,
-                                  k,
-                                  rVal,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "Clustering (k=" + k + ",rVal=" + rVal + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    this.log.current.setState({ info: reason });
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                  }
-                                );
-                              } else if (algo === "k-means") {
-                                const dataset = this.state.dataset.name;
-                                const k = parseInt(
-                                  document.getElementsByName("n_clusters")[0].value || "40"
-                                );
-                                runKMeans(
-                                  dataset,
-                                  k,
-                                  info => {
-                                    if (this.log.current) {
-                                      this.log.current.setState({ info });
-                                    }
-                                  },
-                                  data => {
-                                    this.setState({
-                                      show:     true,
-                                      running:  true,
-                                      done:     true
-                                    });
-                                    Root.pushSample(
-                                      dataset,
-                                      "K-means (k=" + k + ")",
-                                      data
-                                    );
-                                  },
-                                  reason => {
-                                    this.log.current.setState({ info: reason });
                                     this.setState({
                                       show:     true,
                                       running:  true,
@@ -928,7 +714,8 @@ const readProcess = log => {
   };
 };
 
-const runStratifiedBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
+
+const runBNS = async (dataset, Rm, minR, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -955,7 +742,7 @@ const runStratifiedBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejec
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/sb/${dataset}/${nStep}/${Rm}`);
+  const sampling = await axios.get(`/sample/bns/${dataset}/${Rm}/${minR}`);
 
   RealTimeLog.close();
 
@@ -969,7 +756,8 @@ const runStratifiedBNS = async (dataset, Rm, nStep, output, onfulfilled, onrejec
   }
 };
 
-const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => {
+
+const runVDGSAA = async (dataset, Rm, num, minR, output, onfulfilled, onrejected) => {
   await readyBNS(dataset, output);
   
   output("Taking snapshot");
@@ -996,7 +784,7 @@ const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => 
 
   const RealTimeLog = readProcess(output);
 
-  const sampling = await axios.get(`/sample/b3/${dataset}/${nStep}/${Rm}`);
+  const sampling = await axios.get(`/sample/saa/${dataset}/${Rm}/${num}/${minR}`);
 
   RealTimeLog.close();
 
@@ -1010,88 +798,6 @@ const runBNS3D = async (dataset, Rm, nStep, output, onfulfilled, onrejected) => 
   }
 };
 
-const runAttributeNBS = async (dataset, Rm, num, output, onfulfilled, onrejected) => {
-  await readyBNS(dataset, output);
-  
-  output("Taking snapshot");
-
-  const snapshot = await Map.takeSnapshot();
-
-  output("Starting calculating KDE");
-
-  const kde = await axios.post(
-    `/snapshot`, {
-      name: dataset,
-      data: snapshot
-    }
-  );
-
-  if (kde.data.status) {
-    output(kde.data.message);
-  } else {
-    onrejected(kde.data.message);
-    return;
-  }
-  
-  output("Starting sampling");
-
-  const RealTimeLog = readProcess(output);
-
-  const sampling = await axios.get(`/sample/ssb/${dataset}/${Rm}/${num}`);
-
-  RealTimeLog.close();
-
-  if (sampling.data.status) {
-    output(sampling.data.message);
-    const data = resolveBNS(sampling.data.data);
-    onfulfilled(data);
-  } else {
-    onrejected(sampling.data.message);
-    return;
-  }
-};
-
-
-const runActiveBNS = async (dataset, Rm, nStep, extending, output, onfulfilled, onrejected) => {
-  await readyBNS(dataset, output);
-  
-  output("Taking snapshot");
-
-  const snapshot = await Map.takeSnapshot();
-
-  output("Starting calculating KDE");
-
-  const kde = await axios.post(
-    `/snapshot`, {
-      name: dataset,
-      data: snapshot
-    }
-  );
-
-  if (kde.data.status) {
-    output(kde.data.message);
-  } else {
-    onrejected(kde.data.message);
-    return;
-  }
-  
-  output("Starting sampling");
-
-  const RealTimeLog = readProcess(output);
-
-  const sampling = await axios.get(`/sample/ab/${dataset}/${nStep}/${Rm}/${extending}`);
-
-  RealTimeLog.close();
-
-  if (sampling.data.status) {
-    output(sampling.data.message);
-    const data = resolveBNS(sampling.data.data);
-    onfulfilled(data);
-  } else {
-    onrejected(sampling.data.message);
-    return;
-  }
-};
 
 const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected) => {
   output("Starting sampling");
@@ -1107,7 +813,6 @@ const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected
         const item = data[index];
         list.push(item);
         data = data.slice(0, index).concat(data.slice(index + 1, data.length));
-        // console.log((list.length / target * 100).toFixed(2) + "%");
         output((list.length / target * 100).toFixed(2) + "%");
         if (list.length === target) {
           resolve(list);
@@ -1118,45 +823,6 @@ const runRandomSampling = async (dataset, rate, output, onfulfilled, _onrejected
 
   output("Completed");
   onfulfilled(list);
-};
-
-const runKMeans = async (dataset, k, output, onfulfilled, onrejected) => {
-  output("Starting running k-means");
-
-  const result = await axios.get(`/cluster/${dataset}/${k}`);
-
-  if (result.data.status) {
-    output(result.data.message);
-    const data = result.data.data.map(d => {
-      return {
-        ...d,
-        // value: d.label / k
-      };
-    });
-    onfulfilled(data);
-  } else {
-    onrejected(result.data.message);
-    return;
-  }
-};
-
-const runCluster = async (dataset, k, rVal, output, onfulfilled, onrejected) => {
-  output("Starting running clustering");
-
-  const RealTimeLog = readProcess(output);
-
-  const result = await axios.get(`/onlycluster/${dataset}/${k}/${rVal}`);
-
-  RealTimeLog.close();
-
-  if (result.data.status) {
-    output(result.data.message);
-    const data = result.data.data;
-    onfulfilled(data);
-  } else {
-    onrejected(result.data.message);
-    return;
-  }
 };
 
 
