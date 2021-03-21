@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-01-16 22:19:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-20 17:57:13
+ * @Last Modified time: 2021-03-21 19:39:50
  */
 
 import React, { Component } from 'react';
@@ -55,7 +55,7 @@ class MapBox extends Component {
         this.map.on('load', () => {
             this.loaded = true;
             $('.mapboxgl-canvas').css('position', 'relative');
-            $('.mapboxgl-canvas').css('opacity', '0.33');
+            $('.mapboxgl-canvas').css('opacity', '0.2');
             this.props.onBoundsChanged([
                 [this.map.getBounds().getNorth(), this.map.getBounds().getSouth()],
                 [this.map.getBounds().getWest(), this.map.getBounds().getEast()]

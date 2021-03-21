@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-20 20:50:06
+ * @Last Modified time: 2021-03-21 20:18:46
  */
 
 import React, { Component, createRef } from "react";
@@ -13,13 +13,6 @@ import { HilbertEncodeXY } from "../help/hilbertEncoder";
 import axios from "axios";
 import Button from "./Button.client";
 
-
-const getColor = (colormap, val, max) => {
-  const valTransformed = (val / max) ** colormap.exp;
-  const len = colormap.colors.length;
-  const idx = Math.min((valTransformed * len) | 0, len - 1);
-  return colormap.colors[idx];
-};
 
 const encodeLayers = layers => {
   return layers.map(layer => {
@@ -106,7 +99,7 @@ class Map extends Component {
     };
   }
 
-  update(name, data, layers, colorize, borders, setBorders) {
+  update(name, data, layers, colorMap, borders, setBorders) {
     let evaluation = this.state.evaluation;
     let running = this.state.running;
     this.voronoiPolygons = [];
@@ -115,6 +108,7 @@ class Map extends Component {
       // console.log("选页卡切换");
       evaluation = null;
       running = [];
+      this.voronoiPolygonsPrev = [];
       if (data.length) {
         // 更新位置，触发重绘
         let [xmin, xmax, ymin, ymax] = [Infinity, -Infinity, Infinity, -Infinity];
@@ -127,13 +121,13 @@ class Map extends Component {
         });
   
         if (xmin !== xmax) {
-          const ex = (xmax - xmin) / 8;
+          const ex = (xmax - xmin) / 9;
           xmin -= ex;
           xmax += ex;
         }
   
         if (ymin !== ymax) {
-          const ex = (ymax - ymin) / 8;
+          const ex = (ymax - ymin) / 9;
           ymin -= ex;
           ymax += ex;
         }
@@ -159,7 +153,7 @@ class Map extends Component {
       }
     }
 
-    this.setState({ name, data, layers, colorize, borders, setBorders, evaluation, running });
+    this.setState({ name, data, layers, colorMap, borders, setBorders, evaluation, running });
   }
 
   constructor(props) {
@@ -172,19 +166,7 @@ class Map extends Component {
       layers:     [],
       borders:    [],
       setBorders: () => {},
-      colorize:   {
-        colors: [
-          "rgb(237,233,76)",
-          "rgb(223,132,79)",
-          "rgb(38,178,27)",
-          "rgb(141,193,255)",
-          "rgb(255,43,204)",
-          "rgb(9,71,148)",
-          "rgb(148,27,169)",
-          "rgb(255,0,0)"
-        ],
-        exp: 1
-      },
+      colorMap:   null,
       evaluation: null,
       running:    []
     };
@@ -200,6 +182,7 @@ class Map extends Component {
     this.height = 0;
 
     this.voronoiPolygons = [];
+    this.voronoiPolygonsPrev = [];
 
     this.map = createRef();
 
@@ -887,7 +870,7 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
+            ctx.fillStyle = this.state.colorMap.project(d.val / this.max);
             ctx.strokeStyle = d3.interpolateHsl(
               ctx.fillStyle, "rgb(30,30,30)"
             )(0.8);
@@ -976,7 +959,7 @@ class Map extends Component {
             ctx.fill();
             ctx.closePath();
             
-            ctx.fillStyle = getColor(this.state.colorize, d.val, this.max);
+            ctx.fillStyle = this.state.colorMap.project(d.val / this.max);
             ctx.beginPath();
             ctx.arc(d.x, d.y, 2, 0, Math.PI * 2);
             ctx.stroke();
@@ -1032,7 +1015,7 @@ class Map extends Component {
           this.updated = true;
 
           pieceCopy.forEach(d => {
-            const color = getColor(this.state.colorize, d.averVal, this.max);
+            const color = this.state.colorMap.project(d.averVal / this.max);
             ctx.strokeStyle = color;
             const { x, y } = this.map.current.project(d);
             const at_n = this.map.current.project([d.lng, d.bounds[1][1]]).y;
@@ -1056,7 +1039,7 @@ class Map extends Component {
             d.children.forEach(i => {
               const p = total[i];
               const { x: px, y: py } = this.map.current.project(p);
-              ctx.strokeStyle = getColor(this.state.colorize, p.value, this.max);
+              ctx.strokeStyle = this.state.colorMap.project(p.value / this.max);
               ctx.beginPath();
               ctx.moveTo(px, py);
               ctx.lineTo(x, y);
@@ -1068,7 +1051,7 @@ class Map extends Component {
             d.children.forEach(i => {
               const p = total[i];
               const { x: px, y: py } = this.map.current.project(p);
-              ctx.strokeStyle = getColor(this.state.colorize, p.value, this.max);
+              ctx.strokeStyle = this.state.colorMap.project(p.value / this.max);
               ctx.strokeRect(px - 1, py - 1, 2, 2);
               ctx.clearRect(px - 0.5, py - 0.5, 1, 1);
             });
@@ -1122,11 +1105,7 @@ class Map extends Component {
         this.timers.push(
           setTimeout(() => {
             try {
-              const color = getColor(
-                this.state.colorize,
-                averVal,
-                this.max
-              );
+              const color = this.state.colorMap.project(averVal / this.max);
               ctx.fillStyle = color;
               ctx_s.strokeStyle = "rgb(110,110,110)";
               ctx.beginPath();
@@ -1166,10 +1145,14 @@ class Map extends Component {
       return Promise.resolve(true);
     }
 
+    const calculated = this.state.data.length === this.voronoiPolygonsPrev.length;
+
     const log = "Generating Voronoi Diagram";
-    this.setState({
-      running:  [log]
-    });
+    if (!calculated) {
+      this.setState({
+        running:  [log]
+      });
+    }
     
     const delaunay = d3.Delaunay.from(
       this.state.data.map(d => {
@@ -1193,8 +1176,8 @@ class Map extends Component {
     
     const voronoiPolygons = this.state.data.map((_, i) => ({
       polygons: voronoi.cellPolygon(i),
-      values:   [],
-      averVal:  NaN
+      values:   calculated ? this.voronoiPolygonsPrev[i].values : [],
+      averVal:  calculated ? this.voronoiPolygonsPrev[i].averVal : NaN
     }));
 
     const population = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
@@ -1205,12 +1188,20 @@ class Map extends Component {
     const polygonsCenters = this.state.data.map(d => this.map.current.project([d.lng, d.lat]));
 
     const p = await new Promise(res => {
+      if (calculated) {
+        this.voronoiPolygons = voronoiPolygons;
+        this.voronoiPolygonsPrev = this.voronoiPolygons;
+        res(true);
+        return;
+      }
       if (this.worker) {
         this.worker.terminate();
         this.worker = null;
       }
       const worker = new Worker("/worker.js");
-      this.state.valuation = worker;
+      this.setState({
+        valuation:  worker
+      });
       worker.postMessage({
         req:              "gen",
         population,
@@ -1226,6 +1217,7 @@ class Map extends Component {
           this.worker = null;
           // console.log(e.data);
           this.voronoiPolygons = e.data;
+          this.voronoiPolygonsPrev = this.voronoiPolygons;
           res(true);
         } else {
           res(false);
@@ -1260,258 +1252,6 @@ class Map extends Component {
         });
       };
     }, 100);
-  }
-
-  getIDW(x, y, data, code, origin) {
-    const {
-      differ,
-      maxDist,
-      minNeigh,
-      manhattan
-    } = this.state.interpolationConfig;
-
-    // 原始样本数据
-    let countNeighbors = true;
-    let curVal = 0;
-    let curWeight = 0;
-    let curReal = 0;
-    let curRealCount = 0;
-    const _origin = origin.map(d => {
-      return {
-        ...d,
-        dist: Math.abs(
-          parseInt(code, 2) - parseInt(d.code, 2)
-        )
-      };
-    }).sort((a, b) => a.dist - b.dist).slice(
-      0, minNeigh * 2
-    ).map(d => {
-      const dist = manhattan ? (
-        Math.abs(d.x - x) + Math.abs(d.y - y)
-      ) : (
-        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
-      );
-      if (dist < 1) {
-        // 视为重叠
-        countNeighbors = false;
-      }
-      return {
-        ...d,
-        dist
-      };
-    });
-    for (let i = 0; i < _origin.length; i++) {
-      if (_origin[i].dist > maxDist && i >= minNeigh) {
-        // 范围超出且数量满足
-        break;
-      } else if (!countNeighbors && _origin[i].dist >= 1) {
-        // 权重为0
-        break;
-      }
-      if (countNeighbors) {
-        const w = 1 / _origin[i].dist;
-        curVal += _origin[i].value * w;
-        curWeight += w;
-      } else {
-        curReal += _origin[i].value;
-        curRealCount += 1;
-      }
-    }
-    const preInterpolation = countNeighbors ? (
-      curVal / curWeight
-    ) : (curReal / curRealCount);
-
-    if (!differ) {
-      return preInterpolation;
-    }
-
-    // 计算当前
-    countNeighbors = true;
-    curVal = 0;
-    curWeight = 0;
-    curReal = 0;
-    curRealCount = 0;
-    const _data = data.map(d => {
-      return {
-        ...d,
-        dist: Math.abs(
-          parseInt(code, 2) - parseInt(d.code, 2)
-        )
-      };
-    }).sort((a, b) => a.dist - b.dist).slice(
-      0, minNeigh * 2
-    ).map(d => {
-      const dist = manhattan ? (
-        Math.abs(d.x - x) + Math.abs(d.y - y)
-      ) : (
-        Math.pow(d.x - x, 2) + Math.pow(d.y - y, 2)
-      );
-      if (dist < 1) {
-        // 视为重叠
-        countNeighbors = false;
-      }
-      return {
-        ...d,
-        dist
-      };
-    });
-    for (let i = 0; i < _data.length; i++) {
-      if (_data[i].dist > maxDist && i >= minNeigh) {
-        // 范围超出且数量满足
-        break;
-      } else if (!countNeighbors && _data[i].dist >= 1) {
-        // 权重为0
-        break;
-      }
-      if (countNeighbors) {
-        const w = 1 / _data[i].dist;
-        curVal += _data[i].value * w;
-        curWeight += w;
-      } else {
-        curReal += _data[i].value;
-        curRealCount += 1;
-      }
-    }
-    const curInterpolation = countNeighbors ? (
-      curVal / curWeight
-    ) : (curReal / curRealCount);
-    return Math.abs(curInterpolation - preInterpolation);
-  }
-
-  paintInterpolation() {
-    const ctx = this.ctx["interpolation"];
-    if (!ctx) return;
-
-    this.updated = true;
-
-    // 用 Hilbert 编码优化查找
-    const size = Math.max(this.width, this.height);
-    const data = this.state.data.map(d => {
-      const { x, y } = this.map.current.project([d.lng, d.lat]);
-      return {
-        x, y,
-        value: d.value,
-        code: HilbertEncodeXY(x, y, size, 16)
-      };
-    });
-    const origin = Root.getPopulation(this.state.name.split(".")[0]).map(d => {
-      const { x, y } = this.map.current.project([d.lng, d.lat]);
-      return {
-        x, y,
-        value: d.value,
-        code: HilbertEncodeXY(x, y, size, 16)
-      };
-    });
-
-    for (let _y = 0; _y < this.height; _y += this.state.interpolationConfig.pixelStep) {
-      const y = _y + this.state.interpolationConfig.pixelStep / 2;
-      for (let _x = 0; _x < this.width; _x += this.state.interpolationConfig.pixelStep) {
-        const x = _x + this.state.interpolationConfig.pixelStep / 2;
-        const code = HilbertEncodeXY(x, y, size, 16);
-        this.timers.push(
-          setTimeout(() => {
-            const val = this.getIDW(x, y, data, code, origin);
-            const color = getColor(this.state.colorize, val, this.max);
-            ctx.fillStyle = color;
-            ctx.fillRect(
-              _x, _y,
-              this.state.interpolationConfig.pixelStep,
-              this.state.interpolationConfig.pixelStep
-            );
-
-            this.progress.next();
-          }, 2 * this.timers.length)
-        );
-      }
-    }
-  }
-
-  connectCluster(cluster) {
-    let links = [];
-
-    for (let i = 0; i < cluster.length - 1; i++) {
-      for (let j = i + 1; j < cluster.length; j++) {
-        const dist = Math.sqrt(
-          Math.pow(cluster[i].x - cluster[j].x, 2)
-          + Math.pow(cluster[i].y - cluster[j].y, 2)
-        );
-        if (dist < 4) {
-          links.push([[cluster[i].x, cluster[i].y], [cluster[j].x, cluster[j].y]]);
-        }
-      }
-    }
-
-    return links;
-  }
-
-  paintLinks() {
-    if (!this.state.name) {
-      return;
-    }
-    const ctx = this.ctx["links"];
-    if (!ctx) return;
-
-    this.updated = true;
-
-    axios.get(`/clustering/${this.state.name.split(".")[0]}`).then(res => {
-      if (res.data.status) {
-        const groups = res.data.data.filter(grp => grp.length).map(grp => {
-          return grp.map(d => {
-            const p = this.state.data[d];
-            return {
-              ...p,
-              ...this.map.current.project([p.lng, p.lat])
-            };
-          });
-        });
-
-        groups.forEach(grp => {
-          this.timers.push(
-            setTimeout(() => {              
-              // const links = this.connectCluster(grp);
-    
-              ctx.strokeStyle = getColor(this.state.colorize, grp[0].value, this.max);
-    
-              // ctx.beginPath();
-    
-              // links.forEach(link => {
-              //   ctx.moveTo(link[0][0], link[0][1]);
-              //   ctx.lineTo(link[1][0], link[1][1]);
-              //   ctx.stroke();
-              // });
-
-              for (let i = 0; i < grp.length - 1; i++) {
-                for (let j = i + 1; j < grp.length; j++) {
-                  setTimeout(() => {
-                    ctx.strokeStyle = getColor(this.state.colorize, grp[0].value, this.max);
-                    ctx.beginPath();
-                    ctx.moveTo(grp[i].x, grp[i].y);
-                    ctx.lineTo(grp[j].x, grp[j].y);
-                    ctx.stroke();
-                    ctx.closePath();
-                  }, i * 2);
-                  // ctx.moveTo(grp[i].x, grp[i].y);
-                  // ctx.lineTo(grp[j].x, grp[j].y);
-                  // ctx.stroke();
-                }
-              }
-
-              // grp.forEach(node => {
-              //   ctx.fillStyle = d3.interpolateHsl(
-              //     this.state.colorize[0], this.state.colorize[1]
-              //   )(Math.pow(node.value / this.max, this.state.colorize[2]));
-              //   ctx.fillRect(node.x - 1.5, node.y - 1.5, 3, 3);
-              //   ctx.strokeRect(node.x - 1.5, node.y - 1.5, 3, 3);
-              // });
-    
-              // ctx.closePath();
-              
-              this.progress.next();
-            }, this.timers.length)
-          );
-        });
-      }
-    });
   }
 
 };

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-02-25 22:55:58
+ * @Last Modified time: 2021-03-21 19:09:31
  */
 
 import { useState, useEffect } from 'react';
@@ -10,7 +10,6 @@ import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
 import { callContextMenu } from './ContextMenu.client';
 import Button from '../UI/Button.client';
-// import * as d3 from "d3";
 
 
 const rgb2code = rgb => {
@@ -29,11 +28,9 @@ const code2rgb = code => {
   })`;
 };
 
-const getColor = (colormap, val, max) => {
-  const valTransformed = (val / max) ** colormap.exp;
-  const len = colormap.colors.length;
-  const idx = Math.min((valTransformed * len) | 0, len - 1);
-  return colormap.colors[idx];
+const getColor = (colorMap, val, max) => {
+  const v = val / max;
+  return colorMap.project(v);
 };
 
 
@@ -51,7 +48,7 @@ const DatasetItem = props => {
 
   let [min, mean, max] = [Infinity, 0, -Infinity];
   let steps = [];
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 80; i++) {
     steps.push(0);
   }
 
@@ -85,13 +82,6 @@ const DatasetItem = props => {
     );
   });
   path += " L150,0";
-
-  let curve = "M0,20";
-  for (let i = 1; i <= 20; i++) {
-    const x = i / 20;
-    const y = Math.pow(x, props.colorize.exp);
-    curve += " L" + i + "," + ((1 - y) * 20).toFixed(1);
-  }
 
   useEffect(() => {
     lastState[props.name] = state;
@@ -160,13 +150,13 @@ const DatasetItem = props => {
                 <td colSpan="4" >
                   <svg width="150px" height="6px" >
                     {
-                      new Array(40).fill(0).map((_, i) => {
+                      new Array(80).fill(0).map((_, i) => {
                         return (
                           <rect key={ i }
-                            x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
+                            x={ i * 150 / 80 }  width={ 150 / 80 + 0.2 }
                             y={ 0 }             height={ 6 }
                             style={{
-                              fill: getColor(props.colorize, i + 0.5, 40)
+                              fill: getColor(props.colorMap, i + 0.5, 80)
                             }} />
                         );
                       })
@@ -175,37 +165,39 @@ const DatasetItem = props => {
                 </td>
               </tr>
               {
-                props.colorize.colors.map((c, i) => {
+                props.colorMap.colorList.map((c, i) => {
                   return (
                     <tr key={ i } className="color"
                       onContextMenu={
                         e => {
-                          if (props.colorize.colors.length === 1) {
+                          if (props.colorMap.length === 1) {
                             callContextMenu(
                               e, [{
                                 text:   "Color map index [" + (i + 1) + "]"
                               }, {
                                 action: () => {
-                                  props.colorize.colors = (
-                                    props.colorize.colors.slice(0, i).concat(
+                                  const next = (
+                                    props.colorMap.colorList.slice(0, i).concat(
                                       ["rgb(127,127,127)"]
                                     ).concat(
-                                      props.colorize.colors.slice(i, props.colorize.colors.length)
+                                      props.colorMap.colorList.slice(i, props.colorMap.length)
                                     )
                                   );
+                                  props.colorMap.update(next);
                                   Root.colorizeChanged = true;
                                   Root.refresh();
                                 },
                                 text: "Insert before"
                               }, {
                                 action: () => {
-                                  props.colorize.colors = (
-                                    props.colorize.colors.slice(0, i + 1).concat(
+                                  const next = (
+                                    props.colorMap.colorList.slice(0, i + 1).concat(
                                       ["rgb(127,127,127)"]
                                     ).concat(
-                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
                                     )
                                   );
+                                  props.colorMap.update(next);
                                   Root.colorizeChanged = true;
                                   Root.refresh();
                                 },
@@ -218,37 +210,40 @@ const DatasetItem = props => {
                                 text:   "Color map index [" + (i + 1) + "]"
                               }, {
                                 action: () => {
-                                  props.colorize.colors = (
-                                    props.colorize.colors.slice(0, i).concat(
+                                  const next = (
+                                    props.colorMap.colorList.slice(0, i).concat(
                                       ["rgb(127,127,127)"]
                                     ).concat(
-                                      props.colorize.colors.slice(i, props.colorize.colors.length)
+                                      props.colorMap.colorList.slice(i, props.colorMap.length)
                                     )
                                   );
+                                  props.colorMap.update(next);
                                   Root.colorizeChanged = true;
                                   Root.refresh();
                                 },
                                 text: "Insert before"
                               }, {
                                 action: () => {
-                                  props.colorize.colors = (
-                                    props.colorize.colors.slice(0, i + 1).concat(
+                                  const next = (
+                                    props.colorMap.colorList.slice(0, i + 1).concat(
                                       ["rgb(127,127,127)"]
                                     ).concat(
-                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
                                     )
                                   );
+                                  props.colorMap.update(next);
                                   Root.colorizeChanged = true;
                                   Root.refresh();
                                 },
                                 text: "Insert after"
                               }, {
                                 action: () => {
-                                  props.colorize.colors = (
-                                    props.colorize.colors.slice(0, i).concat(
-                                      props.colorize.colors.slice(i + 1, props.colorize.colors.length)
+                                  const next = (
+                                    props.colorMap.colorList.slice(0, i).concat(
+                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
                                     )
                                   );
+                                  props.colorMap.update(next);
                                   Root.colorizeChanged = true;
                                   Root.refresh();
                                 },
@@ -268,7 +263,9 @@ const DatasetItem = props => {
                           value={ c }
                           settor={
                             val => {
-                              props.colorize.colors[i] = val;
+                              const next = [...props.colorMap.colorList];
+                              next[i] = val;
+                              props.colorMap.update(next);
                               Root.colorizeChanged = true;
                               Root.refresh();
                             }
@@ -283,37 +280,15 @@ const DatasetItem = props => {
                   );
                 })
               }
-              <tr>
-                <td
-                  style={{
-                    width: "30px"
-                  }}>
-                    exp
-                </td>
-                <NumberTd
-                  value={ props.colorize.exp }
-                  settor={
-                    val => {
-                      props.colorize.exp = val;
-                      Root.colorizeChanged = true;
-                      Root.refresh();
-                    }
-                  } />
-                <td>
-                  <svg viewBox="0 0 20 20"
-                    style={{
-                      background: "rgb(238,238,238)",
-                      transform: "scale(1.1)"
-                    }} >
-                      <path d={ curve }
-                        style={{
-                          fill:   'none',
-                          stroke: 'rgb(199,124,136)',
-                          strokeWidth:  2
-                        }} />
-                  </svg>
-                </td>
-              </tr>
+              <CheckboxTr
+                value={ props.colorMap.discrete }
+                settor={
+                  val => {
+                    props.colorMap.discrete = val;
+                    Root.colorizeChanged = true;
+                    Root.refresh();
+                  }
+                } />
             </tbody>
         </table>
       </section>
@@ -354,13 +329,13 @@ const DatasetItem = props => {
                     marginBottom: "-0.2rem"
                   }} >
                     {
-                      new Array(40).fill(0).map((_, i) => {
+                      new Array(80).fill(0).map((_, i) => {
                         return (
                           <rect key={ i }
-                            x={ i * 150 / 40 }  width={ 150 / 40 + 0.2 }
+                            x={ i * 150 / 80 }  width={ 150 / 80 + 0.2 }
                             y={ 0 }             height={ 26 }
                             style={{
-                              fill: getColor(props.colorize, i + 0.5, 40)
+                              fill: getColor(props.colorMap, i + 0.5, 80)
                             }} />
                         );
                       })
@@ -801,95 +776,61 @@ const OpacityBar = props => {
   );
 };
 
-const NumberTd = props => {
-  const [editing, edit] = useState(false);
-
-  return editing ? (
-    <>
-      <td
-        style={{
-          width: "76px"
-        }} >
-          <input type="number" defaultValue={ props.value }
-            style={{
-              width:  "60px",
-              height: "18px"
-            }} />
-      </td>
-      <td
-        style={{
-          width: "16px"
-        }} >
-          <svg viewBox="4 4 32 32" tabIndex={ 1 }
-            style={{
-              cursor: "pointer"
-            }}
-            onClick={
-              e => {
-                const input = e.target.parentElement.parentElement.children[1].children[0];
-                const value = parseFloat(input.value);
-                edit(false);
-                setTimeout(() => {
-                  if (value !== props.value) {
-                    props.settor(value);
-                  }
-                }, 20);
+const CheckboxTr = props => {
+  return (
+    <tr
+      tabIndex={ 1 }
+      onClick={
+        () => {
+          props.settor(!props.value);
+        }
+      }
+      style={{
+        cursor: "pointer"
+      }} >
+        <td
+          style={{
+            width: "30px"
+          }}>
+            -
+        </td>
+        <td
+          style={{
+            width: "76px",
+            opacity:  props.value ? 1 : 0.8
+          }}>
+            discrete
+        </td>
+        <td
+          style={{
+            width: "16px"
+          }} >
+            <svg viewBox="0 0 20 20" >
+              <circle
+                cx="10" cy="12" r="6"
+                style={{
+                  fill:           'none',
+                  pointerEvents:  "none",
+                  stroke:         "rgb(176,176,176)",
+                  strokeWidth:    1.6
+                }} />
+              {
+                props.value ? (
+                  <path
+                    d="M2,9 L9,18 L19,4"
+                    style={{
+                      fill:         "none",
+                      stroke:       "rgb(8,196,22)",
+                      strokeWidth:  4
+                    }} />
+                ) : null
               }
-            } >
-              <path d={
-                  "M32,22 A16.5,16.5,0,0,0,32,18 L29,18 A13.5,13.5,0,0,0,28,15"
-                  + " L30,13 A16.5,16.5,0,0,0,27,10 L25,12 A13.5,13.5,0,0,0,22,11"
-                  + " L22,8 A16.5,16.5,0,0,0,18,8 L18,11 A13.5,13.5,0,0,0,15,12"
-                  + " L13,10 A16.5,16.5,0,0,0,10,13 L12,15 A13.5,13.5,0,0,0,11,18"
-                  + " L8,18 L15,20 A5,5,0,0,1,25,20 A5,5,0,0,1,15,20"
-                  + " L8,18 A16.5,16.5,0,0,0,8,22 L11,22 A13.5,13.5,0,0,0,12,25"
-                  + " L10,27 A16.5,16.5,0,0,0,13,30 L15,28 A13.5,13.5,0,0,0,18,29"
-                  + " L18,32 A16.5,16.5,0,0,0,22,32 L22,29 A13.5,13.5,0,0,0,25,28"
-                  + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
-                }
-                style={{
-                  fill:   'rgb(127,213,254)',
-                  pointerEvents:  "none"
-                }} />
-          </svg>
-      </td>
-    </>
-  ) : (
-    <>
-      <td
-        style={{
-          width: "76px"
-        }} >
-          { props.value }
-      </td>
-      <td
-        style={{
-          width: "16px"
-        }} >
-          <svg viewBox="4 4 32 32" tabIndex={ 1 }
-            style={{
-              cursor: "pointer"
-            }}
-            onClick={
-              () => edit(true)
-            } >
-              <path d={
-                  "M32,22 A16.5,16.5,0,0,0,32,18 L29,18 A13.5,13.5,0,0,0,28,15"
-                  + " L30,13 A16.5,16.5,0,0,0,27,10 L25,12 A13.5,13.5,0,0,0,22,11"
-                  + " L22,8 A16.5,16.5,0,0,0,18,8 L18,11 A13.5,13.5,0,0,0,15,12"
-                  + " L13,10 A16.5,16.5,0,0,0,10,13 L12,15 A13.5,13.5,0,0,0,11,18"
-                  + " L8,18 L15,20 A5,5,0,0,1,25,20 A5,5,0,0,1,15,20"
-                  + " L8,18 A16.5,16.5,0,0,0,8,22 L11,22 A13.5,13.5,0,0,0,12,25"
-                  + " L10,27 A16.5,16.5,0,0,0,13,30 L15,28 A13.5,13.5,0,0,0,18,29"
-                  + " L18,32 A16.5,16.5,0,0,0,22,32 L22,29 A13.5,13.5,0,0,0,25,28"
-                  + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
-                }
-                style={{
-                  fill:   'rgb(65,100,148)'
-                }} />
-          </svg>
-      </td>
-    </>
+            </svg>
+        </td>
+        <td>
+          { props.value ? "T" : "F" }
+        </td>
+    </tr>
   );
 };
 

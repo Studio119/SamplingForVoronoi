@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-20 22:39:07
+ * @Last Modified time: 2021-03-21 19:24:49
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -12,6 +12,7 @@ import WorkSpace from './container/WorkSpace.client';
 import SampleDialog from './UI/SampleDialog.server';
 import ContextMenu from './container/ContextMenu.client';
 import Settings from './UI/Settings.server';
+import * as d3 from 'd3';
 
 
 const loadJSON = content => {
@@ -29,13 +30,51 @@ const loadJSON = content => {
   return data;
 };
 
-const getSuggestedExp = data => {
-  let [min, max, sum] = [Infinity, -Infinity, 0];
-  data.forEach(d => {
-    [min, max, sum] = [Math.min(min, d.value), Math.max(max, d.value), sum + d.value];
-  });
-  const rMean = (sum / data.length - min) / (max - min);
-  return parseFloat(((1 + (Math.log(0.5) / Math.log(rMean)) ** 1.41) / 2).toFixed(2));
+export class ColorMap {
+
+  constructor(colorList, data) {
+    this.colorList = [];
+    this.length = 0;
+    this.breaksD = [];
+    this.breaksC = [];
+    this.data = data;
+    this.discrete = true;
+    this.update(colorList);
+  }
+
+  update(colorList) {
+    this.colorList = [...colorList];
+    this.length = this.colorList.length;
+    this.breaksD = getNaturalBreak(this.data, this.length);
+    this.breaksC = this.length > 1 ? getNaturalBreak(this.data, this.length - 1) : [];
+  }
+
+  project(val) {
+    if (this.length === 1) {
+      return this.colorList[0];
+    }
+    val = val < 0 ? 0 : val > 1 ? 1 : val;
+    if (this.discrete) {
+      let floor = 0;
+      while (floor < this.length - 1 && val > this.breaksD[floor]) {
+        floor += 1;
+      }
+      return this.colorList[floor];
+    } else {
+      let floor = 0;
+      let span = [0, this.breaksC[1]];
+      while (floor < this.length - 2 && val > this.breaksC[floor]) {
+        span[0] = this.breaksC[floor];
+        floor += 1;
+      }
+      span[1] = this.breaksC[floor || 1];
+      const pos = (val - span[0]) / (span[1] - span[0]);
+      return d3.interpolateHsl(
+        this.colorList[floor], this.colorList[floor + 1]
+      )(Math.min(Math.max(pos, 0), 1));
+    }
+  }
+
 };
 
 const getNaturalBreak = (data, k) => {
@@ -89,12 +128,12 @@ const getNaturalBreak = (data, k) => {
       }
     } else {
       for (let i = 0; i < centers.length; i++) {
-        centers[i] = centers[i][1].reduce((p, c) => Math.min(p, c));
+        centers[i] = Math.min(...centers[i][1]);
       }
     }
   }
 
-  console.log(centers);
+  return centers;
 };
 
 const createChart = (src, rename=undefined) => {
@@ -147,6 +186,20 @@ const createChart = (src, rename=undefined) => {
   };
 };
 
+
+const colors = [
+  "rgb(212,229,244)",
+  "rgb(196,219,239)",
+  "rgb(182,211,236)",
+  "rgb(168,202,232)",
+  "rgb(156,194,230)",
+  "rgb(127,174,218)",
+  "rgb(74,138,195)",
+  "rgb(27,104,174)",
+  "rgb(18,85,148)",
+  "rgb(12,67,118)"
+];
+
 const AppRoot = () => {
   const [state, setState] = useState({
     time:     (new Date()).getTime(),
@@ -188,78 +241,16 @@ const AppRoot = () => {
             const borders = window.localStorage.getItem("borders") ? (
               JSON.parse(window.localStorage.getItem("borders"))[_name] || []
             ) : [];
-            fr.onload = function(_) {
+            fr.onload = function() {
               const content = loadJSON(this.result);
-              const exp = getSuggestedExp(content);
+              const colorMap = new ColorMap(colors, content);
               setState({
                 ...state,
                 time:   (new Date()).getTime(),
                 datasets: state.datasets.concat({
                   name: _name,
                   data: content,
-                  exp:  exp,
-                  colorize: {
-                    /* ArcGis 分类 */
-                    // colors: [
-                    //   "rgb(200,100,225)",
-                    //   "rgb(120,170,255)",
-                    //   "rgb(242,0,0)",
-                    //   "rgb(48,144,0)",
-                    //   "rgb(142,0,142)",
-                    //   "rgb(190,160,100)",
-                    //   "rgb(250,198,210)",
-                    //   "rgb(180,255,0)",
-                    //   "rgb(111,196,82)",
-                    //   "rgb(255,180,0)",
-                    //   "rgb(130,40,0)",
-                    //   "rgb(255,100,85)",
-                    //   "rgb(0,90,230)",
-                    //   "rgb(175,175,175)",
-                    //   "rgb(60,110,130)",
-                    //   "rgb(255,242,0)"
-                    // ],
-                    /* ArcGis 离散属性 */
-                    // colors: [
-                    //   "rgb(255,255,128)",
-                    //   "rgb(205,250,100)",
-                    //   "rgb(152,240,70)",
-                    //   "rgb(97,232,39)",
-                    //   "rgb(59,217,35)",
-                    //   "rgb(63,196,83)",
-                    //   "rgb(55,173,122)",
-                    //   "rgb(38,152,158)",
-                    //   "rgb(33,122,163)",
-                    //   "rgb(33,83,148)",
-                    //   "rgb(27,49,135)",
-                    //   "rgb(12,16,120)"
-                    // ],
-                    // /* ZJU VAE-Based (purple) */
-                    // colors: [
-                    //   "rgb(243,217,239)",
-                    //   "rgb(232,181,226)",
-                    //   "rgb(220,160,212)",
-                    //   "rgb(213,130,192)",
-                    //   "rgb(198,105,180)",
-                    //   "rgb(185,78,155)",
-                    //   "rgb(168,50,138)",
-                    //   "rgb(140,36,112)",
-                    //   "rgb(111,24,98)"
-                    // ],
-                    /* ZJU VAE-Based (blue) */
-                    colors: [
-                      "rgb(212,229,244)",
-                      "rgb(196,219,239)",
-                      "rgb(182,211,236)",
-                      "rgb(168,202,232)",
-                      "rgb(156,194,230)",
-                      "rgb(127,174,218)",
-                      "rgb(74,138,195)",
-                      "rgb(27,104,174)",
-                      "rgb(18,85,148)",
-                      "rgb(12,67,118)"
-                    ],
-                    exp
-                  },
+                  colorMap,
                   samples:  [{
                     name: "total",
                     data: content
