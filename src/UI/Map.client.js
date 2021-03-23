@@ -2,15 +2,15 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-21 20:18:46
+ * @Last Modified time: 2021-03-23 15:06:43
  */
 
 import React, { Component, createRef } from "react";
 import MapBox from "../react-mapbox/MapBox";
 import * as d3 from "d3";
 import { Root } from "../App.server";
-import { HilbertEncodeXY } from "../help/hilbertEncoder";
-import axios from "axios";
+// import { HilbertEncodeXY } from "../help/hilbertEncoder";
+// import axios from "axios";
 import Button from "./Button.client";
 
 
@@ -103,6 +103,7 @@ class Map extends Component {
     let evaluation = this.state.evaluation;
     let running = this.state.running;
     this.voronoiPolygons = [];
+    this.delaunay = [];
     if (name !== this.state.name) {
       // 选页卡切换
       // console.log("选页卡切换");
@@ -180,7 +181,7 @@ class Map extends Component {
 
     this.width = 0;
     this.height = 0;
-
+    
     this.voronoiPolygons = [];
     this.voronoiPolygonsPrev = [];
 
@@ -188,6 +189,7 @@ class Map extends Component {
 
     this.ctx = {
       "scatters": null,
+      "delaunay": null,
       "p_strokes": null,
       "polygons": null,
       "groups":   null,
@@ -195,9 +197,10 @@ class Map extends Component {
     };
     this.end = {
       "scatters": true,
+      "delaunay": true,
       "p_strokes": true,
       "polygons": true,
-      "groups":   null,
+      "groups":   true,
       "disks":    true
     };
 
@@ -295,8 +298,7 @@ class Map extends Component {
                     display: "block",
                     width: this.width,
                     height: this.height,
-                    filter: "grayscale(0.9)",
-                    background: "#121212"
+                    filter: "grayscale(0.9)"
                   }} >
                     <MapBox ref={ this.map }
                       id={ this.id }
@@ -583,6 +585,10 @@ class Map extends Component {
             });
           });
           this.bufferPaintScatters(renderingQueue);
+        } else if (target === "delaunay") {
+          this.ctx["delaunay"].clearRect(0, 0, this.width, this.height);
+          this.paintDelaunay();
+          this.end["delaunay"] = true;
         } else if (target === "groups") {
           this.ctx["groups"].clearRect(0, 0, this.width, this.height);
           const groups = {};
@@ -681,6 +687,15 @@ class Map extends Component {
         this.end["scatters"] = true;
       } else {
         this.end["scatters"] = false;
+      }
+      // delaunay
+      this.ctx["delaunay"].clearRect(0, 0, this.width, this.height);
+      if (this.state.layers.filter(d => d.label === "delaunay")[0].active) {
+        document.getElementById("layer-delaunay").style.visibility = "visible";
+        this.paintDelaunay();
+        this.end["delaunay"] = true;
+      } else {
+        this.end["delaunay"] = false;
       }
       // groups
       const layerGroups = this.state.layers.filter(d => d.label === "groups")[0];
@@ -1134,8 +1149,6 @@ class Map extends Component {
         );
       }
     });
-
-    this.end["polygons"] = true;
   }
 
   async makeVoronoi() {
@@ -1227,6 +1240,65 @@ class Map extends Component {
     });
 
     return p;
+  }
+
+  paintDelaunay() {
+    const ctx = this.ctx["delaunay"];
+    if (!ctx) return;
+
+    const delaunay = this.pureDelaunay();
+
+    this.updated = true;
+
+    for (let n = 0; n * 3 + 2 < delaunay.triangles.length; n++) {
+      const i0 = delaunay.triangles[n * 3];
+      const i1 = delaunay.triangles[n * 3 + 1];
+      const i2 = delaunay.triangles[n * 3 + 2];
+      this.timers.push(
+        setTimeout(() => {
+          try {
+            ctx.strokeStyle = "rgba(180,180,180,0.6)";
+            ctx.fillStyle = "rgb(103,179,230)";
+            ctx.beginPath();
+            ctx.moveTo(delaunay.points[i0 * 2], delaunay.points[i0 * 2 + 1]);
+            ctx.lineTo(delaunay.points[i1 * 2], delaunay.points[i1 * 2 + 1]);
+            ctx.lineTo(delaunay.points[i2 * 2], delaunay.points[i2 * 2 + 1]);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fillRect(delaunay.points[i0 * 2] - 1.5, delaunay.points[i0 * 2 + 1] - 1.5, 3, 3);
+            ctx.clearRect(delaunay.points[i0 * 2] - 0.6, delaunay.points[i0 * 2 + 1] - 0.6, 1.2, 1.2);
+            ctx.fillRect(delaunay.points[i1 * 2] - 1.5, delaunay.points[i1 * 2 + 1] - 1.5, 3, 3);
+            ctx.clearRect(delaunay.points[i1 * 2] - 0.6, delaunay.points[i1 * 2 + 1] - 0.6, 1.2, 1.2);
+            ctx.fillRect(delaunay.points[i2 * 2] - 1.5, delaunay.points[i2 * 2 + 1] - 1.5, 3, 3);
+            ctx.clearRect(delaunay.points[i2 * 2] - 0.6, delaunay.points[i2 * 2 + 1] - 0.6, 1.2, 1.2);
+          } catch {}
+
+          this.progress.next();
+        }, 1 * this.timers.length)
+      );
+    }
+
+    this.end["delaunay"] = true;
+  }
+
+  pureDelaunay() {
+    const delaunay = d3.Delaunay.from(
+      this.state.data.map(d => {
+        try {
+          const a = this.map.current.project([d.lng, d.lat]);
+          
+          return [a.x, a.y];
+        } catch (error) {
+          console.warn(d, error)
+          
+          return [0, 0];
+        }
+      })
+    );
+
+    const { triangles, points } = delaunay;
+
+    return { triangles, points };
   }
 
   async evaluateVoronoi() {

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-21 19:24:49
+ * @Last Modified time: 2021-03-23 14:29:34
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -142,6 +142,10 @@ const createChart = (src, rename=undefined) => {
     active: true,
     opacity: 1
   }, {
+    label:  "delaunay",
+    active: false,
+    opacity: 1
+  }, {
     label:  "p_strokes",
     active: false,
     opacity: 1
@@ -187,6 +191,18 @@ const createChart = (src, rename=undefined) => {
 };
 
 
+// const colors = [
+//   "rgb(213,201,255)",
+//   "rgb(196,180,254)",
+//   "rgb(182,163,255)",
+//   "rgb(169,145,254)",
+//   "rgb(160,131,255)",
+//   "rgb(130,94,250)",
+//   "rgb(76,31,238)",
+//   "rgb(45,0,201)",
+//   "rgb(39,0,166)",
+//   "rgb(30,0,130)"
+// ];
 const colors = [
   "rgb(212,229,244)",
   "rgb(196,219,239)",
