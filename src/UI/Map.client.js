@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-23 15:06:43
+ * @Last Modified time: 2021-03-23 20:40:41
  */
 
 import React, { Component, createRef } from "react";
@@ -491,12 +491,20 @@ class Map extends Component {
                         <table>
                           <tbody>
                             <tr>
+                              <th>AAVDV</th>
+                              <td>{ this.state.evaluation.dv.toFixed(4) }</td>
+                            </tr>
+                            <tr>
                               <th>AAVSTD</th>
                               <td>{ this.state.evaluation.std.toFixed(4) }</td>
                             </tr>
                             <tr>
                               <th>AAVCV</th>
                               <td>{ this.state.evaluation.cv.toFixed(4) }</td>
+                            </tr>
+                            <tr>
+                              <th>AnE</th>
+                              <td>{ this.state.evaluation.avrgNEdges.toFixed(4) }</td>
                             </tr>
                             <tr>
                               <th>AELCV</th>

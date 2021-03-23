@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-16 19:17:09
+ * @Last Modified time: 2021-03-23 21:35:44
  */
 
 self.addEventListener('message', e => {
@@ -22,21 +22,28 @@ self.addEventListener('message', e => {
 });
 
 const evaluateVoronoi = (voronoiPolygons) => {
+  const dvs = [];
   const stds = [];
   const cvs = [];
+  let avrgNEdges = 0;
 
   voronoiPolygons.forEach(vp => {
     const after = vp.averVal;
     let k = 0;
     vp.values.forEach(v => {
-      k += Math.pow(v - after, 2);
+      k += Math.pow(v - after);
     });
-    const std = Math.sqrt(k / vp.values.length);
+    avrgNEdges += vp.polygons.length;
+    const dv = k / vp.values.length;
+    dvs.push(dv);
+    const std = Math.sqrt(dv);
     stds.push(std);
     const cv = std / after;
     cvs.push(cv);
   });
+  avrgNEdges /= voronoiPolygons.length;
 
+  const dv = dvs.reduce((sum, d) => sum + d) / dvs.length;
   const std = stds.reduce((sum, d) => sum + d) / stds.length;
   const cv = cvs.reduce((sum, d) => sum + d) / cvs.length;
 
@@ -115,7 +122,7 @@ const evaluateVoronoi = (voronoiPolygons) => {
   local /= lc;
 
   return {
-    std, cv, stroke, local
+    dv, std, cv, avrgNEdges, stroke, local
   };
 }
 
