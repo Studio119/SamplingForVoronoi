@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-23 21:35:44
+ * @Last Modified time: 2021-03-24 19:02:46
  */
 
 self.addEventListener('message', e => {
@@ -26,6 +26,7 @@ const evaluateVoronoi = (voronoiPolygons) => {
   const stds = [];
   const cvs = [];
   let avrgNEdges = 0;
+  const labels = [];
 
   voronoiPolygons.forEach(vp => {
     const after = vp.averVal;
@@ -40,6 +41,18 @@ const evaluateVoronoi = (voronoiPolygons) => {
     stds.push(std);
     const cv = std / after;
     cvs.push(cv);
+    const labelCount = {};
+    vp.labels.forEach(label => {
+      labelCount[label] = (labelCount[label] || 0) + 1;
+    });
+    let entropy = 0;
+    for (const n in labelCount) {
+      if (labelCount.hasOwnProperty(n)) {
+        const p = labelCount[n] / vp.labels.length;
+        entropy -= p * Math.log2(p);
+      }
+    }
+    labels.push(entropy);
   });
   avrgNEdges /= voronoiPolygons.length;
 
@@ -122,7 +135,7 @@ const evaluateVoronoi = (voronoiPolygons) => {
   local /= lc;
 
   return {
-    dv, std, cv, avrgNEdges, stroke, local
+    dv, std, cv, avrgNEdges, stroke, local, labels
   };
 }
 
@@ -143,6 +156,7 @@ const getValue = (population, voronoiPolygons, polygonsCenters) => {
     });
     const fromId = possible.sort((a, b) => a.w - b.w)[0].id;
     voronoiPolygons[fromId].values.push(value);
+    voronoiPolygons[fromId].labels.push(d.ss);
     voronoiPolygons[fromId].center = [x, y];
   });
 

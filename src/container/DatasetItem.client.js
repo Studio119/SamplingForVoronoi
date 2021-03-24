@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 16:47:51
+ * @Last Modified time: 2021-03-24 17:01:41
  */
 
 import React, { useState, useEffect } from 'react';
@@ -677,40 +677,38 @@ const CheckBoxTr = props => {
         }
       }
       style={{
-        cursor: "pointer"
+        cursor: "pointer",
+        marginBlockStart: 0,
+        margin: "0.5rem 2px 0"
       }} >
+        <svg width="12px" height="12px" viewBox="0 0 20 20" >
+          <circle
+            cx="10" cy="12" r="6"
+            style={{
+              fill:           'none',
+              pointerEvents:  "none",
+              stroke:         "rgb(176,176,176)",
+              strokeWidth:    1.6
+            }} />
+          {
+            props.value ? (
+              <path
+                d="M2,9 L9,18 L19,4"
+                style={{
+                  fill:         "none",
+                  stroke:       "rgb(8,196,22)",
+                  strokeWidth:  4
+                }} />
+            ) : null
+          }
+        </svg>
         <label
           style={{
-            width: "76px"
-          }}>
-            { `mode = ${ props.value ? "discrete" : "continuous" }` }
-        </label>
-        {/* <label
-          style={{
-            width: "16px"
+            pointerEvents:  "none",
+            fontSize:       "11.8px"
           }} >
-            <svg viewBox="0 0 20 20" >
-              <circle
-                cx="10" cy="12" r="6"
-                style={{
-                  fill:           'none',
-                  pointerEvents:  "none",
-                  stroke:         "rgb(176,176,176)",
-                  strokeWidth:    1.6
-                }} />
-              {
-                props.value ? (
-                  <path
-                    d="M2,9 L9,18 L19,4"
-                    style={{
-                      fill:         "none",
-                      stroke:       "rgb(8,196,22)",
-                      strokeWidth:  4
-                    }} />
-                ) : null
-              }
-            </svg>
-        </label> */}
+            { `discreteness: ${ props.value ? "discrete" : "continuous" }` }
+        </label>
     </div>
   );
 };

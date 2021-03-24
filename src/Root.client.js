@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 14:31:45
+ * @Last Modified time: 2021-03-24 17:49:46
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -315,6 +315,7 @@ const AppRoot = () => {
                 datasets: state.datasets.concat({
                   name: _name,
                   data: content,
+                  grouping: {},
                   colorMap,
                   samples:  [{
                     name: "total",

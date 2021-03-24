@@ -187,11 +187,18 @@ app.get("/sample/saa/:dataset/:Rm/:num/:min_r", (req, res) => {
         res.json({
           status: true,
           message: "Completed",
-          data: JSON.parse(
-            fs.readFileSync(
-              "./storage/saa_" + path + "$R=" + Rm + "$num=" + num + "$min_r=" + min_r + ".json"
+          data: [
+            JSON.parse(
+              fs.readFileSync(
+                "./storage/saa_" + path + "$R=" + Rm + "$num=" + num + "$min_r=" + min_r + ".json"
+              )
+            ),
+            JSON.parse(
+              fs.readFileSync(
+                "./storage/group_" + path + "$" + num + ".json"
+              )
             )
-          )
+          ]
         });
       } else {
         res.json({

@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-20 20:50:39
+ * @Last Modified time: 2021-03-24 19:14:27
  */
 
 import React from 'react';
@@ -440,8 +440,16 @@ class SampleDialog extends React.Component {
                                     Root.pushSample(
                                       dataset,
                                       `VDGSAA {@${Rm}e-4,${num},${minR}}`,
-                                      data
+                                      data[0]
                                     );
+                                    Root.getDataset(dataset).grouping[num] = data[1].map(e => {
+                                      return {
+                                        lng:  e.lng,
+                                        lat:  e.lat,
+                                        ss:   e.ss,
+                                        value:e.value
+                                      };
+                                    });
                                   },
                                   reason => {
                                     console.log("rejected", reason);
@@ -790,7 +798,7 @@ const runVDGSAA = async (dataset, Rm, num, minR, output, onfulfilled, onrejected
 
   if (sampling.data.status) {
     output(sampling.data.message);
-    const data = resolveBNS(sampling.data.data);
+    const data = [resolveBNS(sampling.data.data[0]), sampling.data.data[1]];
     onfulfilled(data);
   } else {
     onrejected(sampling.data.message);
