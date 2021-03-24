@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-23 14:29:34
+ * @Last Modified time: 2021-03-24 14:31:45
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -190,30 +190,79 @@ const createChart = (src, rename=undefined) => {
   };
 };
 
-
-// const colors = [
-//   "rgb(213,201,255)",
-//   "rgb(196,180,254)",
-//   "rgb(182,163,255)",
-//   "rgb(169,145,254)",
-//   "rgb(160,131,255)",
-//   "rgb(130,94,250)",
-//   "rgb(76,31,238)",
-//   "rgb(45,0,201)",
-//   "rgb(39,0,166)",
-//   "rgb(30,0,130)"
-// ];
-const colors = [
-  "rgb(212,229,244)",
-  "rgb(196,219,239)",
-  "rgb(182,211,236)",
-  "rgb(168,202,232)",
-  "rgb(156,194,230)",
-  "rgb(127,174,218)",
-  "rgb(74,138,195)",
-  "rgb(27,104,174)",
-  "rgb(18,85,148)",
-  "rgb(12,67,118)"
+export const colorLists = [
+  /** default VAE blue */ [
+    "rgb(212,229,244)",
+    "rgb(196,219,239)",
+    "rgb(182,211,236)",
+    "rgb(168,202,232)",
+    "rgb(156,194,230)",
+    "rgb(127,174,218)",
+    "rgb(74,138,195)",
+    "rgb(27,104,174)",
+    "rgb(18,85,148)",
+    "rgb(12,67,118)"
+  ],
+  /** VAE green */ [
+    "rgb(230,248,96)",
+    "rgb(211,239,71)",
+    "rgb(195,227,58)",
+    "rgb(178,215,43)",
+    "rgb(157,204,30)",
+    "rgb(133,194,21)",
+    "rgb(100,177,15)",
+    "rgb(66,154,10)",
+    "rgb(38,120,6)",
+    "rgb(18,84,3)"
+  ],
+  /** VAE red */ [
+    "rgb(251,246,187)",
+    "rgb(249,222,147)",
+    "rgb(247,193,114)",
+    "rgb(243,168,86)",
+    "rgb(238,138,59)",
+    "rgb(235,106,38)",
+    "rgb(225,76,26)",
+    "rgb(205,48,18)",
+    "rgb(174,30,12)",
+    "rgb(131,18,9)"
+  ],
+  /** VAE purple */ [
+    "rgb(243,217,239)",
+    "rgb(232,181,226)",
+    "rgb(220,160,212)",
+    "rgb(213,130,192)",
+    "rgb(197,104,179)",
+    "rgb(185,77,154)",
+    "rgb(167,49,137)",
+    "rgb(140,36,112)",
+    "rgb(111,24,98)",
+    "rgb(93,32,77)"
+  ],
+  /** continous */ [
+    "rgb(200,55,54)",
+    "rgb(197,127,53)",
+    "rgb(202,189,52)",
+    "rgb(150,202,51)",
+    "rgb(82,199,47)",
+    "rgb(48,200,84)",
+    "rgb(51,203,149)",
+    "rgb(53,191,198)",
+    "rgb(55,124,200)",
+    "rgb(59,59,203)"
+  ],
+  /** continous reversed */ [
+    "rgb(59,59,203)",
+    "rgb(55,124,200)",
+    "rgb(53,191,198)",
+    "rgb(51,203,149)",
+    "rgb(48,200,84)",
+    "rgb(82,199,47)",
+    "rgb(150,202,51)",
+    "rgb(202,189,52)",
+    "rgb(197,127,53)",
+    "rgb(200,55,54)"
+  ]
 ];
 
 const AppRoot = () => {
@@ -259,7 +308,7 @@ const AppRoot = () => {
             ) : [];
             fr.onload = function() {
               const content = loadJSON(this.result);
-              const colorMap = new ColorMap(colors, content);
+              const colorMap = new ColorMap(colorLists[0], content);
               setState({
                 ...state,
                 time:   (new Date()).getTime(),

@@ -2,14 +2,16 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-21 19:09:31
+ * @Last Modified time: 2021-03-24 16:47:51
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ExpandSign from '../UI/ExpandSign';
 import { Root } from '../App.server';
 import { callContextMenu } from './ContextMenu.client';
 import Button from '../UI/Button.client';
+import * as d3 from 'd3';
+import { colorLists } from '../Root.client';
 
 
 const rgb2code = rgb => {
@@ -136,161 +138,50 @@ const DatasetItem = props => {
             <ExpandSign expanded={ state.showPrefr } />
             Preference
         </label>
-        <table style={{
-            display: state.showPrefr ? undefined : "none",
-            textAlign: "center",
-            marginLeft: "1rem",
-            paddingLeft: "0.84rem",
-            borderLeft: "1px solid rgb(52,103,176)",
-            lineHeight: 1.1,
-            width:      "168px"
+        <article
+          style={{
+            display:        state.showPrefr ? "flex" : "none",
+            flexDirection:  "column",
+            alignItems:     "stretch",
+            justifyContent: "center",
+            textAlign:      "center",
+            marginLeft:     "1rem",
+            paddingLeft:    "0.84rem",
+            paddingBottom:  "10px",
+            borderLeft:     "1px solid rgb(52,103,176)",
+            lineHeight:     1.1,
+            width:          "172px"
           }} >
-            <tbody>
-              <tr>
-                <td colSpan="4" >
-                  <svg width="150px" height="6px" >
-                    {
-                      new Array(80).fill(0).map((_, i) => {
-                        return (
-                          <rect key={ i }
-                            x={ i * 150 / 80 }  width={ 150 / 80 + 0.2 }
-                            y={ 0 }             height={ 6 }
-                            style={{
-                              fill: getColor(props.colorMap, i + 0.5, 80)
-                            }} />
-                        );
-                      })
-                    }
-                  </svg>
-                </td>
-              </tr>
-              {
-                props.colorMap.colorList.map((c, i) => {
-                  return (
-                    <tr key={ i } className="color"
-                      onContextMenu={
-                        e => {
-                          if (props.colorMap.length === 1) {
-                            callContextMenu(
-                              e, [{
-                                text:   "Color map index [" + (i + 1) + "]"
-                              }, {
-                                action: () => {
-                                  const next = (
-                                    props.colorMap.colorList.slice(0, i).concat(
-                                      ["rgb(127,127,127)"]
-                                    ).concat(
-                                      props.colorMap.colorList.slice(i, props.colorMap.length)
-                                    )
-                                  );
-                                  props.colorMap.update(next);
-                                  Root.colorizeChanged = true;
-                                  Root.refresh();
-                                },
-                                text: "Insert before"
-                              }, {
-                                action: () => {
-                                  const next = (
-                                    props.colorMap.colorList.slice(0, i + 1).concat(
-                                      ["rgb(127,127,127)"]
-                                    ).concat(
-                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
-                                    )
-                                  );
-                                  props.colorMap.update(next);
-                                  Root.colorizeChanged = true;
-                                  Root.refresh();
-                                },
-                                text: "Insert after"
-                              }]
-                            );
-                          } else {
-                            callContextMenu(
-                              e, [{
-                                text:   "Color map index [" + (i + 1) + "]"
-                              }, {
-                                action: () => {
-                                  const next = (
-                                    props.colorMap.colorList.slice(0, i).concat(
-                                      ["rgb(127,127,127)"]
-                                    ).concat(
-                                      props.colorMap.colorList.slice(i, props.colorMap.length)
-                                    )
-                                  );
-                                  props.colorMap.update(next);
-                                  Root.colorizeChanged = true;
-                                  Root.refresh();
-                                },
-                                text: "Insert before"
-                              }, {
-                                action: () => {
-                                  const next = (
-                                    props.colorMap.colorList.slice(0, i + 1).concat(
-                                      ["rgb(127,127,127)"]
-                                    ).concat(
-                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
-                                    )
-                                  );
-                                  props.colorMap.update(next);
-                                  Root.colorizeChanged = true;
-                                  Root.refresh();
-                                },
-                                text: "Insert after"
-                              }, {
-                                action: () => {
-                                  const next = (
-                                    props.colorMap.colorList.slice(0, i).concat(
-                                      props.colorMap.colorList.slice(i + 1, props.colorMap.length)
-                                    )
-                                  );
-                                  props.colorMap.update(next);
-                                  Root.colorizeChanged = true;
-                                  Root.refresh();
-                                },
-                                text: "Remove color"
-                              }]
-                            );
-                          }
-                        }
-                      } >
-                        <td
+            <div
+              style={{
+                padding:  "0 0 0 6px"
+              }} >
+                <svg width="150px" height="6px" >
+                  {
+                    new Array(160).fill(0).map((_, i) => {
+                      return (
+                        <rect key={ i }
+                          x={ i * 150 / 160 } width={ 150 / 160 + 0.2 }
+                          y={ 0 }             height={ 6 }
                           style={{
-                            width: "30px"
-                          }}>
-                            { i + 1 }
-                        </td>
-                        <ColorTd key={ c }
-                          value={ c }
-                          settor={
-                            val => {
-                              const next = [...props.colorMap.colorList];
-                              next[i] = val;
-                              props.colorMap.update(next);
-                              Root.colorizeChanged = true;
-                              Root.refresh();
-                            }
-                          } />
-                        <td
-                          style={{
-                            width: "16px",
-                            background: c,
-                            border: "1px solid rgb(103,179,230)"
+                            fill: getColor(props.colorMap, i + 0.5, 160)
                           }} />
-                    </tr>
-                  );
-                })
-              }
-              <CheckboxTr
-                value={ props.colorMap.discrete }
-                settor={
-                  val => {
-                    props.colorMap.discrete = val;
-                    Root.colorizeChanged = true;
-                    Root.refresh();
+                      );
+                    })
                   }
-                } />
-            </tbody>
-        </table>
+                </svg>
+            </div>
+            <DrillList current={ props.colorMap } />
+            <CheckBoxTr
+              value={ props.colorMap.discrete }
+              settor={
+                val => {
+                  props.colorMap.discrete = val;
+                  Root.colorizeChanged = true;
+                  Root.refresh();
+                }
+              } />
+        </article>
       </section>
       <section key="stat"
       style={{
@@ -776,9 +667,9 @@ const OpacityBar = props => {
   );
 };
 
-const CheckboxTr = props => {
+const CheckBoxTr = props => {
   return (
-    <tr
+    <div
       tabIndex={ 1 }
       onClick={
         () => {
@@ -788,20 +679,13 @@ const CheckboxTr = props => {
       style={{
         cursor: "pointer"
       }} >
-        <td
+        <label
           style={{
-            width: "30px"
+            width: "76px"
           }}>
-            -
-        </td>
-        <td
-          style={{
-            width: "76px",
-            opacity:  props.value ? 1 : 0.8
-          }}>
-            discrete
-        </td>
-        <td
+            { `mode = ${ props.value ? "discrete" : "continuous" }` }
+        </label>
+        {/* <label
           style={{
             width: "16px"
           }} >
@@ -826,68 +710,124 @@ const CheckboxTr = props => {
                 ) : null
               }
             </svg>
-        </td>
-        <td>
-          { props.value ? "T" : "F" }
-        </td>
-    </tr>
+        </label> */}
+    </div>
   );
 };
 
-const ColorTd = props => {
+const DrillList = props => {
+  const [opened, open] = useState(false);
+
   return (
-    <>
-      <td
+    <React.Fragment>
+      <div
         style={{
-          width: "76px"
-        }} >
-          { rgb2code(props.value) }
-      </td>
-      <td
-        style={{
-          width: "16px"
-        }} >
-          <input type="color" defaultValue={ rgb2code(props.value) }
-            style={{
-              display:          "none"
-            }}
-            onChange={
-              e => {
-                const value = code2rgb(e.target.value);
-                if (props.value !== value) {
-                  Root.colorizeChanged = true;
-                  props.settor(value);
-                }
+          display:        "flex",
+          alignItems:     "stretch",
+          justifyContent: "stretch",
+          height:         "20px",
+          marginLeft:     "6px",
+          border:         "1px solid rgba(12,67,118,0.33)",
+          background:     "rgba(248,249,253,0.8)"
+        }}
+        onClick={
+          () => {
+            open(!opened);
+          }
+        } >
+          <svg width="18px" height="18px" viewBox="0 0 20 20" >
+            <path
+              d={
+                "M4,10 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 "
+                + "M10,10 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 "
+                + "M16,10 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
               }
-            } />
-          <svg viewBox="4 4 32 32" tabIndex={ 1 }
-            style={{
-              cursor: "pointer"
-            }}
-            onClick={
-              e => {
-                e.target.parentElement.children[0].click();
-              }
-            } >
-              <path d={
-                  "M32,22 A16.5,16.5,0,0,0,32,18 L29,18 A13.5,13.5,0,0,0,28,15"
-                  + " L30,13 A16.5,16.5,0,0,0,27,10 L25,12 A13.5,13.5,0,0,0,22,11"
-                  + " L22,8 A16.5,16.5,0,0,0,18,8 L18,11 A13.5,13.5,0,0,0,15,12"
-                  + " L13,10 A16.5,16.5,0,0,0,10,13 L12,15 A13.5,13.5,0,0,0,11,18"
-                  + " L8,18 L15,20 A5,5,0,0,1,25,20 A5,5,0,0,1,15,20"
-                  + " L8,18 A16.5,16.5,0,0,0,8,22 L11,22 A13.5,13.5,0,0,0,12,25"
-                  + " L10,27 A16.5,16.5,0,0,0,13,30 L15,28 A13.5,13.5,0,0,0,18,29"
-                  + " L18,32 A16.5,16.5,0,0,0,22,32 L22,29 A13.5,13.5,0,0,0,25,28"
-                  + " L27,30 A16.5,16.5,0,0,0,30,27 L28,25 A13.5,13.5,0,0,0,29,22"
-                }
-                style={{
-                  fill:   'rgb(65,100,148)',
-                  pointerEvents: "none"
-                }} />
+              style={{
+                fill: "rgb(12,67,118)"
+              }} />
           </svg>
-      </td>
-    </>
+          <div
+            style={{
+              flex:           1,
+              display:        "flex",
+              alignItems:     "stretch",
+              justifyContent: "stretch",
+              padding:        "3px",
+              marginLeft:     "4px"
+            }} >
+              {
+                props.current.colorList.map((c, i) => {
+                  return (
+                    <label key={ i }
+                      style={{
+                        flex:       1,
+                        background: c,
+                        border:     `1px solid ${
+                          d3.interpolateHsl(c, "rgb(17,17,17)")(0.25)
+                        }`
+                      }} />
+                  );
+                })
+              }
+          </div>
+      </div>
+      <div
+        style={{
+          height:     opened ? "max-content" : 0,
+          overflow:   "hidden",
+          transition: "height 0.6s",
+          display:    "flex",
+          flexDirection:  "column",
+          marginBlockStart: 0
+        }} >
+          {
+            colorLists.map((list, i) => {
+              return props.current.colorList[0] === list[0] ? null : (
+                <div key={ i }
+                  style={{
+                    display:        "flex",
+                    alignItems:     "stretch",
+                    justifyContent: "stretch",
+                    padding:        "3px",
+                    marginLeft:     "28.5px",
+                    height:         "16px",
+                    border:         "1px solid rgb(170,189,209)",
+                    background:     "rgba(248,249,253,0.8)",
+                    cursor:         "pointer"
+                  }}
+                  onClick={
+                    () => {
+                      if (opened) {
+                        open(false);
+                        props.current.colorList = [...list];
+                        Root.colorizeChanged = true;
+                        Root.refresh();
+                      }
+                    }
+                  } >
+                    {
+                      list.map((c, j) => {
+                        return (
+                          <label key={ j }
+                            style={{
+                              flex:       1,
+                              background: c,
+                              border:     `1px solid ${
+                                d3.interpolateHsl(c, "rgb(17,17,17)")(0.25)
+                              }`,
+                              pointerEvents: "none"
+                            }} />
+                        );
+                      })
+                    }
+                </div>
+              );
+            })
+          }
+      </div>
+    </React.Fragment>
   );
 };
+
 
 export default DatasetItem;
