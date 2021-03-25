@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 20:02:32
+ * @Last Modified time: 2021-03-25 12:36:30
  */
 
 import React, { Component, createRef } from "react";
@@ -496,12 +496,15 @@ class Map extends Component {
                             }} >
                               {
                                 (entropies => {
-                                  const sorted = entropies.sort((a, b) => a - b);
-                                  const [min, max] = [sorted[0], sorted[sorted.length - 1]];
-                                  const [CMIN, CMAX] = [
-                                    min - (max - min) / 16,
-                                    max + (max - min) / 16
-                                  ];
+                                  const sorted = entropies.map(
+                                    d => Math.max(0, d)
+                                  ).sort((a, b) => a - b);
+                                  // const [min, max] = [sorted[0], sorted[sorted.length - 1]];
+                                  // const [CMIN, CMAX] = [
+                                  //   min - (max - min) / 16,
+                                  //   max + (max - min) / 16
+                                  // ];
+                                  const [CMIN, CMAX] = [-0.2, 2.4];
                                   const fx = x => (x - CMIN) / (CMAX - CMIN) * 200;
                                   const Q1 = sorted[Math.round(sorted.length / 4)];
                                   const Mid = sorted[Math.round(sorted.length / 2)];
@@ -609,18 +612,18 @@ class Map extends Component {
                                       }
                                       {/* numbers */}
                                       <text key="min"
-                                        x={ fx(CMIN) } y={ 85 } textAnchor="center"
+                                        x={ fx(IMIN) } y={ 88 } textAnchor="middle" dx={ 8 }
                                         style={{
                                           fill: "#202020"
                                         }} >
-                                          { CMIN }
+                                          { IMIN.toFixed(2) }
                                       </text>
                                       <text key="max"
-                                        x={ fx(CMAX) } y={ 85 } textAnchor="center"
+                                        x={ fx(IMAX) } y={ 88 } textAnchor="middle" dx={ -8 }
                                         style={{
                                           fill: "#202020"
                                         }} >
-                                          { CMAX }
+                                          { IMAX.toFixed(2) }
                                       </text>
                                     </React.Fragment>
                                   );
@@ -1309,7 +1312,9 @@ class Map extends Component {
       labels:   calculated ? this.voronoiPolygonsPrev[i].values : []
     }));
 
-    const n = parseInt(/(?<=,)\d+(?=,)/.exec(this.state.name));
+    const n = parseInt(/(?<=,)\d+(?=,)/.exec(this.state.name)) || parseInt(
+      Object.keys(Root.getDataset(this.state.name.split(".")[0]).grouping)[0]
+    );
     const total = Root.getDataset(this.state.name.split(".")[0]).grouping[n];
     
     const population = total.map(d => {

@@ -1,26 +1,29 @@
 import math
 from real_time_log import log_text
+import numpy as np
+from scipy.spatial import Delaunay
+from sklearn.cluster import KMeans
 
 
+ENV_DEV = True
 
-ENV_DEV = False
+
+""" K-Means 预处理 """
+def pre_cluster(points, k=40):
+  X = np.array([[p[1], p[2]] for p in points])
+  estimator = KMeans(n_clusters=k).fit(X)
+  labels = estimator.labels_
+  clusters = [[] for _ in range(k)]
+  for point, label in zip(points, labels):
+    clusters[label].append(point)
+  return clusters
 
 
 """ 将点连接为最小生成树 """
-def connect_nodes(points, num, k=10, hash_len=40):
+def connect_nodes(points, num):
   points, extend = normalize_values(points)
-  map_id_to_node = {}
   
-  # 二维散列优化查找
-  hash_points = []
-  for i in range(hash_len):
-    hash_points.append([])
-    for j in range(hash_len):
-      hash_points[-1].append([])
-  hash_find = lambda y, x: (
-    min(hash_len - 1, int((y - extend[1][0]) / (extend[1][1] - extend[1][0]) * hash_len)),
-    min(hash_len - 1, int((x - extend[0][0]) / (extend[0][1] - extend[0][0]) * hash_len))
-  )
+  map_id_to_node = {}
   
   for point in points:
     _id, x, y, val = point
@@ -29,60 +32,39 @@ def connect_nodes(points, num, k=10, hash_len=40):
       "y":  y,
       "v":  val
     }
-    pos = hash_find(y, x)
-    hash_points[pos[0]][pos[1]].append(_id)
 
-  # 连接邻近点
-  links = []
-  linked = {} # 记录已连接的边 a<->b，id 小的在前，字符串形式为 'a_b'
-  for source in points:
-    neighbors = []
-    search_r = 0
-    search_y, search_x = hash_find(source[2], source[1])
-    while len(neighbors) < k * 2:
-      # 扩大搜索范围
-      search_r += 1
-      if search_r == 1:
-        neighbors += [i for i in hash_points[search_y][search_x] if i != source[0]]
-      else:
-        top = search_y - (search_r - 1)
-        left = search_x - (search_r - 1)
-        bottom = search_y + (search_r - 1)
-        right = search_x + (search_r - 1)
-        # 上边界
-        if top >= 0:
-          for x in range(max(0, left), min(hash_len - 1, right) + 1):
-            neighbors += hash_points[top][x]
-        # 下边界
-        if bottom < hash_len:
-          for x in range(max(0, left), min(hash_len - 1, right) + 1):
-            neighbors += hash_points[bottom][x]
-        # 左侧
-        if left >= 0:
-          for y in range(max(0, top), min(hash_len - 1, bottom) + 1):
-            neighbors += hash_points[y][left]
-        # 右侧
-        if right < hash_len:
-          for y in range(max(0, top), min(hash_len - 1, bottom) + 1):
-            neighbors += hash_points[y][right]
-      pass
-    # 选出 k 近邻
-    knn = []
-    for n in neighbors:
-      p = map_id_to_node[n]
-      dist_2 = (p["x"] - source[1]) ** 2 + (p["y"] - source[2]) ** 2
-      # dist_2 = (p["v"] - source[3]) ** 2
-      knn.append([n, dist_2])
-    knn = [d[0] for d in sorted(knn, key=lambda n: n[1])][:k]
-    for target in knn:
-      a = min(source[0], target)
-      b = max(source[0], target)
-      string = "{}_{}".format(a, b)
-      if string not in linked:
-        links.append((a, b))
-        linked[string] = abs(map_id_to_node[a]["v"] - map_id_to_node[b]["v"])
+  log_text("performing pre-clustering using KMeans...")
+  clusters = pre_cluster(points, k=int(num / 4))
+  log_text("generated {} clusters".format(len(clusters)))
+
+  trees = []
+  s = 0
+
+  for cluster in clusters:
+    log_text("generating MST... ({}/{})".format(len(trees), len(clusters)))
+    tri = Delaunay(np.array(
+      [[p[1], p[2]] for p in cluster]
+    ))
+
+    links = []
+
+    for simplice in tri.simplices:
+      for edge in [[0, 1], [0, 2], [1, 2]]:
+        pid_a = cluster[simplice[edge[0]]][0]
+        pid_b = cluster[simplice[edge[1]]][0]
+        pid_a, pid_b = min(pid_a, pid_b), max(pid_a, pid_b)
+        pa = map_id_to_node[pid_a]
+        pb = map_id_to_node[pid_b]
+        w = abs(pa["v"] - pb["v"])
+        links.append((pid_a, pid_b, w))
+
+    mst = kruskal(links)
+    s += len(mst["nodes"])
+    trees.append(mst)
+
+  log_text("start prunning...")
     
-  trees = prun(map_id_to_node, kruskal(map_id_to_node, links, linked), num)
+  trees = prun(map_id_to_node, trees, num)
 
   map_id_to_tree = {}
 
@@ -94,65 +76,66 @@ def connect_nodes(points, num, k=10, hash_len=40):
 
 
 """ Kruskal 算法 - 最小生成树 """
-def kruskal(nodes, links, weight):
-  result = []
-  map_id_to_tree = {}
-  for p in nodes:
-    map_id_to_tree[p] = p
-  wl = sorted([(w, weight[w]) for w in weight], key=lambda d : d[1])
-  for i in range(len(nodes) - 1):
-    log_text("building spanning trees... {:.2%}".format(i / (len(nodes) - 1)))
-    if ENV_DEV:
-      print("\r" * 100 + "building spanning trees... {:.2%}".format(i / (len(nodes) - 1)), end="")
-    while True:
-      if len(wl) == 0:
-        break
-      # 取出权重最小的边
-      link = wl.pop(0)
-      # 判断两端点是否位于同一树
-      a, b = [int(e) for e in link[0].split("_")]
-      if map_id_to_tree[a] != map_id_to_tree[b]:
-        result.append({
-          "source": a,
-          "target": b,
-          "weight": link[1]
-        })
-        origin = map_id_to_tree[b]
-        for p in map_id_to_tree:
-          if map_id_to_tree[p] == origin:
-            map_id_to_tree[p] = map_id_to_tree[a]
-        break
-    if len(wl) == 0:
-      break
-  if ENV_DEV:
-    print("\r" * 100 + "finished building spanning trees")
-  trees = []
-  map_tree_id = {}
-  for i in map_id_to_tree:
-    pos = map_id_to_tree[i]
-    if pos not in map_tree_id:
-      map_tree_id[pos] = len(trees)
-      trees.append([])
-  for link in result:
-    trees[map_tree_id[map_id_to_tree[link["source"]]]].append(link)
-  
-  return trees
+def kruskal(links):
+  tree = {
+    "nodes":  [],
+    "links":  []
+  }
+  where_is_node = {}
+  flag = 0
+  _links = sorted(links, key=lambda l : l[2])
+  for link in _links:
+    a, b = link[0], link[1]
+    wia = where_is_node[a] if a in where_is_node else -1
+    wib = where_is_node[b] if b in where_is_node else -1
+    if wia == wib == -1:
+      flag += 1
+      where_is_node[a] = flag
+      where_is_node[b] = flag
+      tree["nodes"] += [a, b]
+      tree["links"].append({
+        "source": min(a, b),
+        "target": max(a, b)
+      })
+    elif wia == wib:
+      continue
+    elif wib == -1:
+      where_is_node[b] = wia
+      tree["nodes"].append(b)
+      tree["links"].append({
+        "source": min(a, b),
+        "target": max(a, b)
+      })
+    elif wia == -1:
+      where_is_node[a] = wib
+      tree["nodes"].append(a)
+      tree["links"].append({
+        "source": min(a, b),
+        "target": max(a, b)
+      })
+    else:
+      for nid in where_is_node:
+        if where_is_node[nid] == wib:
+          where_is_node[nid] = wia
+      tree["links"].append({
+        "source": min(a, b),
+        "target": max(a, b)
+      })
+
+  return tree
 
 
 """ 切割树 """
 def prun(nodes, trees, num):
   trees_with_cost = []
+
   for tree in trees:
-    node_list = set()
-    for link in tree:
-      a, b = link["source"], link["target"]
-      node_list.add(a)
-      node_list.add(b)
     trees_with_cost.append({
-      "nodes":  list(node_list),
-      "links":  tree,
+      "nodes":  tree["nodes"],
+      "links":  tree["links"],
       "cost":   None
     })
+
   n_op, step = num - len(trees_with_cost), 0
   while len(trees_with_cost) < num:
     # 选择类内差距最大的将其拆分
@@ -169,11 +152,7 @@ def prun(nodes, trees, num):
     # 找出最适合的拆分
     _min = None
     next_cut = [None, None]
-    tree_to_prun["links"] = sorted(tree_to_prun["links"], key=lambda d : d["weight"], reverse=True)
     for i in range(len(tree_to_prun["links"])):
-      # FIXME 太多了跑不起来
-      if range(len(tree_to_prun["links"]) > 200) and i == 1:
-        break
       # 迭代移除一条边
       use_links = [link for j, link in enumerate(tree_to_prun["links"]) if j != i]
       tree_a, tree_b = tree_cut(tree_to_prun["nodes"], use_links)
@@ -190,12 +169,13 @@ def prun(nodes, trees, num):
     trees_with_cost.append(next_cut[0])
     trees_with_cost.append(next_cut[1])
     if ENV_DEV:
-      print("{}/{} --- cut {} into {}+{}".format(
+      print("\r" * 100 + "{}/{} --- cut {} into {}+{}".format(
         len(trees_with_cost), num,
         len(tree_to_prun["nodes"]), len(next_cut[0]["nodes"]), len(next_cut[1]["nodes"])
       ))
-      print("prunning... {:.2%}".format(step / n_op))
-    log_text("prunning... {:.2%}".format(step / n_op))
+      # print("prunning... {:.2%}".format(step / n_op))
+    else:
+      log_text("prunning... {:.2%}".format(step / n_op))
     step += 1
     pass
   return trees_with_cost
@@ -203,43 +183,57 @@ def prun(nodes, trees, num):
 
 """ 构建切割后的树 """
 def tree_cut(nodes, links):
+  if len(nodes) == 2:
+    return [{
+      "nodes":  [nodes[0]],
+      "links":  [],
+      "cost":   None
+    }, {
+      "nodes":  [nodes[1]],
+      "links":  [],
+      "cost":   None
+    }]
+
   _links = [link for link in links]
-  tree_a = {
-    "nodes":  [],
-    "links":  [],
-    "cost":   None  
-  }
-  tree_b = {
-    "nodes":  [],
-    "links":  [],
-    "cost":   None
-  }
-  tree_a["nodes"].append(nodes[0])
-  flag = 0  # tree_a["nodes"] 中索引小于 flag 的已完成遍历
-  while flag < len(tree_a["nodes"]):
-    _next_links = []
-    cur_node = tree_a["nodes"][flag]
-    # 把这个位置的点的相邻点添加进去
-    for link in _links:
-      if link["source"] == cur_node:
-        next_node = link["target"]
-        tree_a["links"].append(link)
-        if next_node not in tree_a["nodes"]:
-          tree_a["nodes"].append(next_node)
-      elif link["target"] == cur_node:
-        next_node = link["source"]
-        tree_a["links"].append(link)
-        if next_node not in tree_a["nodes"]:
-          tree_a["nodes"].append(next_node)
-      else:
-        _next_links.append(link)
-    flag += 1
-    _links = [link for link in _next_links]
-  # 剩下的全部放到另一个树
-  for node in nodes:
-    if node not in tree_a["nodes"]:
-      tree_b["nodes"].append(node)
-  tree_b["links"] = _links
+  _nodes = [node for node in nodes]
+  groups = []
+  for link in _links:
+    a, b = link["source"], link["target"]
+    wia, wib = -1, -1
+    for i, grp in enumerate(groups):
+      if a in grp["nodes"]:
+        wia = i
+      if b in grp["nodes"]:
+        wib = i
+    if wia == wib == -1:
+      groups.append({
+        "nodes":  [a, b],
+        "links":  [link],
+        "cost":   None
+      })
+    elif wib == -1:
+      groups[wia]["nodes"].append(b)
+      groups[wia]["links"].append(link)
+    elif wia == -1:
+      groups[wib]["nodes"].append(a)
+      groups[wib]["links"].append(link)
+    elif wia == wib:
+      if ENV_DEV:
+        print("error", wia, wib, groups)
+    else:
+      grp_a = groups[wia]
+      grp_b = groups.pop(wib)
+      grp_a["nodes"] += grp_b["nodes"]
+      grp_a["links"] += grp_b["links"]
+      grp_a["links"].append(link)
+  if len(groups) == 1:
+    groups.append({
+      "nodes":  [node for node in _nodes if node not in groups[0]["nodes"]],
+      "links":  [],
+      "cost":   None
+    })
+  tree_a = groups[0]
+  tree_b = groups[1]
   
   return tree_a, tree_b
 
