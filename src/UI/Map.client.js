@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-25 12:36:30
+ * @Last Modified time: 2021-03-26 19:23:41
  */
 
 import React, { Component, createRef } from "react";
@@ -504,7 +504,7 @@ class Map extends Component {
                                   //   min - (max - min) / 16,
                                   //   max + (max - min) / 16
                                   // ];
-                                  const [CMIN, CMAX] = [-0.2, 2.4];
+                                  const [CMIN, CMAX] = [-0.2, 3.6];
                                   const fx = x => (x - CMIN) / (CMAX - CMIN) * 200;
                                   const Q1 = sorted[Math.round(sorted.length / 4)];
                                   const Mid = sorted[Math.round(sorted.length / 2)];
@@ -1434,6 +1434,8 @@ class Map extends Component {
     if (this.voronoiPolygons.length === 0) {
       await this.makeVoronoi();
     }
+
+    // console.log(this.voronoiPolygons);
 
     setTimeout(() => {
       worker.postMessage({

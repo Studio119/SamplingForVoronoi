@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 19:14:27
+ * @Last Modified time: 2021-03-26 11:22:30
  */
 
 import React from 'react';
@@ -252,8 +252,8 @@ class SampleDialog extends React.Component {
                                         }} >
                                           N_groups
                                       </label>
-                                      <input type="number" min="1" max="1000" step="1"
-                                        defaultValue={ 200 }
+                                      <input type="number" min="1" max="10000" step="1"
+                                        defaultValue={ 1600 }
                                         name="n_groups"
                                         style={{
                                           width:        "9.4rem",
@@ -416,7 +416,7 @@ class SampleDialog extends React.Component {
                                   document.getElementsByName("Rm")[0].value || "2"
                                 );
                                 const num = parseInt(
-                                  document.getElementsByName("n_groups")[0].value || "200"
+                                  document.getElementsByName("n_groups")[0].value || "1600"
                                 );
                                 const minR = parseFloat(
                                   document.getElementsByName("min_r")[0].value || "3"

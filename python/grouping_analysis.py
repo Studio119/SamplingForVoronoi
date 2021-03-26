@@ -5,7 +5,7 @@ from scipy.spatial import Delaunay
 from sklearn.cluster import KMeans
 
 
-ENV_DEV = True
+ENV_DEV = False
 
 
 """ K-Means 预处理 """
@@ -34,7 +34,7 @@ def connect_nodes(points, num):
     }
 
   log_text("performing pre-clustering using KMeans...")
-  clusters = pre_cluster(points, k=int(num / 4))
+  clusters = pre_cluster(points, k=int(num / 32))
   log_text("generated {} clusters".format(len(clusters)))
 
   trees = []

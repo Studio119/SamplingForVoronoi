@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 17:01:41
+ * @Last Modified time: 2021-03-26 14:26:01
  */
 
 import React, { useState, useEffect } from 'react';
@@ -718,7 +718,7 @@ const DrillList = props => {
 
   return (
     <React.Fragment>
-      <div
+      <div tabIndex={ 1 }
         style={{
           display:        "flex",
           alignItems:     "stretch",
@@ -781,7 +781,7 @@ const DrillList = props => {
           {
             colorLists.map((list, i) => {
               return props.current.colorList[0] === list[0] ? null : (
-                <div key={ i }
+                <div key={ i } tabIndex={ 1 }
                   style={{
                     display:        "flex",
                     alignItems:     "stretch",

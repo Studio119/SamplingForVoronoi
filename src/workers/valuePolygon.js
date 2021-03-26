@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 19:02:46
+ * @Last Modified time: 2021-03-26 17:18:45
  */
 
 self.addEventListener('message', e => {
@@ -27,12 +27,11 @@ const evaluateVoronoi = (voronoiPolygons) => {
   const cvs = [];
   let avrgNEdges = 0;
   const labels = [];
-
   voronoiPolygons.forEach(vp => {
     const after = vp.averVal;
     let k = 0;
     vp.values.forEach(v => {
-      k += Math.pow(v - after);
+      k += Math.pow(v - after, 2);
     });
     avrgNEdges += vp.polygons.length;
     const dv = k / vp.values.length;
