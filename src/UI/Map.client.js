@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-26 19:23:41
+ * @Last Modified time: 2021-03-27 12:30:50
  */
 
 import React, { Component, createRef } from "react";
@@ -488,177 +488,167 @@ class Map extends Component {
                           <label>runnning evaluation...</label>
                         </React.Fragment>
                       ) : (
-                        <React.Fragment>
-                          <header>Entropy</header>
-                          <svg width="200px" height="100px"
-                            style={{
-                              border: "1px solid"
-                            }} >
-                              {
-                                (entropies => {
-                                  const sorted = entropies.map(
-                                    d => Math.max(0, d)
-                                  ).sort((a, b) => a - b);
-                                  // const [min, max] = [sorted[0], sorted[sorted.length - 1]];
-                                  // const [CMIN, CMAX] = [
-                                  //   min - (max - min) / 16,
-                                  //   max + (max - min) / 16
-                                  // ];
-                                  const [CMIN, CMAX] = [-0.2, 3.6];
-                                  const fx = x => (x - CMIN) / (CMAX - CMIN) * 200;
-                                  const Q1 = sorted[Math.round(sorted.length / 4)];
-                                  const Mid = sorted[Math.round(sorted.length / 2)];
-                                  const Q3 = sorted[Math.round(sorted.length * 3 / 4)];
-                                  const IQR = Q3 - Q1;
-                                  const ILs = [Q1 - 1.5 * IQR, Q3 + 1.5 * IQR];
-                                  const OLs = [Q1 - 3 * IQR, Q3 + 3 * IQR];
-
-                                  const inliers = [];
-                                  const mildOutliers = [];
-                                  const extremeOutliers = [];
-
-                                  sorted.forEach(d => {
-                                    if (d < OLs[0] || d > OLs[1]) {
-                                      extremeOutliers.push(d);
-                                    } else if (d < ILs[0] || d > ILs[1]) {
-                                      mildOutliers.push(d);
-                                    } else {
-                                      inliers.push(d);
-                                    }
-                                  });
-
-                                  const [IMIN, IMAX] = [inliers[0], inliers[inliers.length - 1]];
-
-                                  return (
-                                    <React.Fragment>
-                                      {/* 正常值分布区间 */}
-                                      <line key="inliner-range"
-                                        x1={ fx(IMIN) } x2={ fx(IMAX) }
-                                        y1={ 50 }       y2={ 50 }
+                        <table>
+                          <tbody>
+                            {
+                              [
+                                ["dvs", "AAVDV", "dv", 0.015],
+                                ["stds", "AAVSTD", "std", 0.15],
+                                ["cvs", "AAVCV", "cv", 0.7],
+                                // ["avrgNEdges", "AnE"],
+                                ["cbs", "AELCV", "stroke", 1.5],
+                                ["areas", "ALAD", "local", 360]
+                              ].map(e => {
+                                return (
+                                  <tr key={ e[0] } >
+                                    <th>{ e[1] }</th>
+                                    <td>{ this.state.evaluation[e[2]].toFixed(4) }</td>
+                                    <td>
+                                      <svg width="120px" height="54px"
                                         style={{
-                                          stroke:       "rgb(97,96,96)",
-                                          strokeWidth:  "1px"
-                                        }} />
-                                      <line key="inliner-min"
-                                        x1={ fx(IMIN) } x2={ fx(IMIN) }
-                                        y1={ 40 }       y2={ 60 }
-                                        style={{
-                                          stroke:       "rgb(97,96,96)",
-                                          strokeWidth:  "3px"
-                                        }} />
-                                      <line key="inliner-max"
-                                        x1={ fx(IMAX) } x2={ fx(IMAX) }
-                                        y1={ 40 }       y2={ 60 }
-                                        style={{
-                                          stroke:       "rgb(97,96,96)",
-                                          strokeWidth:  "3px"
-                                        }} />
-                                      {/* 矩形盒 */}
-                                      <rect
-                                        x={ fx(Q1) }  width={ fx(Mid) - fx(Q1) }
-                                        y={ 30 }      height={ 40 }
-                                        style={{
-                                          fill:         "rgb(213,232,247)",
-                                          stroke:       "rgb(97,96,96)",
-                                          strokeWidth:  "2px"
-                                        }} />
-                                      <rect
-                                        x={ fx(Mid) }  width={ fx(Q3) - fx(Mid) }
-                                        y={ 30 }      height={ 40 }
-                                        style={{
-                                          fill:         "rgb(179,216,242)",
-                                          stroke:       "rgb(97,96,96)",
-                                          strokeWidth:  "2px"
-                                        }} />
-                                      {/* 中位数 */}
-                                      <line key="mid"
-                                        x1={ fx(Mid) }  x2={ fx(Mid) }
-                                        y1={ 25 }       y2={ 75 }
-                                        style={{
-                                          stroke:       "rgb(52,103,176)",
-                                          strokeWidth:  "2px"
-                                        }} />
-                                      {/* 温和的异常值 */}
-                                      {
-                                        mildOutliers.forEach((d, i) => (
-                                          <circle key={ `mild-${i}` }
-                                            cx={ fx(d) } cy={ 50 } r={ 4 }
-                                            style={{
-                                              fill:   "none",
-                                              stroke: "rgb(235,106,38)"
-                                            }} />
-                                        ))
-                                      }
-                                      {/* 极端的异常值 */}
-                                      {
-                                        extremeOutliers.forEach((d, i) => (
-                                          <React.Fragment key={ `extreme-${i}` } >
-                                            <line key="1"
-                                              x1={ fx(d) - 2 }  x2={ fx(d) + 2 }
-                                              y1={ 48 }         y2={ 52 }
-                                              style={{
-                                                fill:   "none",
-                                                stroke: "rgb(200,55,54)"
-                                              }} />
-                                            <line key="2"
-                                              x1={ fx(d) - 2 }  x2={ fx(d) + 2 }
-                                              y1={ 52 }         y2={ 48 }
-                                              style={{
-                                                fill:   "none",
-                                                stroke: "rgb(200,55,54)"
-                                              }} />
-                                          </React.Fragment>
-                                        ))
-                                      }
-                                      {/* numbers */}
-                                      <text key="min"
-                                        x={ fx(IMIN) } y={ 88 } textAnchor="middle" dx={ 8 }
-                                        style={{
-                                          fill: "#202020"
+                                          border: "1px solid"
                                         }} >
-                                          { IMIN.toFixed(2) }
-                                      </text>
-                                      <text key="max"
-                                        x={ fx(IMAX) } y={ 88 } textAnchor="middle" dx={ -8 }
-                                        style={{
-                                          fill: "#202020"
-                                        }} >
-                                          { IMAX.toFixed(2) }
-                                      </text>
-                                    </React.Fragment>
-                                  );
-                                })(this.state.evaluation.labels)
-                              }
-                          </svg>
-                          <table>
-                            <tbody>
-                              <tr>
-                                <th>AAVDV</th>
-                                <td>{ this.state.evaluation.dv.toFixed(4) }</td>
-                              </tr>
-                              <tr>
-                                <th>AAVSTD</th>
-                                <td>{ this.state.evaluation.std.toFixed(4) }</td>
-                              </tr>
-                              <tr>
-                                <th>AAVCV</th>
-                                <td>{ this.state.evaluation.cv.toFixed(4) }</td>
-                              </tr>
-                              <tr>
-                                <th>AnE</th>
-                                <td>{ this.state.evaluation.avrgNEdges.toFixed(4) }</td>
-                              </tr>
-                              <tr>
-                                <th>AELCV</th>
-                                <td>{ this.state.evaluation.stroke.toFixed(4) }</td>
-                              </tr>
-                              <tr>
-                                <th>ALAD</th>
-                                <td>{ this.state.evaluation.local.toFixed(4) }</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </React.Fragment>
+                                          {
+                                            (entropies => {
+                                              const sorted = entropies.sort((a, b) => a - b);
+                                              const [min, max] = [0, e[3]];
+                                              const [CMIN, CMAX] = [
+                                                min - (max - min) / 16,
+                                                max + (max - min) / 16
+                                              ];
+                                              // const [CMIN, CMAX] = [-0.2, 3.6];
+                                              const fx = x => (x - CMIN) / (CMAX - CMIN) * 120;
+                                              const Q1 = sorted[Math.round(sorted.length / 4)];
+                                              const Mid = sorted[Math.round(sorted.length / 2)];
+                                              const Q3 = sorted[Math.round(sorted.length * 3 / 4)];
+                                              const IQR = Q3 - Q1;
+                                              const ILs = [Q1 - 1.5 * IQR, Q3 + 1.5 * IQR];
+                                              const OLs = [Q1 - 3 * IQR, Q3 + 3 * IQR];
+
+                                              const inliers = [];
+                                              const mildOutliers = [];
+                                              const extremeOutliers = [];
+
+                                              sorted.forEach(d => {
+                                                if (d < OLs[0] || d > OLs[1]) {
+                                                  extremeOutliers.push(d);
+                                                } else if (d < ILs[0] || d > ILs[1]) {
+                                                  mildOutliers.push(d);
+                                                } else {
+                                                  inliers.push(d);
+                                                }
+                                              });
+
+                                              const [IMIN, IMAX] = [inliers[0], inliers[inliers.length - 1]];
+
+                                              return (
+                                                <React.Fragment>
+                                                  {/* 正常值分布区间 */}
+                                                  <line key="inliner-range"
+                                                    x1={ fx(IMIN) } x2={ fx(IMAX) }
+                                                    y1={ 20 }       y2={ 20 }
+                                                    style={{
+                                                      stroke:       "rgb(97,96,96)",
+                                                      strokeWidth:  "1px"
+                                                    }} />
+                                                  <line key="inliner-min"
+                                                    x1={ fx(IMIN) } x2={ fx(IMIN) }
+                                                    y1={ 12 }       y2={ 28 }
+                                                    style={{
+                                                      stroke:       "rgb(97,96,96)",
+                                                      strokeWidth:  "3px"
+                                                    }} />
+                                                  <line key="inliner-max"
+                                                    x1={ fx(IMAX) } x2={ fx(IMAX) }
+                                                    y1={ 12 }       y2={ 28 }
+                                                    style={{
+                                                      stroke:       "rgb(97,96,96)",
+                                                      strokeWidth:  "3px"
+                                                    }} />
+                                                  {/* 矩形盒 */}
+                                                  <rect
+                                                    x={ fx(Q1) }  width={ fx(Mid) - fx(Q1) }
+                                                    y={ 8 }      height={ 24 }
+                                                    style={{
+                                                      fill:         "rgb(213,232,247)",
+                                                      stroke:       "rgb(97,96,96)",
+                                                      strokeWidth:  "2px"
+                                                    }} />
+                                                  <rect
+                                                    x={ fx(Mid) }  width={ fx(Q3) - fx(Mid) }
+                                                    y={ 8 }      height={ 24 }
+                                                    style={{
+                                                      fill:         "rgb(179,216,242)",
+                                                      stroke:       "rgb(97,96,96)",
+                                                      strokeWidth:  "2px"
+                                                    }} />
+                                                  {/* 中位数 */}
+                                                  <line key="mid"
+                                                    x1={ fx(Mid) }  x2={ fx(Mid) }
+                                                    y1={ 4 }        y2={ 36 }
+                                                    style={{
+                                                      stroke:       "rgb(52,103,176)",
+                                                      strokeWidth:  "2px"
+                                                    }} />
+                                                  {/* 温和的异常值 */}
+                                                  {
+                                                    mildOutliers.forEach((d, i) => (
+                                                      <circle key={ `mild-${i}` }
+                                                        cx={ fx(d) } cy={ 20 } r={ 4 }
+                                                        style={{
+                                                          fill:   "none",
+                                                          stroke: "rgb(235,106,38)"
+                                                        }} />
+                                                    ))
+                                                  }
+                                                  {/* 极端的异常值 */}
+                                                  {
+                                                    extremeOutliers.forEach((d, i) => (
+                                                      <React.Fragment key={ `extreme-${i}` } >
+                                                        <line key="1"
+                                                          x1={ fx(d) - 2 }  x2={ fx(d) + 2 }
+                                                          y1={ 18 }         y2={ 22 }
+                                                          style={{
+                                                            fill:   "none",
+                                                            stroke: "rgb(200,55,54)"
+                                                          }} />
+                                                        <line key="2"
+                                                          x1={ fx(d) - 2 }  x2={ fx(d) + 2 }
+                                                          y1={ 18 }         y2={ 22 }
+                                                          style={{
+                                                            fill:   "none",
+                                                            stroke: "rgb(200,55,54)"
+                                                          }} />
+                                                      </React.Fragment>
+                                                    ))
+                                                  }
+                                                  {/* numbers */}
+                                                  <text key="min"
+                                                    x={ fx(IMIN) } y={ 50 } textAnchor="middle" dx={ 8 }
+                                                    style={{
+                                                      fill: "#202020"
+                                                    }} >
+                                                      { IMIN.toFixed(2) }
+                                                  </text>
+                                                  <text key="max"
+                                                    x={ fx(IMAX) } y={ 50 } textAnchor="middle" dx={ -8 }
+                                                    style={{
+                                                      fill: "#202020"
+                                                    }} >
+                                                      { IMAX.toFixed(2) }
+                                                  </text>
+                                                </React.Fragment>
+                                              );
+                                            })(this.state.evaluation[e[0]])
+                                          }
+                                      </svg>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            }
+                          </tbody>
+                        </table>
                       )
                     ) : (
                       <React.Fragment>

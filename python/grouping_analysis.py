@@ -34,7 +34,7 @@ def connect_nodes(points, num):
     }
 
   log_text("performing pre-clustering using KMeans...")
-  clusters = pre_cluster(points, k=int(num / 32))
+  clusters = pre_cluster(points, k=int(num / 16))
   log_text("generated {} clusters".format(len(clusters)))
 
   trees = []

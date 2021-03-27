@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-26 17:18:45
+ * @Last Modified time: 2021-03-27 12:14:26
  */
 
 self.addEventListener('message', e => {
@@ -134,7 +134,8 @@ const evaluateVoronoi = (voronoiPolygons) => {
   local /= lc;
 
   return {
-    dv, std, cv, avrgNEdges, stroke, local, labels
+    dv, std, cv, avrgNEdges, stroke, local,
+    dvs, stds, cvs, cbs, areas, labels
   };
 }
 

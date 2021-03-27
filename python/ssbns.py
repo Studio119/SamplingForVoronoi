@@ -64,31 +64,50 @@ class SSBNS:
         (disk["x"] - seed["x"]) ** 2 + (disk["y"] - seed["y"]) ** 2
       ) ** 0.5
       r = min(r, dist)
+      if r < self.min_r:
+        r = self.min_r
+        break
 
     # 查找邻近包含点
-    contained = { "sum": 0, "each": {} }
+    array = []
     for p in self.points:
       dist = (
         (p["x"] - seed["x"]) ** 2 + (p["y"] - seed["y"]) ** 2
       ) ** 0.5
       if dist <= r:
-        contained["sum"] += 1
-        ss = p["ss"]
-        if ss in contained["each"]:
-          contained["each"][ss] += 1
-        else:
-          contained["each"][ss] = 1
+        array.append(p)
 
-    # 计算纯度，调整半径
-    H = 0 # 信息熵
-    for ss in contained["each"]:
-      p = contained["each"][ss] / contained["sum"]
-      H -= p * math.log2(p)
-    # print(contained, H)
+    N_STEPS = 1
+    count = 0
+    while r > self.min_r and count < N_STEPS:
+      count += 1
+      each = {}
+      contained = []
+      for p in array:
+        dist = (
+          (p["x"] - seed["x"]) ** 2 + (p["y"] - seed["y"]) ** 2
+        ) ** 0.5
+        if dist <= r:
+          contained.append(p)
+      entropy = 0
+      for p in contained:
+        ss = p["ss"]
+        if ss in each:
+          each[ss] += 1
+        else:
+          each[ss] = 1
+      for ss in each:
+        p = each[ss] / len(contained)
+        entropy -= p * math.log2(p)
+      array = [p for p in contained]
+
+      # variation = math.log2(entropy + 1)
+      variation = (entropy)
+
+      # 调整半径
+      r = (r - self.min_r) / (1 + variation) + self.min_r
 
     r = max(r, self.min_r)
-    # r /= (1 + H)
-    r = (r - self.min_r) / (1 + H) + self.min_r
 
     next_ready = []
     next_active = []
