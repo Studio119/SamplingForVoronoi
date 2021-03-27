@@ -1,0 +1,36 @@
+{"type":"start","data":"","time":"Sat, 27 Mar 2021 09:31:39 GMT"}
+{"type":"stdout","data":"\n> react-notes@0.1.0 hs:prod D:\\project\\@github-119\\VIS2021\n> cross-env NODE_ENV=prodction nodemon -- --conditions=react-server hs\n\n","time":"Sat, 27 Mar 2021 09:31:40 GMT"}
+{"type":"stdout","data":"\u001b[33m[nodemon] 2.0.6\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:41 GMT"}
+{"type":"stdout","data":"\u001b[33m[nodemon] to restart at any time, enter `rs`\u001b[39m\n\u001b[33m[nodemon] watching path(s): *.*\u001b[39m\n\u001b[33m[nodemon] watching extensions: js,mjs,json\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:41 GMT"}
+{"type":"stdout","data":"\u001b[32m[nodemon] starting `concurrently \"npm run server:dev\" \"npm run bundler:dev\" --conditions=react-server hs`\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:41 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:31:42 GMT"}
+{"type":"stdout","data":"\u001b[33mStarting up http-server, serving \u001b[39m\u001b[36m./public\u001b[39m\u001b[33m\u001b[39m\n[2] \u001b[33mAvailable on:\u001b[39m\n[2] ","time":"Sat, 27 Mar 2021 09:31:42 GMT"}
+{"type":"stdout","data":"  http://192.168.137.1:\u001b[32m8080\u001b[39m\n[2]   http://192.168.150.1:\u001b[32m8080\u001b[39m\n[2]   http://192.168.220.1:\u001b[32m8080\u001b[39m\n[2]   http://127.0.0.1:\u001b[32m8080\u001b[39m\n[2]   http://192.168.43.227:\u001b[32m8080\u001b[39m\n[2] Hit CTRL-C to stop the server\n","time":"Sat, 27 Mar 2021 09:31:42 GMT"}
+{"type":"stdout","data":"[0] ","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"\n[0] > react-notes@0.1.0 server:dev D:\\project\\@github-119\\VIS2021\n[0] > cross-env NODE_ENV=development nodemon -- --conditions=react-server server\n[0] \n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[1] ","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"\n[1] > react-notes@0.1.0 bundler:dev D:\\project\\@github-119\\VIS2021\n[1] > cross-env NODE_ENV=development nodemon -- scripts/build.js\n[1] \n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[0] ","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"\u001b[33m[nodemon] 2.0.6\u001b[39m\n[0] \u001b[33m[nodemon] to restart at any time, enter `rs`\u001b[39m\n[0] \u001b[33m[nodemon] watching path(s): *.*\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[0] \u001b[33m[nodemon] watching extensions: js,mjs,json\u001b[39m\n[0] \u001b[32m[nodemon] starting `node --conditions=react-server server`\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[1] ","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"\u001b[33m[nodemon] 2.0.6\u001b[39m\n[1] \u001b[33m[nodemon] to restart at any time, enter `rs`\u001b[39m\n[1] \u001b[33m[nodemon] watching path(s): *.*\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[1] \u001b[33m[nodemon] watching extensions: js,mjs,json\u001b[39m\n[1] \u001b[32m[nodemon] starting `node scripts/build.js`\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:44 GMT"}
+{"type":"stdout","data":"[0] ","time":"Sat, 27 Mar 2021 09:31:46 GMT"}
+{"type":"stdout","data":"React app listening at 4000...\n","time":"Sat, 27 Mar 2021 09:31:46 GMT"}
+{"type":"stdout","data":"[1] Finished running webpack.\n","time":"Sat, 27 Mar 2021 09:31:57 GMT"}
+{"type":"stdout","data":"[1] \u001b[32m[nodemon] clean exit - waiting for changes before restart\u001b[39m\n","time":"Sat, 27 Mar 2021 09:31:57 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:32:27 GMT"}
+{"type":"stdout","data":"[2021-03-27T09:32:27.727Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/\u001b[39m\" \"Mozilla/5.0 (Linux; Android 10; ANG-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.117 Mobile Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:32:27 GMT"}
+{"type":"stdout","data":"[2] (node:24704) [DEP0066] DeprecationWarning: OutgoingMessage.prototype._headers is deprecated\n[2] (Use `node --trace-deprecation ...` to show where the warning was created)\n","time":"Sat, 27 Mar 2021 09:32:27 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:33:04 GMT"}
+{"type":"stdout","data":"[2021-03-27T09:33:04.735Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/\u001b[39m\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:33:04 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:33:05 GMT"}
+{"type":"stdout","data":"[2021-03-27T09:33:05.053Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/favicon.ico\u001b[39m\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:33:05 GMT"}
+{"type":"stdout","data":"[2] [2021-03-27T09:33:05.057Z]  \"\u001b[31mGET\u001b[39m \u001b[31m/favicon.ico\u001b[39m\" Error (\u001b[31m404\u001b[39m): \"\u001b[31mNot found\u001b[39m\"\n","time":"Sat, 27 Mar 2021 09:33:05 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:33:21 GMT"}
+{"type":"stdout","data":"[2021-03-27T09:33:21.836Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/\u001b[39m\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:33:21 GMT"}
+{"type":"stdout","data":"[2] ","time":"Sat, 27 Mar 2021 09:33:46 GMT"}
+{"type":"stdout","data":"[2021-03-27T09:33:46.753Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/\u001b[39m\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:33:46 GMT"}
+{"type":"stdout","data":"[2] [2021-03-27T09:33:46.875Z]  \"\u001b[36mGET\u001b[39m \u001b[36m/favicon.ico\u001b[39m\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36\"\n","time":"Sat, 27 Mar 2021 09:33:46 GMT"}
+{"type":"stdout","data":"[2] [2021-03-27T09:33:46.877Z]  \"\u001b[31mGET\u001b[39m \u001b[31m/favicon.ico\u001b[39m\" Error (\u001b[31m404\u001b[39m): \"\u001b[31mNot found\u001b[39m\"\n","time":"Sat, 27 Mar 2021 09:33:46 GMT"}

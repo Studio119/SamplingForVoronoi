@@ -46,10 +46,9 @@
     "start:prod": "concurrently \"npm run server:prod\" \"npm run bundler:prod\"",
     "server:dev": "cross-env NODE_ENV=development nodemon -- --conditions=react-server server",
     "server:prod": "cross-env NODE_ENV=production nodemon -- --conditions=react-server server",
+    "hs:prod": "cross-env NODE_ENV=prodction nodemon -- --conditions=react-server hs",
     "bundler:dev": "cross-env NODE_ENV=development nodemon -- scripts/build.js",
-    "bundler:prod": "cross-env NODE_ENV=production nodemon -- scripts/build.js",
-    "prettier": "prettier --write **/*.js",
-    "seed": "node ./scripts/seed.js"
+    "bundler:prod": "cross-env NODE_ENV=production nodemon -- scripts/build.js"
   },
   "babel": {
     "presets": [
