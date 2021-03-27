@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-24 17:49:46
+ * @Last Modified time: 2021-03-27 23:24:10
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -239,7 +239,7 @@ export const colorLists = [
     "rgb(111,24,98)",
     "rgb(93,32,77)"
   ],
-  /** continous */ [
+  /** continuous */ [
     "rgb(200,55,54)",
     "rgb(197,127,53)",
     "rgb(202,189,52)",
@@ -251,7 +251,7 @@ export const colorLists = [
     "rgb(55,124,200)",
     "rgb(59,59,203)"
   ],
-  /** continous reversed */ [
+  /** continuous reversed */ [
     "rgb(59,59,203)",
     "rgb(55,124,200)",
     "rgb(53,191,198)",
@@ -262,6 +262,20 @@ export const colorLists = [
     "rgb(202,189,52)",
     "rgb(197,127,53)",
     "rgb(200,55,54)"
+  ],
+  /** arcgis continuous */ [
+    "rgb(40,146,199)",
+    "rgb(94,163,184)",
+    "rgb(134,181,168)",
+    "rgb(168,199,149)",
+    "rgb(202,219,132)",
+    "rgb(233,240,110)",
+    "rgb(252,234,91)",
+    "rgb(252,193,73)",
+    "rgb(250,154,57)",
+    "rgb(247,114,42)",
+    "rgb(240,76,31)",
+    "rgb(232,16,20)"
   ]
 ];
 
