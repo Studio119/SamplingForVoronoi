@@ -30,7 +30,6 @@ class SSBNS:
       "disactivated": []
     }
 
-
   def apply_sample(self):
     # 迭代
     while len(self.indexes["active"]) + len(self.indexes["ready"]) > 0:
@@ -39,63 +38,24 @@ class SSBNS:
         len(self.indexes["seed"]) + len(self.indexes["disactivated"]),
         len(self.points)
       )
-      seed, cost = self._get_random_point()
-      self._create_disk(seed, cost)
+      seed = self._get_random_point()
+      self._create_disk(seed)
 
     return self.indexes["seed"], self.disks
 
-
   def _get_random_point(self):
-    MAX_ATTEMP = 1
-    MAX_COST = 1.5
     if len(self.indexes["active"]) == 0:
-      # 从所有就绪点中选一个作为种子点
-      may_use = [i for i, _ in enumerate(self.indexes["ready"])]
-      # MAX_ATTEMP = min(len(may_use), )
-      steps = 0
-      idx = 0
-      min_cost = 0
-      while steps < MAX_ATTEMP:
-        i = may_use.pop(int(rand() * len(may_use)))
-        cost = self._future_entropy(i)
-
-        if steps == 0 or cost < min_cost:
-          idx = i
-          min_cost = cost
-
-        if cost < MAX_COST:
-          break
-
-        steps += 1
-
-      seed = self.indexes["ready"].pop(idx)
+      # 从所有就绪点中随机选一个作为种子点
+      seed = self.indexes["ready"].pop(int(rand() * len(self.indexes["ready"])))
       self.indexes["seed"].append(seed)
-      
-      return seed, min_cost
+      return seed
     
     # 从所有活跃点中随机选一个作为种子点
-    steps = 0
-    idx = 0
-    min_cost = 0
-    while steps < MAX_ATTEMP:
-      i = int(rand() * len(self.indexes["active"]))
-      cost = self._future_entropy(i)
-
-      if steps == 0 or cost < min_cost:
-        idx = i
-        min_cost = cost
-
-      if cost < MAX_COST:
-        break
-
-      steps += 1
-
-    seed = self.indexes["active"].pop(idx)
+    seed = self.indexes["active"].pop(int(rand() * len(self.indexes["active"])))
     self.indexes["seed"].append(seed)
-    return seed, min_cost
+    return seed
 
-
-  def _future_entropy(self, index):
+  def _create_disk(self, index):
     seed = self.points[self.point_index[index]]
     r = seed["r"]
 
@@ -117,58 +77,10 @@ class SSBNS:
       if dist <= r:
         array.append(p)
 
-    each = {}
-    contained = []
-    for p in array:
-      dist = (
-        (p["x"] - seed["x"]) ** 2 + (p["y"] - seed["y"]) ** 2
-      ) ** 0.5
-      if dist <= r:
-        contained.append(p)
-    entropy = 0
-    for p in contained:
-      ss = p["ss"]
-      if ss in each:
-        each[ss] += 1
-      else:
-        each[ss] = 1
-    for ss in each:
-      p = each[ss] / len(contained)
-      entropy -= p * math.log2(p)
-
-    return entropy
-
-
-  def _create_disk(self, index, entropy):
-    seed = self.points[self.point_index[index]]
-    r = seed["r"]
-
-    for disk in self.disks:
-      dist = (
-        (disk["x"] - seed["x"]) ** 2 + (disk["y"] - seed["y"]) ** 2
-      ) ** 0.5
-      r = min(r, dist)
-      if r < self.min_r:
-        r = self.min_r
-        break
-
-    # 查找邻近包含点
-    array = []
-    for p in self.points:
-      dist = (
-        (p["x"] - seed["x"]) ** 2 + (p["y"] - seed["y"]) ** 2
-      ) ** 0.5
-      if dist <= r:
-        array.append(p)
-
-    prev_r = r
-    if r > self.min_r:
-      variation = (entropy)
-
-      # 调整半径
-      r = (r - self.min_r) / (1 + variation) + self.min_r
-      
-      # 确定是否缩小      
+    N_STEPS = 1
+    count = 0
+    while r > self.min_r and count < N_STEPS:
+      count += 1
       each = {}
       contained = []
       for p in array:
@@ -177,7 +89,7 @@ class SSBNS:
         ) ** 0.5
         if dist <= r:
           contained.append(p)
-      after = 0
+      entropy = 0
       for p in contained:
         ss = p["ss"]
         if ss in each:
@@ -186,11 +98,16 @@ class SSBNS:
           each[ss] = 1
       for ss in each:
         p = each[ss] / len(contained)
-        after -= p * math.log2(p)
-      
-      # if after >= entropy:
-      #   # 回退
-      #   r = prev_r
+        entropy -= p * math.log2(p)
+      array = [p for p in contained]
+
+      # variation = math.log2(entropy + 1)
+      variation = (entropy)
+
+      # 调整半径
+      r = (r - self.min_r) / (1 + variation) + self.min_r
+
+    r = max(r, self.min_r)
 
     next_ready = []
     next_active = []
