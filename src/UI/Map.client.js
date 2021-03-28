@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-27 12:30:50
+ * @Last Modified time: 2021-03-28 11:21:42
  */
 
 import React, { Component, createRef } from "react";
@@ -1305,7 +1305,9 @@ class Map extends Component {
     const n = parseInt(/(?<=,)\d+(?=,)/.exec(this.state.name)) || parseInt(
       Object.keys(Root.getDataset(this.state.name.split(".")[0]).grouping)[0]
     );
-    const total = Root.getDataset(this.state.name.split(".")[0]).grouping[n];
+    const total = Root.getDataset(this.state.name.split(".")[0]).grouping[n] || (
+      Root.getPopulation(this.state.name.split(".")[0])
+    );
     
     const population = total.map(d => {
       const { x, y } = Map.project(d.lng, d.lat);
