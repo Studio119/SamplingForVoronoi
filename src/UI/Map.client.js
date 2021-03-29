@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-28 11:21:42
+ * @Last Modified time: 2021-03-28 22:42:16
  */
 
 import React, { Component, createRef } from "react";
@@ -1322,6 +1322,17 @@ class Map extends Component {
         this.voronoiPolygonsPrev = this.voronoiPolygons;
         res(true);
         return;
+      } else if (this.state.data.length === total.length) {
+        for (let i = 0; i < this.state.data.length; i++) {
+          const val = this.state.data[i].value;
+          voronoiPolygons[i].values = [val];
+          voronoiPolygons[i].averVal = val;
+          voronoiPolygons[i].labels = [i];
+        }
+        this.voronoiPolygons = voronoiPolygons;
+        this.voronoiPolygonsPrev = this.voronoiPolygons;
+        res(true);
+        return;
       }
       if (this.worker) {
         this.worker.terminate();
@@ -1432,7 +1443,8 @@ class Map extends Component {
     setTimeout(() => {
       worker.postMessage({
         req:              "evl",
-        voronoiPolygons:  this.voronoiPolygons
+        voronoiPolygons:  this.voronoiPolygons,
+        max:              this.max
       });
       worker.onmessage = e => {
         // console.log(e.data);

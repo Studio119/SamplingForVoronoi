@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-27 12:14:26
+ * @Last Modified time: 2021-03-28 19:58:04
  */
 
 self.addEventListener('message', e => {
@@ -11,7 +11,7 @@ self.addEventListener('message', e => {
     const res = getValue(data.population, data.voronoiPolygons, data.polygonsCenters);
     self.postMessage(res);
   } else if (data.req === "evl") {
-    const res = evaluateVoronoi(data.voronoiPolygons);
+    const res = evaluateVoronoi(data.voronoiPolygons, data.max);
     self.postMessage(res);
   } else {
     self.postMessage({
@@ -21,17 +21,18 @@ self.addEventListener('message', e => {
   }
 });
 
-const evaluateVoronoi = (voronoiPolygons) => {
+const evaluateVoronoi = (voronoiPolygons, max) => {
+  max = 1;
   const dvs = [];
   const stds = [];
   const cvs = [];
   let avrgNEdges = 0;
   const labels = [];
   voronoiPolygons.forEach(vp => {
-    const after = vp.averVal;
+    const after = vp.averVal / max;
     let k = 0;
     vp.values.forEach(v => {
-      k += Math.pow(v - after, 2);
+      k += Math.pow((v / max) - after, 2);
     });
     avrgNEdges += vp.polygons.length;
     const dv = k / vp.values.length;
@@ -54,6 +55,7 @@ const evaluateVoronoi = (voronoiPolygons) => {
     labels.push(entropy);
   });
   avrgNEdges /= voronoiPolygons.length;
+  console.log(JSON.stringify(cvs))
 
   const dv = dvs.reduce((sum, d) => sum + d) / dvs.length;
   const std = stds.reduce((sum, d) => sum + d) / stds.length;
