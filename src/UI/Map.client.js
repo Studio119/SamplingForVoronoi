@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-28 22:42:16
+ * @Last Modified time: 2021-03-30 13:23:54
  */
 
 import React, { Component, createRef } from "react";
@@ -122,18 +122,22 @@ class Map extends Component {
         });
   
         if (xmin !== xmax) {
-          const ex = (xmax - xmin) / 9;
+          const ex = (xmax - xmin) / 16;
           xmin -= ex;
           xmax += ex;
         }
   
         if (ymin !== ymax) {
-          const ex = (ymax - ymin) / 9;
+          const ex = (ymax - ymin) / 16;
           ymin -= ex;
           ymax += ex;
         }
-  
-        this.map.current.fitBounds([ [xmax, ymin], [xmin, ymax] ]);
+
+        if (name === null || this.state.name === null || name.split(".")[0] !== this.state.name.split(".")[0]) {
+          this.map.current.fitBounds([ [xmax, ymin], [xmin, ymax] ]);
+        }
+
+        this.shouldRepaint = true;
       }
     } else {
       if (Root.colorizeChanged) {
@@ -171,6 +175,8 @@ class Map extends Component {
       evaluation: null,
       running:    []
     };
+
+    this.shouldRepaint = false;
 
     Map.cur = this;
 
@@ -497,14 +503,14 @@ class Map extends Component {
                                 ["cvs", "AAVCV", "cv", 0.7],
                                 // ["avrgNEdges", "AnE"],
                                 ["cbs", "AELCV", "stroke", 1.5],
-                                ["areas", "ALAD", "local", 360]
+                                ["areas", "ALAD", "local", 15]
                               ].map(e => {
                                 return (
                                   <tr key={ e[0] } >
                                     <th>{ e[1] }</th>
                                     <td>{ this.state.evaluation[e[2]].toFixed(4) }</td>
                                     <td>
-                                      <svg width="120px" height="54px"
+                                      <svg width="840px" height="54px"
                                         style={{
                                           border: "1px solid"
                                         }} >
@@ -517,7 +523,7 @@ class Map extends Component {
                                                 max + (max - min) / 16
                                               ];
                                               // const [CMIN, CMAX] = [-0.2, 3.6];
-                                              const fx = x => (x - CMIN) / (CMAX - CMIN) * 120;
+                                              const fx = x => (x - CMIN) / (CMAX - CMIN) * 840;
                                               const Q1 = sorted[Math.round(sorted.length / 4)];
                                               const Mid = sorted[Math.round(sorted.length / 2)];
                                               const Q3 = sorted[Math.round(sorted.length * 3 / 4)];
@@ -697,6 +703,11 @@ class Map extends Component {
       });
       this.ctx_bp = document.getElementById("borderpicking").getContext("2d");
       this.ctx_bp.clearRect(0, 0, this.width, this.height);
+
+      if (this.shouldRepaint) {
+        this.shouldRepaint = false;
+        this.repaint();
+      }
     }
   }
 

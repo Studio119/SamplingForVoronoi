@@ -1,0 +1,130 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdftitle={evaluation.md},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{longtable,booktabs}
+% Fix footnotes in tables (requires footnote package)
+\IfFileExists{footnote.sty}{\usepackage{footnote}\makesavenoteenv{longtable}}{}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{evaluation.md}
+\date{}
+
+\begin{document}
+\maketitle
+
+\hypertarget{header-n0}{%
+\section{评估}\label{header-n0}}
+
+\textbf{Table 1}
+
+\begin{longtable}[]{@{}llllllllllllllllllll@{}}
+\toprule
+& & 参数 & & & AAVDV & & & AAVSTD & & & AAVCV & & & AELCV & & & ALAD &
+&\tabularnewline
+\midrule
+\endhead
+\textbf{Dataset} & \textbf{Sampling Rate} & RS & BNS & OURS & RS & BNS &
+OURS & RS & BNS & OURS & RS & BNS & OURS & RS & BNS & OURS & RS & BNS &
+OURS\tabularnewline
+\textbf{D1 (Occupation)} & 1\% & 0.01 & 1.15,0 & 24,200,12 & 47.7084 &
+52.1739 & \textbf{46.8626} & 6.6290 & 6.9414 & \textbf{6.5622} & 0.3138
+& 0.3143 & \textbf{0.2968} & 0.7274 & \textbf{0.5624} & 0.5816 & 0.9141
+& \textbf{0.3769} & 0.4803\tabularnewline
+& 5\% & 0.05 & 0.46,0 & 10,800,5.6 & \textbf{36.8730} & 39.4104 &
+37.3015 & \textbf{5.6200} & 5.8588 & 5.6574 & 0.2674 & 0.2665 &
+\textbf{0.2522} & 0.7112 & \textbf{0.5517} & 0.5621 & 0.9865 &
+\textbf{0.3370} & 0.4176\tabularnewline
+& 10\% & 0.10 & 0.31,0 & 5,1600,4.2 & \textbf{29.9597} & 32.6566 &
+30.2883 & 4.9298 & 5.1636 & \textbf{4.9192} & 0.2375 & 0.2374 &
+\textbf{0.2258} & 0.6954 & 0.5672 & \textbf{0.5665} & 1.0503 &
+\textbf{0.3418} & 0.4462\tabularnewline
+\textbf{D2 (health)} & 1\% & 0.01 & 1.08,0 & 3.6,200,7.6 & 35.8184 &
+33.4971 & \textbf{31.9687} & 5.8157 & 5.6280 & \textbf{5.4067} & 0.0700
+& 0.0673 & \textbf{0.0658} & 0.7244 & 0.6013 & \textbf{0.5681} & 1.7027
+& 0.6182 & \textbf{0.4531}\tabularnewline
+& 5\% & 0.05 & 0.393,0 & 0.8,800,3 & 30.2648 & 24.2467 &
+\textbf{24.0735} & 5.0544 & 4.3303 & \textbf{4.3272} & 0.0611 &
+\textbf{0.0518} & 0.0521 & 0.7241 & 0.6000 & \textbf{0.5938} & 2.1214 &
+\textbf{0.4580} & 0.4768\tabularnewline
+& 10\% & 0.10 & 0.245,0 & 0.32,1600,3 & 25.9968 & 19.9859 &
+\textbf{19.7560} & 4.4946 & 3.6404 & \textbf{3.6155} & 0.0546 & 0.0438 &
+\textbf{0.0435} & 0.7141 & 0.6081 & \textbf{0.6008} & 2.4297 & 0.5380 &
+\textbf{0.4933}\tabularnewline
+\textbf{D3 (density)} & 1\% & 0.01 & 1.23,0 & 24,200,12 & 906.9834 &
+847.9734 & \textbf{623.9223} & 27.6892 & 25.5295 & \textbf{21.8568} &
+\textbf{0.8367} & 0.9128 & 1.0457 & 0.7590 & 0.6306 & \textbf{0.6160} &
+7.6339 & 2.9861 & \textbf{1.9790}\tabularnewline
+& 5\% & 0.05 & 0.475,0 & 8.1,800,5 & 794.9580 & 534.4744 &
+\textbf{451.6205} & 23.2173 & 16.8667 & \textbf{15.2583} & 0.7656 &
+\textbf{0.7456} & 0.7875 & 0.7584 & \textbf{0.6140} & 0.6653 & 11.5952 &
+\textbf{2.3054} & 2.5608\tabularnewline
+& 10\% & 0.10 & 0.29,0 & 1,1600,3 & 685.2493 & 481.2348 &
+\textbf{424.6810} & 20.0212 & 13.9174 & \textbf{13.5826} & 0.6516 &
+\textbf{0.5700} & 0.6052 & 0.7408 & 0.6259 & \textbf{0.6193} & 11.7867 &
+\textbf{2.2082} & 3.1087\tabularnewline
+\textbf{D4 (poverty)} & 1\% & 0.01 & 1.23,0 & 28,200,16 & 127.5917 &
+124.1436 & \textbf{105.1920} & 11.1242 & 10.8932 & \textbf{9.9246} &
+0.2494 & 0.2359 & \textbf{0.2199} & 0.7371 & 0.6327 & \textbf{0.6059} &
+13.2284 & 2.8672 & \textbf{2.1340}\tabularnewline
+& 5\% & 0.05 & 0.475,0 & 10,400,5 & 100.9732 & 87.1982 &
+\textbf{85.7475} & 9.5958 & 8.4141 & \textbf{8.3889} & 0.2193 & 0.1821 &
+\textbf{0.1803} & 0.7439 & 0.6068 & \textbf{0.6059} & 13.2269 &
+\textbf{2.2450} & 2.7695\tabularnewline
+& 10\% & 0.10 & 0.29,0 & 2.1,1600,3.6 & 85.1899 & 69.6789 &
+\textbf{64.2829} & 8.4838 & 6.9318 & \textbf{6.4489} & 0.1954 & 0.1526 &
+\textbf{0.1419} & 0.7426 & 0.6237 & \textbf{0.6226} & 13.8675 &
+\textbf{2.4248} & 3.1414\tabularnewline
+\bottomrule
+\end{longtable}
+
+\end{document}

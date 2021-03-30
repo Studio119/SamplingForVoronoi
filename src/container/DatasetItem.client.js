@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-17 19:42:44 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-26 14:26:01
+ * @Last Modified time: 2021-03-30 18:27:01
  */
 
 import React, { useState, useEffect } from 'react';
@@ -797,7 +797,7 @@ const DrillList = props => {
                     () => {
                       if (opened) {
                         open(false);
-                        props.current.colorList = [...list];
+                        props.current.update([...list]);
                         Root.colorizeChanged = true;
                         Root.refresh();
                       }

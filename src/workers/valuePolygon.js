@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-03-09 22:11:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-28 19:58:04
+ * @Last Modified time: 2021-03-30 12:21:54
  */
 
 self.addEventListener('message', e => {
@@ -22,7 +22,7 @@ self.addEventListener('message', e => {
 });
 
 const evaluateVoronoi = (voronoiPolygons, max) => {
-  max = 1;
+  max = 0.01;
   const dvs = [];
   const stds = [];
   const cvs = [];
@@ -55,7 +55,7 @@ const evaluateVoronoi = (voronoiPolygons, max) => {
     labels.push(entropy);
   });
   avrgNEdges /= voronoiPolygons.length;
-  console.log(JSON.stringify(cvs))
+  // console.log(JSON.stringify(cvs))
 
   const dv = dvs.reduce((sum, d) => sum + d) / dvs.length;
   const std = stds.reduce((sum, d) => sum + d) / stds.length;
@@ -106,6 +106,7 @@ const evaluateVoronoi = (voronoiPolygons, max) => {
   const stroke = cbs.reduce((prev, cur) => prev + cur) / cbs.length;
 
   let local = 0;
+  const locals = [];
   let lc = 0;
   voronoiPolygons.forEach((vp, i) => {
     const neighbors = [];
@@ -129,6 +130,7 @@ const evaluateVoronoi = (voronoiPolygons, max) => {
       neighbors.forEach(a => {
         temp += (areas[a] / areas[i] - 1) ** 2;
       });
+      locals.push(Math.sqrt(temp / neighbors.length));
       local += Math.sqrt(temp / neighbors.length);
       lc += 1;
     }
@@ -137,7 +139,7 @@ const evaluateVoronoi = (voronoiPolygons, max) => {
 
   return {
     dv, std, cv, avrgNEdges, stroke, local,
-    dvs, stds, cvs, cbs, areas, labels
+    dvs, stds, cvs, cbs, areas: locals, labels
   };
 }
 

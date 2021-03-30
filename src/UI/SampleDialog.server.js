@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-26 11:22:30
+ * @Last Modified time: 2021-03-30 13:36:42
  */
 
 import React from 'react';
@@ -439,7 +439,7 @@ class SampleDialog extends React.Component {
                                     });
                                     Root.pushSample(
                                       dataset,
-                                      `VDGSAA {@${Rm}e-4,${num},${minR}}`,
+                                      `VALMN {@${Rm}e-4,${num},${minR}}`,
                                       data[0]
                                     );
                                     Root.getDataset(dataset).grouping[num] = data[1].map(e => {
