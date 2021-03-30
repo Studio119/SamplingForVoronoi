@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-30 19:06:22
+ * @Last Modified time: 2021-03-31 01:09:53
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -79,6 +79,11 @@ export class ColorMap {
 
 const getNaturalBreak = (data, k) => {
   k = Math.max(1, Math.round(k));
+  const res = [];
+  for (let i = 0; i < k; i++) {
+    res.push(i / k);
+  }
+  return k
   let [min, max] = [Infinity, -Infinity];
   const sorted = data.map(d => {
     [min, max] = [Math.min(min, d.value), Math.max(max, d.value)];

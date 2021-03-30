@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-30 13:23:54
+ * @Last Modified time: 2021-03-31 00:32:30
  */
 
 import React, { Component, createRef } from "react";
@@ -676,6 +676,35 @@ class Map extends Component {
                     )
                   }
               </article>
+              <article key="optimization"
+                style={{
+                  marginTop:  "6px",
+                  padding:  "0.6rem 0.8rem",
+                  background: "white",
+                  border:   "1px solid #aaa",
+                  display:  (
+                    this.state.layers.filter(d => d.label === "polygons")[0]
+                    && this.state.layers.filter(d => d.label === "polygons")[0].active
+                  ) ? "flex" : "none",
+                  flexDirection:  "column",
+                  alignItems: "center",
+                  boxShadow: "4px 3px 0 #888a"
+                }} >
+                  <header>Optimize</header>
+                    <Button
+                      listener={
+                        () => {
+                          this.optimizeVoronoi();
+                        }
+                      }
+                      style={{
+                        display:  "block",
+                        padding:  "3px 10px",
+                        margin:   "0.24rem 0"
+                      }} >
+                        Run
+                    </Button>
+            </article>
           </section>
       </section>
     );
@@ -1465,6 +1494,10 @@ class Map extends Component {
         });
       };
     }, 100);
+  }
+  
+  optimizeVoronoi() {
+    console.log("?");
   }
 
 };
