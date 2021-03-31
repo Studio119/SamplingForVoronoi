@@ -16,6 +16,10 @@
 /datasets
 /storage
 
+# docs
+/docs
+/video
+
 # misc
 .DS_Store
 .eslintcache

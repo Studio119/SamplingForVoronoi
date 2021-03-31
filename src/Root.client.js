@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-31 03:15:44
+ * @Last Modified time: 2021-03-31 20:58:50
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -328,7 +328,29 @@ export const colorLists = [
     "rgb(242,81,31)",
     "rgb(237,54,26)",
     "rgb(232,21,21)"
-  ]
+  ],
+  /** arcgis continuous 20 reversed */ [
+    "rgb(40,146,199)",
+    "rgb(75,156,191)",
+    "rgb(98,164,181)",
+    "rgb(123,176,172)",
+    "rgb(143,186,163)",
+    "rgb(164,196,151)",
+    "rgb(182,207,140)",
+    "rgb(203,219,129)",
+    "rgb(223,232,121)",
+    "rgb(243,245,108)",
+    "rgb(250,240,95)",
+    "rgb(252,216,83)",
+    "rgb(252,194,76)",
+    "rgb(252,171,66)",
+    "rgb(250,149,55)",
+    "rgb(247,127,47)",
+    "rgb(245,104,39)",
+    "rgb(242,81,31)",
+    "rgb(237,54,26)",
+    "rgb(232,21,21)"
+  ].reverse()
 ];
 
 const AppRoot = () => {
