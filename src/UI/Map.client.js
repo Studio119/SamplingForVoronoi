@@ -2,7 +2,7 @@
  * @Author: Antoine YANG 
  * @Date: 2020-08-20 22:43:10 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-31 00:32:30
+ * @Last Modified time: 2021-03-31 14:47:11
  */
 
 import React, { Component, createRef } from "react";
@@ -676,7 +676,7 @@ class Map extends Component {
                     )
                   }
               </article>
-              <article key="optimization"
+              {/* <article key="optimization"
                 style={{
                   marginTop:  "6px",
                   padding:  "0.6rem 0.8rem",
@@ -704,7 +704,7 @@ class Map extends Component {
                       }} >
                         Run
                     </Button>
-            </article>
+              </article> */}
           </section>
       </section>
     );

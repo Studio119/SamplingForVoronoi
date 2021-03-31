@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-20 18:22:31 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-31 01:09:53
+ * @Last Modified time: 2021-03-31 03:15:44
  */
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -79,11 +79,13 @@ export class ColorMap {
 
 const getNaturalBreak = (data, k) => {
   k = Math.max(1, Math.round(k));
-  const res = [];
-  for (let i = 0; i < k; i++) {
-    res.push(i / k);
-  }
-  return k
+  // if (Math.random() < 15) {
+  //   const res = [];
+  //   for (let i = 0; i < k; i++) {
+  //     res.push(i / k);
+  //   }
+  //   return res;
+  // }
   let [min, max] = [Infinity, -Infinity];
   const sorted = data.map(d => {
     [min, max] = [Math.min(min, d.value), Math.max(max, d.value)];
@@ -100,7 +102,7 @@ const getNaturalBreak = (data, k) => {
 
   for (let i = 0; i < k; i++) {
     const pos = Math.floor(data.length / k * (i + 0.5));
-    centers.push([sorted[pos], []]);
+    centers.push([sorted[pos], [], 0]);
   }
 
   let ifContinue = true;
@@ -109,9 +111,9 @@ const getNaturalBreak = (data, k) => {
 
     sorted.forEach((d, i) => {
       let idx = 0;
-      let min = Math.abs(d - centers[0][0]);
+      let min = Math.abs(d - centers[0][0]) * (1 + centers[0][2] / data.length * 64);
       for (let j = 1; j < centers.length; j++) {
-        const dist = Math.abs(d - centers[j][0]);
+        const dist = Math.abs(d - centers[j][0]) * (1 + centers[j][2] / data.length);
         if (dist < min) {
           idx = j;
           min = dist;
@@ -128,7 +130,8 @@ const getNaturalBreak = (data, k) => {
       for (let i = 0; i < centers.length; i++) {
         centers[i] = [
           centers[i][1].reduce((p, c) => p + c) / centers[i][1].length,
-          []
+          [],
+          centers[i][1].length
         ];
       }
     } else {

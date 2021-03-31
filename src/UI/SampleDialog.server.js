@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2021-01-19 17:22:48 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2021-03-30 13:36:42
+ * @Last Modified time: 2021-03-31 14:46:41
  */
 
 import React from 'react';
@@ -370,7 +370,8 @@ class SampleDialog extends React.Component {
                                       padding:  "0.4rem 1rem",
                                       display: "flex",
                                       alignItems: "center",
-                                      justifyContent: "space-around"
+                                      justifyContent: "space-around",
+                                      visibility: "hidden"
                                     }} >
                                       <label
                                         style={{
@@ -380,7 +381,7 @@ class SampleDialog extends React.Component {
                                           Min radius
                                       </label>
                                       <input type="number" min="0" max="8" step="0.1"
-                                        defaultValue={ 3 }
+                                        defaultValue={ 0 }
                                         name="min_r"
                                         style={{
                                           width:        "9.4rem",
